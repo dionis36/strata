@@ -17,6 +17,10 @@ class AnalysisRun(Base):
     started_at = Column(DateTime, default=func.now(), nullable=False)
     completed_at = Column(DateTime, nullable=True)
     status = Column(String, nullable=False)  # e.g., 'started', 'completed', 'failed'
+    total_files = Column(Integer, nullable=True)
+    total_classes = Column(Integer, nullable=True)
+    total_edges = Column(Integer, nullable=True)
+    error_message = Column(String, nullable=True)
 
 class SchemaVersion(Base):
     __tablename__ = "schema_version"
