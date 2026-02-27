@@ -18,12 +18,13 @@ class GraphModel:
             )
 
     def add_edge(self, edge: Edge):
-        """Adds a directed edge between two nodes."""
-        self.graph.add_edge(
-            edge.source_id, 
-            edge.target_id, 
-            type=edge.edge_type.value
-        )
+        """Adds a directed edge between two nodes only if both exist."""
+        if self.graph.has_node(edge.source_id) and self.graph.has_node(edge.target_id):
+            self.graph.add_edge(
+                edge.source_id, 
+                edge.target_id, 
+                type=edge.edge_type.value
+            )
         
     def get_node_count(self) -> int:
         return self.graph.number_of_nodes()

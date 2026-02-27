@@ -167,22 +167,39 @@ Now that the backend is proven, verify the presentation layer.
 
 _(Notice that the `Run ID` incremented to `2`! This proves the DB isolation works accurately across multiple idempotent runs)._
 
+### Step 4e: Test the Complex MVC Graph
+
+Now test the enhanced parser logic with an independent node (`Helper`) and branching edges (`UserController`).
+
+1. In the Streamlit UI, change the Project Path to: `/data/test_project_2`
+2. Click **Run Minimal Analysis**.
+3. **Expected metrics:** Run ID: 3, Files: 4, Classes: 4, Edges: 2.
+4. Open the generated `data/graph_3.json` on your laptop to verify `UserController` drew `method_call` links specifically to `UserView` and `Database`, and `Helper` was extracted as a standalone node.
+
+### Step 4f: Test the Resiliency Rule (Ghost Node)
+
+Our architecture mathematically prevents mapping method calls to classes that don't exist.
+
+1. In the Streamlit UI, change the Project Path to: `/data/test_project_3_phantom`
+2. Click **Run Minimal Analysis**.
+3. **Expected metrics:** Run ID: 4, Files: 1, Classes: 1, Edges: 0.
+   _(Even though `Ghost.php` issues a `$phantom->scare()` call, the GraphModel securely drops the edge because `MissingLibrary` was not found in the codebase. This protects Phase 2 math from corrupting)._
+
 ---
 
-## 5. Teardown & Reset
+## 5. Teardown & Reset (Start from Scratch)
 
-To cleanly shut down the environment:
-
-```bash
-docker compose down
-```
-
-### To Reset Phase 1 Completely:
-
-If you want to blow away the database and clear all stored runs and graphs:
+If you want to clear your local database, wipe the generated JSON graphs, and destroy the Docker images to test this entirely from absolute scratch on a given day:
 
 ```bash
-rm -rf data/*
+# Blow away all containers and prune attached volumes
+docker compose down -v
+
+# Remove the built Strata images
+docker rmi strata-api strata-frontend
+
+# Delete the persistent database and past JSON artifacts (Keep the test_projects!)
+rm -f data/app.db data/*.json
 ```
 
-The next time you run `docker compose up`, the API will automatically rebuild `app.db` containing empty tables.
+The next time you run `docker compose up --build -d`, it will rebuild the pristine Phase 1 environment directly from the Dockerfiles and generate a fresh SQLite database natively.
