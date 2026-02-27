@@ -62,7 +62,7 @@ class AnalysisRunRepository:
         Saves the graph JSON to the local /data directory.
         Returns the path saved.
         """
-        data_dir = os.path.abspath("./data")
+        data_dir = os.path.abspath("/data")
         os.makedirs(data_dir, exist_ok=True)
         filepath = os.path.join(data_dir, f"graph_{run_id}.json")
         with open(filepath, "w", encoding="utf-8") as f:
