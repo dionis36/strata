@@ -1,0 +1,63 @@
+erDiagram
+    PROJECT {
+        int id PK
+        string name
+        string root_path
+        timestamp created_at
+    }
+
+    ANALYSIS_RUN {
+        int id PK
+        int project_id FK
+        timestamp run_at
+        string graph_file
+        string summary_json
+    }
+
+    FILE {
+        int id PK
+        int project_id FK
+        string path
+        int size
+        timestamp last_modified
+    }
+
+    COMPONENT {
+        int id PK
+        int file_id FK
+        string name
+        string kind
+        string signature
+        int loc
+        string metrics_json
+        float risk_score
+        string risk_level
+        boolean has_db_access
+        string db_access_json
+    }
+
+    EDGE {
+        int id PK
+        int project_id FK
+        int from_component FK
+        int to_component FK
+        string kind
+    }
+
+    EXTRACTION_CANDIDATE {
+        int id PK
+        int component_id FK
+        float score
+        float effort_hours
+        int priority
+        string reason
+        boolean validated
+    }
+
+    PROJECT ||--o{ ANALYSIS_RUN : "has"
+    PROJECT ||--o{ FILE : "contains"
+    PROJECT ||--o{ EDGE : "contains"
+    FILE ||--o{ COMPONENT : "defines"
+    COMPONENT ||--o{ EDGE : "outgoing"
+    COMPONENT ||--o{ EDGE : "incoming"
+    COMPONENT ||--o| EXTRACTION_CANDIDATE : "evaluated as"
