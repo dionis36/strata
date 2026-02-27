@@ -39,6 +39,12 @@ In our `docker-compose.yml`, we mapped:
 
 Any folder or file you place inside the `strata/data/` directory on your laptop instantly becomes visible to the API at `/data/`.
 
+**When to paste your files?**
+Because the volume mount acts as a live, transparent window, it does not matter if you place the folders into `data/` BEFORE or AFTER you start Docker.
+
+- If you place them before: Docker sees them the millisecond it boots.
+- If you place them after: Docker sees them instantly without needing a restart. You do not need to reboot the server to scan new test directories.
+
 **Example:**
 If you download a client's legacy codebase and place it at:
 `~/strata/data/old_website/`
@@ -49,6 +55,15 @@ Inside Streamlit or the API, you must tell Strata to analyze:
 ---
 
 ## 3. Starting the Environment
+
+The `docker compose up` command is the orchestrator for the entire application.
+
+**Important Runtime Rules:**
+
+1. **Execution Location:** You must run `docker compose up` from the absolute root of the project (e.g., `/home/dio/Documents/strata`). If you try to run it inside an inner folder, Docker will fail.
+2. **All Services Start Simultaneously:** Running the command boots both the FastAPI backend and the Streamlit frontend. They run side-by-side.
+   - Backend API Docs are immediately available at `http://localhost:8000/docs`
+   - Frontend UI is immediately available at `http://localhost:8501`
 
 Ensure Docker is running on your host machine, then build and start the application:
 
