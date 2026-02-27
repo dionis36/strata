@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app
+
+  frontend:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/data
+    command: streamlit run frontend/app.py --server.address=0.0.0.0
+    env_file:
+      - .env
+    environment:
+      - FASTAPI_URL=http://api:8000/health
+    depends_on:
+      - api
