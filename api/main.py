@@ -7,6 +7,7 @@ from sqlalchemy import text
 from pydantic import BaseModel
 from infrastructure.persistence.database import init_db, get_db
 from infrastructure.persistence.repositories import ProjectRepository
+from infrastructure.persistence.models import ComponentMetric
 from application.services.analysis_service import AnalysisService
 
 # Configure structured logging
@@ -58,4 +59,26 @@ def analyze_project(req: AnalyzeRequest, db: Session = Depends(get_db)):
         return result
     except Exception as e:
         logger.error(f"Analysis failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/metrics/{run_id}")
+def get_metrics(run_id: int, db: Session = Depends(get_db)):
+    try:
+        metrics = db.query(ComponentMetric).filter(ComponentMetric.run_id == run_id).all()
+        components = []
+        for m in metrics:
+            components.append({
+                "name": m.component_name,
+                "in_degree": m.in_degree,
+                "out_degree": m.out_degree,
+                "betweenness": m.betweenness,
+                "scc_size": m.scc_size,
+                "blast_radius": m.blast_radius
+            })
+        return {
+            "run_id": run_id,
+            "components": components
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch metrics for run {run_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
