@@ -110,3 +110,32 @@ If you wish to test Phase 2 again from scratch, use the provided infrastructure 
 ```bash
 ./scripts/reset_environment.sh
 ```
+
+---
+
+## 5. Web UI Validation (Structural Microscope)
+
+The Streamlit frontend is now a **multi-page validation interface**. Open http://localhost:8501 to access it.
+
+You will see a sidebar with three pages:
+
+| Page                   | Path                           | Purpose                                        |
+| :--------------------- | :----------------------------- | :--------------------------------------------- |
+| **Strata** (Home)      | `http://localhost:8501`        | Trigger analysis, view Structural Summary Card |
+| **Metrics Inspection** | Sidebar → `Metrics Inspection` | Query sortable raw metric table by Run ID      |
+| **Experiment Results** | Sidebar → `Experiment Results` | Experiment harness stub (Phase 3+)             |
+
+### Step 5a: Trigger Analysis from Home Page
+
+1. Open http://localhost:8501
+2. Enter a project path (e.g. `/data/test_project_2`).
+3. Click **Run Minimal Analysis**.
+4. You will see the **Structural Summary Card** (Run ID, Files, Nodes, Edges) and a blue hint directing you to the inspection page.
+
+### Step 5b: Inspect the Structural Matrix
+
+1. Click **Metrics Inspection** in the sidebar.
+2. Enter the `Run ID` returned from the analysis.
+3. Click **Query Structural Matrix**.
+4. A sortable DataFrame will appear. Click the **Betweenness** column header to sort and identify architectural choke points. Click **Blast Radius** to identify which class propagates the most change impact.
+5. Use the **Download Raw JSON** button to export the metric trace for offline logging.
