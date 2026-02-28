@@ -18,13 +18,21 @@ class GraphModel:
             )
 
     def add_edge(self, edge: Edge):
-        """Adds a directed edge between two nodes only if both exist."""
+        """Adds a directed edge between two nodes only if both exist and it is not a self-loop."""
+        if edge.source_id == edge.target_id:
+            return  # Reject self-loops
+
         if self.graph.has_node(edge.source_id) and self.graph.has_node(edge.target_id):
-            self.graph.add_edge(
-                edge.source_id, 
-                edge.target_id, 
-                type=edge.edge_type.value
-            )
+            if self.graph.has_edge(edge.source_id, edge.target_id):
+                # Increment weight for duplicate calls to formalize frequency
+                self.graph[edge.source_id][edge.target_id]['weight'] += 1
+            else:
+                self.graph.add_edge(
+                    edge.source_id, 
+                    edge.target_id, 
+                    type=edge.edge_type.value,
+                    weight=1
+                )
         
     def get_node_count(self) -> int:
         return self.graph.number_of_nodes()
@@ -36,5 +44,9 @@ class GraphModel:
         return sum(1 for _, data in self.graph.nodes(data=True) if data.get('type') == NodeType.CLASS.value)
 
     def to_json_dict(self) -> dict:
-        """Serializes the graph to a JSON-compatible dictionary."""
-        return nx.node_link_data(self.graph)
+        """Serializes the graph to a JSON-compatible dictionary Deterministically."""
+        data = nx.node_link_data(self.graph)
+        # Sort nodes and links mathematically to guarantee deterministic JSON output
+        data["nodes"] = sorted(data["nodes"], key=lambda k: k["id"])
+        data["links"] = sorted(data["links"], key=lambda k: (k["source"], k["target"]))
+        return data
