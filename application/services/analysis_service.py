@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from infrastructure.persistence.repositories import AnalysisRunRepository
 from infrastructure.parser_bridge import ParserBridge, FileScanner
 from domain.models.graph_model import GraphModel
+from domain.services.metric_calculator import MetricCalculator
 
 class AnalysisService:
     def __init__(self, db: Session):
@@ -32,11 +33,18 @@ class AnalysisService:
             total_classes = graph.get_class_count()
             total_edges = graph.get_edge_count()
             
-            # 4. Save Graph JSON locally
+            # 4. Calculate Phase 2 Structural Metrics
+            calculator = MetricCalculator(graph.graph)
+            metrics_matrix = calculator.calculate_all_metrics()
+            
+            # 5. Persist structural metrics in batch
+            self.repo.save_component_metrics(run.id, metrics_matrix)
+            
+            # 6. Save Graph JSON locally
             graph_data = graph.to_json_dict()
             self.repo.serialize_graph(run.id, graph_data)
             
-            # 5. Persist minimal run metadata
+            # 7. Persist minimal run metadata
             self.repo.update_metrics(run.id, total_files, total_classes, total_edges)
             self.repo.mark_completed(run.id)
             
