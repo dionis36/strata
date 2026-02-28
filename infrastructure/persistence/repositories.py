@@ -2,7 +2,7 @@ import json
 import os
 from datetime import datetime
 from sqlalchemy.orm import Session
-from infrastructure.persistence.models import Project, AnalysisRun
+from infrastructure.persistence.models import Project, AnalysisRun, ComponentMetric
 
 class ProjectRepository:
     def __init__(self, db: Session):
@@ -68,3 +68,30 @@ class AnalysisRunRepository:
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(graph_data, f, indent=2)
         return filepath
+
+    def save_component_metrics(self, run_id: int, metrics_matrix: dict):
+        """Batch inserts all computed structural metrics for a run."""
+        objects = []
+        for component_name, metrics in metrics_matrix.items():
+            cm = ComponentMetric(
+                run_id=run_id,
+                component_name=component_name,
+                in_degree=metrics.get('in_degree', 0),
+                out_degree=metrics.get('out_degree', 0),
+                weighted_in=metrics.get('weighted_in', 0),
+                weighted_out=metrics.get('weighted_out', 0),
+                betweenness=metrics.get('betweenness', 0.0),
+                closeness=metrics.get('closeness', 0.0),
+                scc_id=metrics.get('scc_id', 0),
+                scc_size=metrics.get('scc_size', 0),
+                blast_radius=metrics.get('blast_radius', 0),
+                fan_in_ratio=metrics.get('fan_in_ratio', 0.0),
+                fan_out_ratio=metrics.get('fan_out_ratio', 0.0),
+                scc_density=metrics.get('scc_density', 0.0),
+                reachability_ratio=metrics.get('reachability_ratio', 0.0)
+            )
+            objects.append(cm)
+            
+        if objects:
+            self.db.bulk_save_objects(objects)
+            self.db.commit()

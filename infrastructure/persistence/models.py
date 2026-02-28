@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float
 from sqlalchemy.sql import func
 from infrastructure.persistence.database import Base
 
@@ -28,3 +28,24 @@ class SchemaVersion(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     version = Column(String, nullable=False, unique=True)
     applied_at = Column(DateTime, default=func.now(), nullable=False)
+
+class ComponentMetric(Base):
+    __tablename__ = "component_metrics"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    run_id = Column(Integer, ForeignKey("analysis_run.id"), nullable=False)
+    component_name = Column(String, nullable=False)
+    in_degree = Column(Integer, default=0)
+    out_degree = Column(Integer, default=0)
+    weighted_in = Column(Integer, default=0)
+    weighted_out = Column(Integer, default=0)
+    betweenness = Column(Float, default=0.0)
+    closeness = Column(Float, default=0.0)
+    scc_id = Column(Integer, default=0)
+    scc_size = Column(Integer, default=0)
+    blast_radius = Column(Integer, default=0)
+    fan_in_ratio = Column(Float, default=0.0)
+    fan_out_ratio = Column(Float, default=0.0)
+    scc_density = Column(Float, default=0.0)
+    reachability_ratio = Column(Float, default=0.0)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
