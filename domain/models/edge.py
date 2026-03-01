@@ -3,6 +3,11 @@ from pydantic import BaseModel
 
 class EdgeType(Enum):
     METHOD_CALL = "method_call"
+    INSTANTIATION = "instantiation"
+    INHERITS = "inherits"
+    IMPLEMENTS = "implements"
+    USES_TRAIT = "uses_trait"
+    DEPENDS_ON = "depends_on"
     UNKNOWN = "unknown"
 
 class Edge(BaseModel):
