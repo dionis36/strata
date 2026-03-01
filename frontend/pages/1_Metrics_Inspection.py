@@ -29,7 +29,11 @@ if st.button("Query Structural Matrix"):
                     df = pd.DataFrame(components)
                     
                     # Ensure specific column order for readability
-                    cols = ["name", "in_degree", "out_degree", "betweenness", "scc_size", "blast_radius"]
+                    cols = ["name", "type", "in_degree", "out_degree", "betweenness", "scc_size", "blast_radius"]
+                    # type column may not exist in older runs — fill safely
+                    for c in cols:
+                        if c not in df.columns:
+                            df[c] = "unknown"
                     df = df[cols]
                     
                     st.subheader(f"Run {run_id} Results Matrix")
