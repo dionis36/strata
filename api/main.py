@@ -69,6 +69,7 @@ def get_metrics(run_id: int, db: Session = Depends(get_db)):
         for m in metrics:
             components.append({
                 "name": m.component_name,
+                "type": m.component_type,
                 "in_degree": m.in_degree,
                 "out_degree": m.out_degree,
                 "betweenness": m.betweenness,

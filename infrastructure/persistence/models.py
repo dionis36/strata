@@ -35,6 +35,7 @@ class ComponentMetric(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     run_id = Column(Integer, ForeignKey("analysis_run.id"), nullable=False)
     component_name = Column(String, nullable=False)
+    component_type = Column(String, nullable=False, default="class")  # Phase D: node type
     in_degree = Column(Integer, default=0)
     out_degree = Column(Integer, default=0)
     weighted_in = Column(Integer, default=0)
