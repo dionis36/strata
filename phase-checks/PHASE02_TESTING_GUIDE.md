@@ -12,6 +12,18 @@ Typed Parser → Namespace IDs → Graph Build → Metric Projection → Compone
 
 ## §1. Environment Readiness
 
+> [!IMPORTANT]
+> **First-time setup required on any new machine.**
+> Before testing, run the fixture bootstrap script to create `data/test_benchmark`:
+>
+> ```bash
+> ./scripts/setup_fixtures.sh
+> ```
+>
+> This downloads CodeIgniter 3 (~166 PHP files) into `data/test_benchmark/system`.
+> The `data/` folder is git-ignored — this fixture is never committed to the repo.
+> Run it once; it persists across environment resets.
+
 ```bash
 # Clean the environment (preserves test_project* and test_benchmark)
 ./scripts/reset_environment.sh
