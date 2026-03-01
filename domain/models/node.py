@@ -27,11 +27,12 @@ class NodeMetrics(BaseModel):
     reachability_ratio: float = 0.0
 
 class Node(BaseModel):
-    id: str  # Unique identifier (e.g. fully qualified name or hash)
-    name: str
+    id: str  # Fully-qualified: Namespace\ClassName or dir\ClassName
+    name: str  # Short class name without namespace
     node_type: NodeType
+    namespace: Optional[str] = None  # PHP namespace if declared
     file_path: Optional[str] = None
     metrics: NodeMetrics = NodeMetrics()
-    
+
     # Internal representation convenience
     methods: List[str] = []
