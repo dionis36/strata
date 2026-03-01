@@ -69,13 +69,26 @@ class AnalysisRunRepository:
             json.dump(graph_data, f, indent=2)
         return filepath
 
-    def save_component_metrics(self, run_id: int, metrics_matrix: dict):
-        """Batch inserts all computed structural metrics for a run."""
+    def save_component_metrics(
+        self,
+        run_id: int,
+        metrics_matrix: dict,
+        node_types: dict = None
+    ):
+        """Batch inserts all computed structural metrics for a run.
+
+        Args:
+            run_id: ID of the parent AnalysisRun.
+            metrics_matrix: Dict of {node_id: metrics_dict} from MetricCalculator.
+            node_types: Optional dict of {node_id: type_string} e.g. 'class', 'method'.
+        """
+        node_types = node_types or {}
         objects = []
         for component_name, metrics in metrics_matrix.items():
             cm = ComponentMetric(
                 run_id=run_id,
                 component_name=component_name,
+                component_type=node_types.get(component_name, "class"),
                 in_degree=metrics.get('in_degree', 0),
                 out_degree=metrics.get('out_degree', 0),
                 weighted_in=metrics.get('weighted_in', 0),
