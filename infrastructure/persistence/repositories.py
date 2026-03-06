@@ -2,7 +2,7 @@ import json
 import os
 from datetime import datetime
 from sqlalchemy.orm import Session
-from infrastructure.persistence.models import Project, AnalysisRun, ComponentMetric
+from infrastructure.persistence.models import Project, AnalysisRun, ComponentMetric, ComponentRisk
 
 class ProjectRepository:
     def __init__(self, db: Session):
@@ -108,3 +108,48 @@ class AnalysisRunRepository:
         if objects:
             self.db.bulk_save_objects(objects)
             self.db.commit()
+
+
+class RiskRepository:
+    """Phase 3 persistence — stores and retrieves ComponentRisk rows."""
+
+    def __init__(self, db: Session):
+        self.db = db
+
+    def save_risk_scores(self, run_id: int, risk_results: list[dict]) -> None:
+        """Bulk-insert all risk score records for a run.
+
+        Args:
+            run_id: ID of the parent AnalysisRun.
+            risk_results: List of dicts from RiskService, one per component.
+        """
+        objects = [
+            ComponentRisk(
+                run_id=run_id,
+                component_name=r["component_name"],
+                component_type=r.get("component_type", "class"),
+                norm_betweenness=r.get("norm_betweenness", 0.0),
+                norm_blast_radius=r.get("norm_blast_radius", 0.0),
+                norm_in_degree=r.get("norm_in_degree", 0.0),
+                norm_out_degree=r.get("norm_out_degree", 0.0),
+                criticality_index=r.get("criticality_index", 0.0),
+                instability=r.get("instability", 0.0),
+                cycle_flag=r.get("cycle_flag", 0),
+                coupling_pressure=r.get("coupling_pressure", 0.0),
+                risk_score=r["risk_score"],
+                risk_level=r["risk_level"],
+            )
+            for r in risk_results
+        ]
+        if objects:
+            self.db.bulk_save_objects(objects)
+            self.db.commit()
+
+    def get_risk_by_run(self, run_id: int) -> list[ComponentRisk]:
+        """Return all risk rows for a run, sorted by risk_score descending."""
+        return (
+            self.db.query(ComponentRisk)
+            .filter(ComponentRisk.run_id == run_id)
+            .order_by(ComponentRisk.risk_score.desc())
+            .all()
+        )
