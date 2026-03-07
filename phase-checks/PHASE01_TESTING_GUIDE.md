@@ -24,7 +24,16 @@ cp .env.example .env
 
 # 4. Create the required data directory (if Git hasn't already)
 mkdir -p data
+
+# 5. Bootstrap the legacy PHP benchmark fixture (one-time, persists across resets)
+./scripts/setup_fixtures.sh
 ```
+
+> [!IMPORTANT]
+> **`./scripts/setup_fixtures.sh` must be run once on every new machine before testing.**
+> It downloads CodeIgniter 3 (~166 PHP files) into `data/test_benchmark/system` — the
+> legacy PHP benchmark used for real-world structural validation in Phase 2.
+> The `data/` folder is git-ignored; this fixture is never committed to the repo.
 
 ---
 

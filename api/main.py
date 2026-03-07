@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from pydantic import BaseModel
 from infrastructure.persistence.database import init_db, get_db
-from infrastructure.persistence.repositories import ProjectRepository
-from infrastructure.persistence.models import ComponentMetric
+from infrastructure.persistence.repositories import ProjectRepository, RiskRepository
+from infrastructure.persistence.models import ComponentMetric, ComponentRisk
 from application.services.analysis_service import AnalysisService
 
 # Configure structured logging
@@ -82,4 +82,36 @@ def get_metrics(run_id: int, db: Session = Depends(get_db)):
         }
     except Exception as e:
         logger.error(f"Failed to fetch metrics for run {run_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/risk/{run_id}")
+def get_risk(run_id: int, db: Session = Depends(get_db)):
+    """Returns Phase 3 structural risk scores for a run, sorted by risk_score desc."""
+    try:
+        repo = RiskRepository(db)
+        rows = repo.get_risk_by_run(run_id)
+        if not rows:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No risk data found for run_id={run_id}. Run POST /analyze first."
+            )
+        components = [
+            {
+                "name":              r.component_name,
+                "type":              r.component_type,
+                "risk_score":        r.risk_score,
+                "risk_level":        r.risk_level,
+                "criticality_index": r.criticality_index,
+                "instability":       r.instability,
+                "cycle_flag":        r.cycle_flag,
+                "coupling_pressure": r.coupling_pressure,
+            }
+            for r in rows
+        ]
+        return {"run_id": run_id, "components": components}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to fetch risk for run {run_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))

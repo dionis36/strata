@@ -12,7 +12,8 @@ echo "⚠️  WARNING: STRATA ENVIRONMENT RESET ⚠️"
 echo "======================================================================"
 echo "This will permanently destroy the local database (data/app.db),"
 echo "all generated JSON graph artifacts, and the built Docker images."
-echo "Your test PHP files in data/test_project* will be preserved."
+echo "Your test PHP files in data/test_project* and data/test_benchmark"
+echo "will be PRESERVED (they are standard fixtures, not runtime artifacts)."
 echo "----------------------------------------------------------------------"
 
 read -p "Are you absolutely sure you want to perform a hard reset? (y/N): " confirm
