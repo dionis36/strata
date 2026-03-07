@@ -8,6 +8,9 @@ This guide validates the **Phase 2 Structural Intelligence Engine** end-to-end. 
 Typed Parser → Namespace IDs → Graph Build → Metric Projection → ComponentMetric DB → /metrics/{run_id}
 ```
 
+> [!NOTE]
+> **Phase 3 is now live.** When you analyse a project using the Phase 2 guide, the backend will automatically compute Phase 3 structural risk scores. You can view these directly on the **Risk Analysis** page in Streamlit.
+
 ---
 
 ## §1. Environment Readiness
