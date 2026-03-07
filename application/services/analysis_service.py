@@ -5,6 +5,7 @@ from infrastructure.parser_bridge import ParserBridge, FileScanner
 from domain.models.graph_model import GraphModel
 from domain.models.edge import EdgeType
 from domain.services.metric_calculator import MetricCalculator
+from application.services.risk_service import RiskService
 
 class AnalysisService:
     def __init__(self, db: Session):
@@ -54,7 +55,12 @@ class AnalysisService:
                 for n, data in graph.graph.nodes(data=True)
             }
             self.repo.save_component_metrics(run.id, metrics_matrix, node_types)
-            
+
+            # 5.5 Phase 3: Compute structural risk scores from Phase 2 metrics.
+            #     Runs synchronously — risk scores are always ready with the analysis.
+            risk_service = RiskService(self.db)
+            risk_service.compute_risk(run.id)
+
             # 6. Save Graph JSON locally
             graph_data = graph.to_json_dict()
             self.repo.serialize_graph(run.id, graph_data)

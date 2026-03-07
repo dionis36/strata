@@ -50,3 +50,36 @@ class ComponentMetric(Base):
     scc_density = Column(Float, default=0.0)
     reachability_ratio = Column(Float, default=0.0)
     created_at = Column(DateTime, default=func.now(), nullable=False)
+
+
+class ComponentRisk(Base):
+    """Phase 3: Structural risk scores derived from Phase 2 metrics.
+
+    Stored separately from ComponentMetric to keep Phase 2 and Phase 3
+    data concerns cleanly separated. All derived indicators are persisted
+    to enable Phase 6 ablation studies without re-running analysis.
+    """
+    __tablename__ = "component_risk"
+
+    id                = Column(Integer, primary_key=True, autoincrement=True)
+    run_id            = Column(Integer, ForeignKey("analysis_run.id"), nullable=False)
+    component_name    = Column(String, nullable=False)
+    component_type    = Column(String, nullable=False, default="class")
+
+    # Normalized Phase 2 inputs (min-max per run)
+    norm_betweenness  = Column(Float, default=0.0)
+    norm_blast_radius = Column(Float, default=0.0)
+    norm_in_degree    = Column(Float, default=0.0)
+    norm_out_degree   = Column(Float, default=0.0)
+
+    # Derived structural indicators (Phase 6: ablation targets)
+    criticality_index = Column(Float, default=0.0)   # betweenness × blast_radius
+    instability       = Column(Float, default=0.0)   # out / (in + out)
+    cycle_flag        = Column(Integer, default=0)   # 1 if scc_size > 1
+    coupling_pressure = Column(Float, default=0.0)   # (norm_in + norm_out) / 2
+
+    # Risk output
+    risk_score        = Column(Float, nullable=False)
+    risk_level        = Column(String, nullable=False)  # LOW / MEDIUM / HIGH / CRITICAL
+
+    created_at        = Column(DateTime, default=func.now(), nullable=False)
