@@ -86,7 +86,9 @@ if st.button("Query Risk Matrix"):
                     df = df.rename(columns={
                         "name":              "Component",
                         "type":              "Type",
-                        "risk_score":        "Risk Score",
+                        "risk_score":        "Structural Risk",
+                        "behavioral_factor": "Behavioral Factor",
+                        "final_risk":        "Final Risk",
                         "risk_level":        "Risk Level",
                         "criticality_index": "Criticality",
                         "instability":       "Instability",
@@ -95,7 +97,7 @@ if st.button("Query Risk Matrix"):
                     })
 
                     display_cols = [
-                        "Component", "Type", "Risk Score", "Risk Level",
+                        "Component", "Type", "Risk Level", "Final Risk", "Behavioral Factor", "Structural Risk",
                         "Criticality", "Instability", "Cycle", "Coupling"
                     ]
                     st.dataframe(

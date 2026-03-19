@@ -182,6 +182,6 @@ class RiskRepository:
         return (
             self.db.query(ComponentRisk)
             .filter(ComponentRisk.run_id == run_id)
-            .order_by(ComponentRisk.risk_score.desc())
+            .order_by(ComponentRisk.final_risk.desc())
             .all()
         )

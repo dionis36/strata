@@ -102,6 +102,8 @@ def get_risk(run_id: int, db: Session = Depends(get_db)):
                 "type":              r.component_type,
                 "risk_score":        r.risk_score,
                 "risk_level":        r.risk_level,
+                "behavioral_factor": r.behavioral_factor,
+                "final_risk":        r.final_risk,
                 "criticality_index": r.criticality_index,
                 "instability":       r.instability,
                 "cycle_flag":        r.cycle_flag,
