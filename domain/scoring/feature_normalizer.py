@@ -9,7 +9,7 @@ from typing import List, Dict
 class FeatureNormalizer:
     """Fits on a list of raw metric dicts and normalizes each component."""
 
-    FIELDS = ["betweenness", "blast_radius", "in_degree", "out_degree"]
+    FIELDS = ["betweenness", "blast_radius", "in_degree", "out_degree", "write_intensity", "table_dependencies"]
 
     def __init__(self):
         self._min: Dict[str, float] = {}
