@@ -2,7 +2,7 @@ import json
 import os
 from datetime import datetime
 from sqlalchemy.orm import Session
-from infrastructure.persistence.models import Project, AnalysisRun, ComponentMetric, ComponentRisk
+from infrastructure.persistence.models import Project, AnalysisRun, ComponentMetric, ComponentRisk, ComponentBehavior
 
 class ProjectRepository:
     def __init__(self, db: Session):
@@ -110,6 +110,36 @@ class AnalysisRunRepository:
             self.db.commit()
 
 
+class BehaviorRepository:
+    """Phase 4 persistence — stores ComponentBehavior rows."""
+
+    def __init__(self, db: Session):
+        self.db = db
+
+    def save_behavior_metrics(self, run_id: int, metrics: list[dict]) -> None:
+        objects = [
+            ComponentBehavior(
+                run_id=run_id,
+                component_name=b["component_name"],
+                write_intensity=b.get("write_intensity", 0.0),
+                table_dependencies=b.get("table_dependencies", 0),
+                shared_table_pressure=b.get("shared_table_pressure", 0.0)
+            )
+            for b in metrics
+        ]
+        if objects:
+            self.db.bulk_save_objects(objects)
+            self.db.commit()
+
+    def get_behavior_by_run(self, run_id: int) -> list:
+        return (
+            self.db.query(ComponentBehavior)
+            .filter(ComponentBehavior.run_id == run_id)
+            .all()
+        )
+
+
+
 class RiskRepository:
     """Phase 3 persistence — stores and retrieves ComponentRisk rows."""
 
@@ -138,6 +168,8 @@ class RiskRepository:
                 coupling_pressure=r.get("coupling_pressure", 0.0),
                 risk_score=r["risk_score"],
                 risk_level=r["risk_level"],
+                behavioral_factor=r.get("behavioral_factor", 0.0),
+                final_risk=r.get("final_risk", r["risk_score"]),
             )
             for r in risk_results
         ]
@@ -150,6 +182,6 @@ class RiskRepository:
         return (
             self.db.query(ComponentRisk)
             .filter(ComponentRisk.run_id == run_id)
-            .order_by(ComponentRisk.risk_score.desc())
+            .order_by(ComponentRisk.final_risk.desc())
             .all()
         )

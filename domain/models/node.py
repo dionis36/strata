@@ -5,6 +5,7 @@ from typing import List, Optional
 class NodeType(Enum):
     CLASS = "class"
     METHOD = "method"
+    TABLE = "table"
     UNKNOWN = "unknown"
 
 class NodeMetrics(BaseModel):

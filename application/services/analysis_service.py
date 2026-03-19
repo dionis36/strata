@@ -3,9 +3,13 @@ from sqlalchemy.orm import Session
 from infrastructure.persistence.repositories import AnalysisRunRepository
 from infrastructure.parser_bridge import ParserBridge, FileScanner
 from domain.models.graph_model import GraphModel
-from domain.models.edge import EdgeType
+from domain.models.edge import Edge, EdgeType
+from domain.models.node import Node, NodeType
 from domain.services.metric_calculator import MetricCalculator
 from application.services.risk_service import RiskService
+from domain.behavior.write_analyzer import WriteAnalyzer
+from domain.behavior.behavioral_metrics import BehavioralMetricsCalculator
+from infrastructure.persistence.repositories import BehaviorRepository
 
 class AnalysisService:
     def __init__(self, db: Session):
@@ -28,12 +32,32 @@ class AnalysisService:
             graph = GraphModel()
             for node in nodes:
                 graph.add_node(node)
+                
+                # 3.5 Phase 4 Behavioral Extraction
+                # We do this here since the ParserBridge has already mapped file_paths to Node IDs
+                if getattr(node, "node_type", None) == NodeType.CLASS and getattr(node, "file_path", None):
+                    try:
+                        with open(node.file_path, 'r', encoding='utf-8') as f:
+                            code_content = f.read()
+                        behavior_res = WriteAnalyzer.analyze_file(code_content)
+                        for table_name in behavior_res.get("tables", []):
+                            # Ensure TABLE node exists
+                            table_node_id = f"table::{table_name}"
+                            if not graph.graph.has_node(table_node_id):
+                                table_node = Node(id=table_node_id, name=table_name, node_type=NodeType.TABLE)
+                                graph.add_node(table_node)
+                            # Add WRITES edge
+                            graph.add_edge(Edge(source_id=node.id, target_id=table_node_id, edge_type=EdgeType.WRITES))
+                    except Exception:
+                        pass # Silently ignore unreadable files during behavior extraction
+
             for edge in edges:
                 graph.add_edge(edge)
                 
             total_files = len(files)
             total_classes = graph.get_class_count()
             total_edges = graph.get_edge_count()
+
             
             # 4. Calculate Phase 2 Structural Metrics on STRUCTURAL edge projection
             #    Excludes DB-write edges etc. to keep centrality semantically correct.
@@ -55,6 +79,13 @@ class AnalysisService:
                 for n, data in graph.graph.nodes(data=True)
             }
             self.repo.save_component_metrics(run.id, metrics_matrix, node_types)
+
+            # 5.2 Phase 4: Compute behavioral metrics based on WRITES edges
+            behavior_calc = BehavioralMetricsCalculator(graph)
+            behavior_metrics = behavior_calc.calculate_metrics()
+            if behavior_metrics:
+                b_repo = BehaviorRepository(self.db)
+                b_repo.save_behavior_metrics(run.id, behavior_metrics)
 
             # 5.5 Phase 3: Compute structural risk scores from Phase 2 metrics.
             #     Runs synchronously — risk scores are always ready with the analysis.
