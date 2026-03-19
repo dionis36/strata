@@ -51,14 +51,20 @@ class ComponentMetric(Base):
     reachability_ratio = Column(Float, default=0.0)
     created_at = Column(DateTime, default=func.now(), nullable=False)
 
+class ComponentBehavior(Base):
+    """Phase 4: Behavioral metrics (database write dependencies)."""
+    __tablename__ = "component_behavior"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    run_id = Column(Integer, ForeignKey("analysis_run.id"), nullable=False)
+    component_name = Column(String, nullable=False)
+    write_intensity = Column(Float, default=0.0)
+    table_dependencies = Column(Integer, default=0)
+    shared_table_pressure = Column(Float, default=0.0)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
 
 class ComponentRisk(Base):
-    """Phase 3: Structural risk scores derived from Phase 2 metrics.
-
-    Stored separately from ComponentMetric to keep Phase 2 and Phase 3
-    data concerns cleanly separated. All derived indicators are persisted
-    to enable Phase 6 ablation studies without re-running analysis.
-    """
+    """Phase 3 & 4: Structural risk scores and behavioral amplification."""
     __tablename__ = "component_risk"
 
     id                = Column(Integer, primary_key=True, autoincrement=True)
@@ -72,14 +78,18 @@ class ComponentRisk(Base):
     norm_in_degree    = Column(Float, default=0.0)
     norm_out_degree   = Column(Float, default=0.0)
 
-    # Derived structural indicators (Phase 6: ablation targets)
-    criticality_index = Column(Float, default=0.0)   # betweenness × blast_radius
-    instability       = Column(Float, default=0.0)   # out / (in + out)
-    cycle_flag        = Column(Integer, default=0)   # 1 if scc_size > 1
-    coupling_pressure = Column(Float, default=0.0)   # (norm_in + norm_out) / 2
+    # Derived structural indicators
+    criticality_index = Column(Float, default=0.0)
+    instability       = Column(Float, default=0.0)
+    cycle_flag        = Column(Integer, default=0)
+    coupling_pressure = Column(Float, default=0.0)
 
-    # Risk output
+    # Risk output (Phase 3)
     risk_score        = Column(Float, nullable=False)
-    risk_level        = Column(String, nullable=False)  # LOW / MEDIUM / HIGH / CRITICAL
+    risk_level        = Column(String, nullable=False)
+
+    # Behavioral Intelligence (Phase 4)
+    behavioral_factor = Column(Float, default=0.0)
+    final_risk        = Column(Float, nullable=False, default=0.0)
 
     created_at        = Column(DateTime, default=func.now(), nullable=False)
