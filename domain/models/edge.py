@@ -8,6 +8,7 @@ class EdgeType(Enum):
     IMPLEMENTS = "implements"
     USES_TRAIT = "uses_trait"
     DEPENDS_ON = "depends_on"
+    WRITES = "writes"
     UNKNOWN = "unknown"
 
 class Edge(BaseModel):
