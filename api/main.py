@@ -7,6 +7,7 @@ from sqlalchemy import text
 from pydantic import BaseModel
 from infrastructure.persistence.database import init_db, get_db
 from infrastructure.persistence.repositories import ProjectRepository, RiskRepository
+from application.services.explanation_service import ExplanationService
 from infrastructure.persistence.models import ComponentMetric, ComponentRisk
 from application.services.analysis_service import AnalysisService
 
@@ -117,3 +118,32 @@ def get_risk(run_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Failed to fetch risk for run {run_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/explain/{run_id}")
+def get_explanation(run_id: int, db: Session = Depends(get_db)):
+    """Phase 4.5: Returns deterministic, rule-based explanations for all components in a run.
+
+    Each component explanation includes:
+      - Which rules fired (category, severity, message)
+      - Evidence: dependent components, SCC members, source file path
+    """
+    try:
+        # Verify risk data exists first (ExplanationService depends on it)
+        repo = RiskRepository(db)
+        if not repo.get_risk_by_run(run_id):
+            raise HTTPException(
+                status_code=404,
+                detail=f"No risk data found for run_id={run_id}. Run POST /analyze first."
+            )
+
+        service = ExplanationService(db)
+        explanations = service.explain_run(run_id)
+        return {"run_id": run_id, "components": explanations}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to generate explanations for run {run_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
