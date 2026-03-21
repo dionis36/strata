@@ -84,12 +84,10 @@ class ExplanationService:
                 "final_risk":        row.final_risk,
             }
 
-            # Enrich scc_size from graph if available
+            # Enrich scc_size from graph if available (O(1) with pre-indexed nodes)
             if graph:
-                for node in graph.get("nodes", []):
-                    if node.get("id") == row.component_name:
-                        component_data["scc_size"] = node.get("scc_size", 0)
-                        break
+                node_data = graph.get("nodes", {}).get(row.component_name, {})
+                component_data["scc_size"] = node_data.get("scc_size", 0)
 
             # 5. Run the reasoner
             explanations = self._reasoner.explain(component_data)

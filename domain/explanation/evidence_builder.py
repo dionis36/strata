@@ -42,9 +42,12 @@ class EvidenceBuilder:
 
     @staticmethod
     def load_graph(run_id: int) -> Optional[dict]:
-        """Load the graph JSON artifact from disk for a given run.
+        """Load and pre-index the graph JSON artifact from disk.
 
-        Returns None if the file doesn't exist (analysis may not have serialised it).
+        Returns a pre-processed dict with:
+          - 'nodes':   {node_id: node_data}
+          - 'inbound': {node_id: [source_ids]}  — who points AT this node
+        Returns None if the file doesn't exist.
         """
         path = os.path.join(GRAPH_DIR, f"graph_{run_id}.json")
         if not os.path.exists(path):
@@ -52,10 +55,23 @@ class EvidenceBuilder:
             return None
         try:
             with open(path, "r", encoding="utf-8") as f:
-                return json.load(f)
+                raw = json.load(f)
         except Exception as e:
             logger.error(f"[EvidenceBuilder] Failed to load graph: {e}")
             return None
+
+        # Pre-index nodes by ID — O(n) once, then O(1) per lookup
+        nodes_index = {n["id"]: n for n in raw.get("nodes", [])}
+
+        # Pre-build inbound adjacency map — O(e) once, then O(1) per lookup
+        inbound_map: dict = {}
+        for link in raw.get("links", []):
+            target = link.get("target")
+            source = link.get("source")
+            if target and source and source != target:
+                inbound_map.setdefault(target, []).append(source)
+
+        return {"nodes": nodes_index, "inbound": inbound_map}
 
     @classmethod
     def build(
@@ -93,49 +109,42 @@ class EvidenceBuilder:
 
     @staticmethod
     def _extract_graph_context(component_name: str, graph: Optional[dict]) -> dict:
-        """Extract dependent components and SCC membership from graph JSON."""
+        """O(1) lookup using pre-indexed nodes and inbound adjacency map."""
         if not graph:
             return {"dependent_components": [], "scc_members": []}
 
-        nodes = {n["id"]: n for n in graph.get("nodes", [])}
-        links = graph.get("links", [])
+        nodes   = graph.get("nodes", {})    # dict: id -> node_data
+        inbound = graph.get("inbound", {})  # dict: id -> [source_ids]
 
-        # Components that have an edge pointing TO this component (in-bound dependents)
-        dependents = [
-            link["source"]
-            for link in links
-            if link.get("target") == component_name
-            and link.get("source") != component_name
-        ]
+        # Direct inbound dependents (capped to avoid payload bloat)
+        dependents = inbound.get(component_name, [])[:10]
 
-        # Components sharing the same scc_id (cycle members), excluding self
+        # SCC members — same scc_id, same scc_size > 1
         target_node = nodes.get(component_name, {})
-        scc_id = target_node.get("scc_id")
+        scc_id   = target_node.get("scc_id")
+        scc_size = target_node.get("scc_size", 1)
         scc_members = []
-        if scc_id and scc_id != 0:
+        if scc_id and scc_size > 1:
             scc_members = [
                 nid for nid, ndata in nodes.items()
                 if ndata.get("scc_id") == scc_id and nid != component_name
             ]
 
         return {
-            "dependent_components": dependents[:10],  # Cap to avoid payload bloat
-            "scc_members": scc_members,
+            "dependent_components": dependents,
+            "scc_members":          scc_members,
         }
 
     @staticmethod
     def _extract_code_context(component_name: str, graph: Optional[dict]) -> dict:
-        """Extract the source file path for a component from graph node attributes."""
+        """O(1) file path lookup from pre-indexed node dict."""
         if not graph:
             return {"file_path": None}
 
-        for node in graph.get("nodes", []):
-            if node.get("id") == component_name:
-                raw_path = node.get("file_path") or node.get("filepath")
-                if raw_path:
-                    # Normalise to forward-slash relative path for readability
-                    rel = raw_path.replace("\\", "/")
-                    return {"file_path": rel}
-                break
+        node = graph.get("nodes", {}).get(component_name)
+        if node:
+            raw_path = node.get("file_path") or node.get("filepath")
+            if raw_path:
+                return {"file_path": raw_path.replace("\\", "/")}
 
         return {"file_path": None}

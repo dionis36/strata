@@ -47,7 +47,7 @@ def _fetch_explain(run_id: int):
     return {c["component_name"]: c for c in r.json().get("components", [])}
 
 # ── Explanation Modal ─────────────────────────────────────────────────────────
-@st.dialog("Component Explanation", width="large")
+@st.experimental_dialog("Component Explanation", width="large")
 def show_explanation(component_name: str, run_id: int):
     with st.spinner("Loading explanation…"):
         try:
