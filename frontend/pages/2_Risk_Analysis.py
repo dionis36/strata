@@ -31,11 +31,13 @@ with st.sidebar:
 LEVEL_ICON = {"CRITICAL": "🔴", "HIGH": "🟠", "MEDIUM": "🟡", "LOW": "🟢"}
 SEV_ICON   = {"high": "🔴", "medium": "🟠", "low": "🟢"}
 
+@st.cache_data(ttl=300, show_spinner=False)
 def _fetch_risk(run_id: int):
     r = requests.get(f"{FASTAPI_URL.rstrip('/')}/risk/{run_id}", timeout=30)
     r.raise_for_status()
     return r.json().get("components", [])
 
+@st.cache_data(ttl=300, show_spinner=False)
 def _fetch_explain(run_id: int):
     r = requests.get(f"{FASTAPI_URL.rstrip('/')}/explain/{run_id}", timeout=60)
     r.raise_for_status()
@@ -131,15 +133,25 @@ def show_explanation(component_name: str, run_id: int):
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 st.header("Risk Matrix")
-run_id = st.number_input("Run ID", min_value=1, step=1, value=1)
 
-if st.button("Query Risk Matrix"):
-    with st.spinner(f"Fetching risk data for run {run_id}…"):
+col_in, col_btn = st.columns([4, 1])
+with col_in:
+    run_id = st.number_input(
+        "Run ID", min_value=1, step=1, value=st.session_state.get("active_run_id", 1)
+    )
+with col_btn:
+    st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
+    if st.button("Query Risk Matrix", use_container_width=True):
+        st.session_state["active_run_id"] = run_id
+
+if "active_run_id" in st.session_state:
+    active_run = st.session_state["active_run_id"]
+    with st.spinner(f"Fetching risk data for run {active_run}…"):
         try:
-            components = _fetch_risk(run_id)
+            components = _fetch_risk(active_run)
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 404:
-                st.warning(f"No risk data for Run ID {run_id}. Run an analysis first.")
+                st.warning(f"No risk data for Run ID {active_run}. Run an analysis first.")
             else:
                 st.error(f"API error {e.response.status_code}: {e.response.text}")
             components = []
@@ -188,7 +200,7 @@ if st.button("Query Risk Matrix"):
             use_container_width=True,
             height=460,
             column_config={
-                "Component":       st.column_config.TextColumn("Component", width="large"),
+                "Component":       st.column_config.TextColumn("Component", width="medium"),
                 "Type":            st.column_config.TextColumn("Type", width="small"),
                 "Betweenness":     st.column_config.NumberColumn("Betweenness",  format="%.3f"),
                 "Blast Radius":    st.column_config.NumberColumn("Blast Radius", format="%.3f"),
@@ -228,13 +240,13 @@ if st.button("Query Risk Matrix"):
             )
         with col_btn:
             if st.button("Open →", use_container_width=True):
-                show_explanation(sorted_names[selected_idx], run_id)
+                show_explanation(sorted_names[selected_idx], active_run)
 
         # ── Download ─────────────────────────────────────────────────────────
         st.divider()
         st.download_button(
             label="⬇️ Download Raw Risk JSON",
             data=json.dumps(components, indent=2),
-            file_name=f"risk_{run_id}.json",
+            file_name=f"risk_{active_run}.json",
             mime="application/json",
         )
