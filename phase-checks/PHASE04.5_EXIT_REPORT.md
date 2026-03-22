@@ -24,7 +24,7 @@ Every answer is deterministic, rule-based, and backed by concrete evidence.
 
 ### Frontend
 
-- `2_Risk_Analysis.py` — Slim table (Component | Risk Level | Final Risk | 🔍 Explain).
+- `2_Risk_Analysis.py` — Full detailed risk matrix table with all metrics intact. Added an Explain Selector below the table to trigger explanations without cluttering the rows.
 - `@st.dialog` modal with 3 tabs: **Risk Summary** / **Why Risky** (grouped by category) / **Evidence** (dependents, SCC, file path).
 
 ## 3. Design Guarantees

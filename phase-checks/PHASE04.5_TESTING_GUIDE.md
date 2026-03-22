@@ -88,8 +88,8 @@ Tests cover:
 
 1. Open `http://localhost:8501`
 2. Enter the `Run ID` and click **Query Risk Matrix**
-3. The table shows only: `Component | Risk Level | Final Risk | 🔍 Explain`
-4. Click **🔍 Explain** on a CRITICAL component
+3. The table displays the full detailed risk matrix (14 columns including all structural and behavioral metrics).
+4. Below the table, use the **🔍 Explain a Component** select box to choose a CRITICAL component and click **Open →**
 5. Modal opens — verify 3 tabs:
    - **📊 Risk Summary**: Structural Risk, Behavioral Factor, Final Risk metrics
    - **🔍 Why Risky**: Explanation bullets grouped by `🏗️ Structural`, `🗄️ Behavioral`, `⚡ Combined`
