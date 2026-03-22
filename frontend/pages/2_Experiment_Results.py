@@ -5,7 +5,7 @@ st.set_page_config(page_title="Strata - Experiment Results", layout="wide")
 st.title("Validation & Experiment Harness")
 st.markdown("This interface will be populated in Phase 3 or later to display experimental sensitivity results.")
 
-st.warning("⚠️ Experiment Engine offline. Awaiting downstream metric sensitivity features.")
+st.info("🚧 Under Construction: Scheduled for Phase 6 Large-Scale Ablation Engine")
 
 st.markdown("### Anticipated Experiment Summaries")
 

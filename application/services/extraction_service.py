@@ -47,9 +47,9 @@ class ExtractionService:
             nx_graph.add_edge(link["source"], link["target"], type=link.get("type", "CALLS"))
             
         # 4. Phase 5 Pipeline
-        cluster_builder = ClusterBuilder(nx_graph)
+        cluster_builder = ClusterBuilder(nx_graph, original_risk_map)
         scorer = ClusterScorer(nx_graph)
-        resolver = ConflictResolver(nx_graph)
+        resolver = ConflictResolver(nx_graph, original_risk_map)
         simulator = GraphSimulator(nx_graph)
         analyzer = ImpactAnalyzer(nx_graph, original_risk_map)
         ranker = CandidateRanker()

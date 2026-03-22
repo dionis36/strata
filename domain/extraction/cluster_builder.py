@@ -3,29 +3,26 @@ from typing import List, Dict, Set
 from collections import defaultdict
 
 from domain.extraction.extraction_model import ExtractionUnit, ExtractionUnitType
-from domain.models.node import NodeType
-from domain.models.edge import EdgeType
 
 
 class ClusterBuilder:
     """
-    Generates hybrid candidate clusters (SCC, Table-Coupled, Density-Based)
-    from the raw system graph.
+    Generates hybrid candidate clusters (SCC, Table-Coupled, Density-Based, Risk-Targeted)
+    from the raw system graph. Bridged with Phase 3 Risk metrics to pinpoint hotspots.
     """
-    def __init__(self, nx_graph: nx.DiGraph):
+    def __init__(self, nx_graph: nx.DiGraph, original_risk_map: dict = None):
         self.G = nx_graph
+        self.original_risk_map = original_risk_map or {}
         self.class_nodes = [
             n for n, d in self.G.nodes(data=True) 
-            if d.get("type") == NodeType.CLASS.value
+            if d.get("type", "").lower() == "class"
         ]
 
     def build_scc_clusters(self) -> List[ExtractionUnit]:
-        """Extract strongly connected components as clusters (cycles)."""
         sccs = list(nx.strongly_connected_components(self.G))
         clusters = []
         for scc in sccs:
-            # We only care about cycles among classes
-            classes_in_scc = [n for n in scc if self.G.nodes[n].get("type") == NodeType.CLASS.value]
+            classes_in_scc = [n for n in scc if self.G.nodes[n].get("type", "").lower() == "class"]
             if len(classes_in_scc) > 1:
                 short_name = classes_in_scc[0].split('\\')[-1]
                 label = f"{short_name}_SCCLogic"
@@ -37,19 +34,17 @@ class ClusterBuilder:
         return clusters
 
     def build_table_coupled_clusters(self) -> List[ExtractionUnit]:
-        """Extract clusters of classes that write to the same table."""
         table_writers = defaultdict(list)
         for u, v, data in self.G.edges(data=True):
-            if data.get("type") == EdgeType.WRITES.value:
-                # u is class, v is table
-                if self.G.nodes[u].get("type") == NodeType.CLASS.value:
+            # FIXED: case-insensitive match for writes
+            if data.get("type", "").upper() == "WRITES":
+                if self.G.nodes[u].get("type", "").lower() == "class":
                     table_writers[v].append(u)
                     
         clusters = []
         for table, writers in table_writers.items():
             unique_writers = list(set(writers))
             if len(unique_writers) >= 2:
-                # Table name is likely the node id or its suffix
                 table_name = table.split('\\')[-1].capitalize()
                 label = f"{table_name}DataModule"
                 clusters.append(ExtractionUnit(
@@ -59,17 +54,13 @@ class ClusterBuilder:
                 ))
         return clusters
 
-    def build_density_clusters(self, density_threshold: float = 0.6) -> List[ExtractionUnit]:
-        """Extract tight clusters where internal edges are high compared to possible edges."""
+    def build_density_clusters(self, density_threshold: float = 0.25) -> List[ExtractionUnit]:
+        # FIXED: threshold relaxed to 0.25 for sparse web applications
         clusters = []
         visited_dense_sets = set()
-        
-        # We only look at class nodes subgraph for logic density
         subgraph = self.G.subgraph(self.class_nodes)
         
         for node in self.class_nodes:
-            # 1-hop neighborhood (undirected sense to capture tightly knit groups)
-            # We include predecessors and successors
             neighbors = set(subgraph.predecessors(node)) | set(subgraph.successors(node))
             neighborhood = list({node} | neighbors)
             
@@ -81,7 +72,6 @@ class ClusterBuilder:
             if possible_edges == 0:
                 continue
                 
-            # Number of actual edges between these nodes
             sub_g = subgraph.subgraph(neighborhood)
             actual_edges = sub_g.number_of_edges()
             
@@ -99,9 +89,36 @@ class ClusterBuilder:
                     ))
         return clusters
 
+    def build_risk_targeted_clusters(self) -> List[ExtractionUnit]:
+        """FIXED: Aggressively seed clusters radiating around the highest risk bottleneck nodes."""
+        clusters = []
+        if not self.original_risk_map:
+            return clusters
+            
+        sorted_risk = sorted(self.original_risk_map.items(), key=lambda x: x[1], reverse=True)
+        top_nodes = [node for node, risk in sorted_risk[:15] if node in self.class_nodes]
+        
+        visited_heavy_sets = set()
+        for bottleneck in top_nodes:
+            consumers = set(self.G.predecessors(bottleneck))
+            class_consumers = {c for c in consumers if c in self.class_nodes}
+            
+            neighborhood = list({bottleneck} | class_consumers)
+            if len(neighborhood) >= 2:
+                frozen = frozenset(neighborhood)
+                if frozen not in visited_heavy_sets:
+                    visited_heavy_sets.add(frozen)
+                    short_name = bottleneck.split('\\')[-1]
+                    clusters.append(ExtractionUnit(
+                        label=f"{short_name}_RiskIsolation",
+                        type=ExtractionUnitType.CLUSTER,
+                        nodes=neighborhood
+                    ))
+        return clusters
+
     def build_all_candidate_clusters(self) -> List[ExtractionUnit]:
-        """Returns all SCC, Table, and Density clusters combined. May contain overlaps."""
         scc = self.build_scc_clusters()
         table = self.build_table_coupled_clusters()
-        density = self.build_density_clusters(density_threshold=0.6)
-        return scc + table + density
+        density = self.build_density_clusters(density_threshold=0.25)
+        risk = self.build_risk_targeted_clusters()
+        return scc + table + density + risk
