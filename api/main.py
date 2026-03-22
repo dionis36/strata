@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from infrastructure.persistence.database import init_db, get_db
 from infrastructure.persistence.repositories import ProjectRepository, RiskRepository
 from application.services.explanation_service import ExplanationService
+from application.services.extraction_service import ExtractionService
 from infrastructure.persistence.models import ComponentMetric, ComponentRisk
 from application.services.analysis_service import AnalysisService
 
@@ -147,3 +148,24 @@ def get_explanation(run_id: int, db: Session = Depends(get_db)):
         logger.error(f"Failed to generate explanations for run {run_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@app.get("/extraction/{run_id}")
+def get_extraction(run_id: int, db: Session = Depends(get_db)):
+    """Phase 5: Returns simulated architecture extraction candidates and impact metrics."""
+    try:
+        repo = RiskRepository(db)
+        if not repo.get_risk_by_run(run_id):
+            raise HTTPException(
+                status_code=404,
+                detail=f"No risk data found for run_id={run_id}. Run POST /analyze first."
+            )
+
+        service = ExtractionService(db)
+        candidates = service.analyze_extraction(run_id)
+        return {"run_id": run_id, "candidates": candidates}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to generate extraction candidates for run {run_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
