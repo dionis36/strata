@@ -33,18 +33,32 @@ class ExtractionService:
             
         original_risk_map = {row.component_name: row.final_risk for row in risk_rows}
         
-        # 2. Fetch the graph JSON
-        graph_data = EvidenceBuilder.load_graph(run_id)
-        if not graph_data:
+        # 2. Fetch the graph JSON directly to avoid EvidenceBuilder stripping links
+        import os
+        import json
+        graph_path = f"/data/graph_{run_id}.json"
+        
+        # Test paths mapping
+        if not os.path.exists(graph_path):
+            graph_path = f"data/graph_{run_id}.json"
+            
+        if not os.path.exists(graph_path):
             logger.warning(f"[ExtractionService] Graph not found for run_id={run_id}")
             return []
             
+        with open(graph_path, "r", encoding="utf-8") as f:
+            raw_graph = json.load(f)
+            
         # 3. Build NetworkX DiGraph
         nx_graph = nx.DiGraph()
-        for node_id, data in graph_data.get("nodes", {}).items():
-            nx_graph.add_node(node_id, **data)
-        for link in graph_data.get("links", []):
-            nx_graph.add_edge(link["source"], link["target"], type=link.get("type", "CALLS"))
+        for node_data in raw_graph.get("nodes", []):
+            nx_graph.add_node(node_data.get("id"), **node_data)
+            
+        for link in raw_graph.get("links", []):
+            source = link.get("source") or link.get("caller")
+            target = link.get("target") or link.get("callee")
+            if source and target:
+                nx_graph.add_edge(source, target, type=link.get("type", "CALLS"))
             
         # 4. Phase 5 Pipeline
         cluster_builder = ClusterBuilder(nx_graph, original_risk_map)
