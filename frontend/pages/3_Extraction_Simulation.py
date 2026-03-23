@@ -5,7 +5,7 @@ import requests
 import pandas as pd
 
 st.set_page_config(page_title="Extraction Simulation — Strata", layout="wide")
-st.title("🏗️ Extraction Intelligence & Simulation")
+st.title("🏗️ Microservice Extraction Simulator")
 st.markdown(
     "Evaluates candidates for service extraction by simulating their isolation behind an API boundary. "
     "This engine balances structural risk, internal cohesion, and the resulting architectural impact."
@@ -104,7 +104,7 @@ if "active_run_id_ext" in st.session_state:
         )
 
         st.divider()
-        st.markdown("### 🔍 Candidate Detail Viewer")
+        st.markdown("### 🔍 Simulated Architectural Impact")
         st.caption("Select a candidate to inspect the impact of its extraction.")
         
         display_names = [r["Unit Name"] for r in rows]
@@ -121,14 +121,30 @@ if "active_run_id_ext" in st.session_state:
             reasoning = raw.get("reasoning", [])
             nodes = raw.get("nodes", [])
             
+            # --- OVERARCHING AI VERDICT ---
+            verdict_text = ""
+            details = []
+            for r in reasoning:
+                if "**AI Verdict:" in r:
+                    verdict_text = r
+                else:
+                    details.append(r)
+            
+            if verdict_text:
+                if "Safe to Extract" in verdict_text:
+                    st.success(verdict_text)
+                elif "Caution" in verdict_text:
+                    st.warning(verdict_text)
+                elif "Refactor First" in verdict_text:
+                    st.warning(verdict_text)
+                else:
+                    st.error(verdict_text)
+
             detail_col1, detail_col2 = st.columns([1, 1])
             with detail_col1:
                 st.markdown("#### 🧠 Decision Engine Logic")
-                for reason in reasoning:
-                    if "Verdict:" in reason:
-                        st.markdown(f"**{reason}**")
-                    else:
-                        st.markdown(f"- {reason}")
+                for d in details:
+                    st.markdown(f"- {d}")
                         
                 st.markdown("#### 📦 Internal Composition")
                 st.caption(f"{len(nodes)} modules bundled in this unit")
@@ -138,13 +154,14 @@ if "active_run_id_ext" in st.session_state:
 
             with detail_col2:
                 st.markdown("#### 💥 Simulated Impact Metrics")
-                r_change = impact.get('risk_change', 0.0)
-                change_str = f"{abs(r_change):.3f} {'↓' if r_change < 0 else '↑' if r_change > 0 else '='}"
+                before_risk = impact.get("before_risk", 0.0)
+                after_risk = impact.get("after_risk", 0.0)
+                r_change = impact.get("risk_change", 0.0)
                 
                 i_col1, i_col2 = st.columns(2)
                 i_col1.metric(
                     "System Risk Shift", 
-                    value=change_str, 
+                    value=f"{after_risk:.3f}", 
                     delta=f"{r_change:.3f}" if r_change != 0 else None,
                     delta_color="inverse"
                 )

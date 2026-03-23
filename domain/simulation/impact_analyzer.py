@@ -56,5 +56,7 @@ class ImpactAnalyzer:
             dependency_breaks=dependency_breaks,
             interface_complexity=interface_complexity,
             data_isolation_difficulty=data_isolation,
-            risk_change=round(risk_change, 3)
+            risk_change=round(risk_change, 3),
+            before_risk=round(self.original_total_risk, 3),
+            after_risk=round(new_total_risk, 3)
         )

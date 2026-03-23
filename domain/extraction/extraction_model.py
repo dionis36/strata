@@ -22,6 +22,8 @@ class ImpactMetrics(BaseModel):
     risk_change: float
     interface_complexity: int
     data_isolation_difficulty: int
+    before_risk: float
+    after_risk: float
 
 
 class RecommendationCategory(str, Enum):
