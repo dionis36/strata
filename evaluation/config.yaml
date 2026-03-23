@@ -1,0 +1,21 @@
+weights:
+  risk_factors:
+    w_instability: 0.20
+    w_coupling: 0.15
+    w_cycle: 0.15
+    w_scc_size: 0.15
+    w_blast_radius: 0.15
+    w_behavior: 0.20
+  cluster_factors:
+    cohesion: 0.35
+    coupling: 0.20
+    size: 0.15
+    behavior: 0.15
+    isolation: 0.15
+
+experiments:
+  ablation:
+    disable_phase4: false
+    disable_density_clusters: false
+  sensitivity:
+    run_perturbations: true

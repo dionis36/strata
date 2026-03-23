@@ -1,0 +1,10 @@
+{
+    "SAFE_TO_EXTRACT": [
+        "app/Services/UserAuth",
+        "app/Payments/Gateway"
+    ],
+    "DO_NOT_EXTRACT": [
+        "app/Core/DatabaseConnection",
+        "app/Legacy/MonolithGodClass"
+    ]
+}
