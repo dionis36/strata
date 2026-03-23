@@ -1,9 +1,9 @@
 import networkx as nx
 from collections import defaultdict
 from domain.extraction.extraction_model import ExtractionUnit
-from domain.models.node import NodeType
 from domain.models.edge import EdgeType
 
+EXTRACTABLE_TYPES = {"class", "file", "function", "script"}
 
 class ClusterScorer:
     """
@@ -12,9 +12,10 @@ class ClusterScorer:
     """
     def __init__(self, nx_graph: nx.DiGraph):
         self.G = nx_graph
-        self.class_nodes = set(
+        self.extractable_nodes = set(
             n for n, d in self.G.nodes(data=True) 
-            if d.get("type") == NodeType.CLASS.value
+            if d.get("type", "").lower() in EXTRACTABLE_TYPES
+            or not d.get("type")
         )
 
     def score_cluster(self, unit: ExtractionUnit) -> float:
@@ -31,17 +32,17 @@ class ClusterScorer:
             # Outbound edges
             for v in self.G.successors(u):
                 edge_data = self.G.edges[u, v]
-                if edge_data.get("type") == EdgeType.WRITES.value:
+                if edge_data.get("type", "").upper() == "WRITES":
                     table_writes[v] += 1
                 elif v in nodes:
                     internal_edges += 1
-                elif v in self.class_nodes:
+                elif v in self.extractable_nodes:
                     external_edges += 1
                     boundary_edges += 1
             
             # Inbound edges
             for v in self.G.predecessors(u):
-                if v in self.class_nodes and v not in nodes:
+                if v in self.extractable_nodes and v not in nodes:
                     external_edges += 1
                     boundary_edges += 1
 
