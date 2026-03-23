@@ -84,11 +84,12 @@ if "active_run_id_ext" in st.session_state:
         df = pd.DataFrame(rows)
 
         # ── KPI Summary ──────────────────────────────────────────────────────
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3, col4, col5 = st.columns(5)
         col1.metric("Total Candidates", len(candidates))
         col2.metric("✅ Safe", len(df[df["Recommendation"] == "✅ Safe"]))
         col3.metric("⚠️ Caution", len(df[df["Recommendation"] == "⚠️ Caution"]))
-        col4.metric("⛔ Blocked", len(df[df["Recommendation"] == "⛔ Blocked"]))
+        col4.metric("🛠️ Refactor First", len(df[df["Recommendation"] == "🛠️ Refactor First"]))
+        col5.metric("⛔ Blocked", len(df[df["Recommendation"] == "⛔ Blocked"]))
 
         st.markdown("### Ranked Proposals")
         st.dataframe(
@@ -121,11 +122,11 @@ if "active_run_id_ext" in st.session_state:
             reasoning = raw.get("reasoning", [])
             nodes = raw.get("nodes", [])
             
-            # --- OVERARCHING AI VERDICT ---
+            # --- OVERARCHING ALGORITHMIC VERDICT ---
             verdict_text = ""
             details = []
             for r in reasoning:
-                if "**AI Verdict:" in r:
+                if "**Algorithmic Verdict:" in r:
                     verdict_text = r
                 else:
                     details.append(r)
