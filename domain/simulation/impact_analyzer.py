@@ -36,7 +36,8 @@ class ImpactAnalyzer:
             
             # 3. Data Isolation Difficulty (Number of shared tables cross-boundary)
             for v in g_sim.successors(proxy_node):
-                if g_sim.edges[proxy_node, v].get("type", "").upper() == "WRITES":
+
+                if g_sim.edges[proxy_node, v].get("type", "").upper() == "WRITES_TO":
                     data_isolation += 1
                     
         # 4. Risk Change Estimation

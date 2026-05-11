@@ -2,7 +2,8 @@ import json
 import os
 from datetime import datetime
 from sqlalchemy.orm import Session
-from infrastructure.persistence.models import Project, AnalysisRun, ComponentMetric, ComponentRisk, ComponentBehavior
+
+from infrastructure.persistence.models import Project, AnalysisRun, ComponentMetric, ComponentRisk, ComponentBehavior, ComponentDependency
 
 class ProjectRepository:
     def __init__(self, db: Session):
@@ -69,11 +70,13 @@ class AnalysisRunRepository:
             json.dump(graph_data, f, indent=2)
         return filepath
 
+
     def save_component_metrics(
         self,
         run_id: int,
         metrics_matrix: dict,
-        node_types: dict = None
+        node_types: dict = None,
+        node_fqns: dict = None
     ):
         """Batch inserts all computed structural metrics for a run.
 
@@ -82,13 +85,15 @@ class AnalysisRunRepository:
             metrics_matrix: Dict of {node_id: metrics_dict} from MetricCalculator.
             node_types: Optional dict of {node_id: type_string} e.g. 'class', 'method'.
         """
+
         node_types = node_types or {}
+        node_fqns = node_fqns or {}
         objects = []
-        for component_name, metrics in metrics_matrix.items():
+        for component_id, metrics in metrics_matrix.items():
             cm = ComponentMetric(
                 run_id=run_id,
-                component_name=component_name,
-                component_type=node_types.get(component_name, "class"),
+                component_name=node_fqns.get(component_id, component_id),
+                component_type=node_types.get(component_id, "class"),
                 in_degree=metrics.get('in_degree', 0),
                 out_degree=metrics.get('out_degree', 0),
                 weighted_in=metrics.get('weighted_in', 0),
@@ -105,6 +110,24 @@ class AnalysisRunRepository:
             )
             objects.append(cm)
             
+
+        if objects:
+            self.db.bulk_save_objects(objects)
+            self.db.commit()
+
+    def save_graph_edges(self, run_id: int, edges: list):
+        """
+        Phase 3: Persists the graph edges to SQLite.
+        """
+        objects = [
+            ComponentDependency(
+                run_id=run_id,
+                source_id=e.source_id,
+                target_id=e.target_id,
+                edge_type=e.edge_type.value
+            )
+            for e in edges
+        ]
         if objects:
             self.db.bulk_save_objects(objects)
             self.db.commit()

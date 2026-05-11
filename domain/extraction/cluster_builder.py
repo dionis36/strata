@@ -41,7 +41,8 @@ class ClusterBuilder:
     def build_table_coupled_clusters(self) -> List[ExtractionUnit]:
         table_writers = defaultdict(list)
         for u, v, data in self.G.edges(data=True):
-            if data.get("type", "").upper() == "WRITES":
+
+            if data.get("type", "").upper() == "WRITES_TO":
                 if u in self.extractable_nodes:
                     table_writers[v].append(u)
                     

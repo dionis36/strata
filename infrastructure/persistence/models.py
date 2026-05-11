@@ -92,4 +92,20 @@ class ComponentRisk(Base):
     behavioral_factor = Column(Float, default=0.0)
     final_risk        = Column(Float, nullable=False, default=0.0)
 
+
     created_at        = Column(DateTime, default=func.now(), nullable=False)
+
+class ComponentDependency(Base):
+    """
+    Phase 3: Persists the graph edges directly in SQLite.
+    Enables recursive queries for blast-radius and impact analysis.
+    """
+    __tablename__ = "component_dependencies"
+
+    id          = Column(Integer, primary_key=True, autoincrement=True)
+    run_id      = Column(Integer, ForeignKey("analysis_run.id"), nullable=False)
+    source_id   = Column(String, nullable=False)
+    target_id   = Column(String, nullable=False)
+    edge_type   = Column(String, nullable=False)
+    
+    created_at  = Column(DateTime, default=func.now(), nullable=False)

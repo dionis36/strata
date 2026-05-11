@@ -41,7 +41,8 @@ class ClusterScorer:
             # Outbound edges
             for v in self.G.successors(u):
                 edge_data = self.G.edges[u, v]
-                if edge_data.get("type", "").upper() == "WRITES":
+
+                if edge_data.get("type", "").upper() == "WRITES_TO":
                     table_writes[v] += 1
                 elif v in nodes:
                     internal_edges += 1

@@ -9,7 +9,8 @@ def test_graph_model_creation():
     node1 = Node(id="ClassA", name="ClassA", node_type=NodeType.CLASS, methods=["method1"])
     node2 = Node(id="ClassB", name="ClassB", node_type=NodeType.CLASS, methods=["method2"])
     
-    edge = Edge(source_id="ClassA", target_id="ClassB", edge_type=EdgeType.METHOD_CALL)
+
+    edge = Edge(source_id="ClassA", target_id="ClassB", edge_type=EdgeType.CALLS)
     
     graph.add_node(node1)
     graph.add_node(node2)

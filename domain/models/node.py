@@ -2,10 +2,18 @@ from enum import Enum
 from pydantic import BaseModel
 from typing import List, Optional
 
+
 class NodeType(Enum):
+    FILE = "file"
+    NAMESPACE = "namespace"
     CLASS = "class"
+    INTERFACE = "interface"
+    TRAIT = "trait"
     METHOD = "method"
+    FIELD = "field"
     TABLE = "table"
+    API_ROUTE = "api_route"
+    GLOBAL_VAR = "global_var"
     UNKNOWN = "unknown"
 
 class NodeMetrics(BaseModel):
@@ -28,8 +36,10 @@ class NodeMetrics(BaseModel):
     reachability_ratio: float = 0.0
 
 class Node(BaseModel):
-    id: str  # Fully-qualified: Namespace\ClassName or dir\ClassName
-    name: str  # Short class name without namespace
+
+    id: str  # Deterministic Hash: SHA256(FQN + type)
+    name: str  # Short name without namespace
+    fqn: str  # Full Fully Qualified Name
     node_type: NodeType
     namespace: Optional[str] = None  # PHP namespace if declared
     file_path: Optional[str] = None

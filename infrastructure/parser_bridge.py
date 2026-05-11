@@ -1,24 +1,53 @@
+
 import os
 import re
-from typing import List, Tuple, Optional
+import json
+import subprocess
+from typing import List, Tuple, Optional, Dict, Any
 from domain.models.node import Node, NodeType
 from domain.models.edge import Edge, EdgeType
 
-# Regex patterns
-_NS_PATTERN = re.compile(r'^\s*namespace\s+([\w\\]+)\s*;', re.MULTILINE)
-_CLASS_PATTERN = re.compile(
-    r'\bclass\s+([A-Za-z0-9_]+)'
-    r'(?:\s+extends\s+([A-Za-z0-9_\\]+))?'
-    r'(?:\s+implements\s+([\w,\s\\]+?))?'
-    r'\s*\{'
-)
-_INTERFACE_PATTERN = re.compile(r'\binterface\s+([A-Za-z0-9_]+)')
-_TRAIT_PATTERN = re.compile(r'\btrait\s+([A-Za-z0-9_]+)')
-_USE_TRAIT_PATTERN = re.compile(r'^\s*use\s+([\w,\s\\]+?);', re.MULTILINE)
-_METHOD_PATTERN = re.compile(r'\bfunction\s+([A-Za-z0-9_]+)')
-_INSTANTIATE_PATTERN = re.compile(r'\bnew\s+([\w\\]+)\s*\(')
-_STATIC_CALL_PATTERN = re.compile(r'\b([\w\\]+)::[\w]+\s*\(')
+# ... (regex patterns remain for fallback if needed, but we will focus on AST)
 
+class PHPRuntime:
+    """Manages the PHP subprocess for AST extraction."""
+    
+    def __init__(self, script_path: str = "infrastructure/php/parser.php"):
+        self.script_path = script_path
+        self._process: Optional[subprocess.Popen] = None
+
+    def start(self):
+        if self._process is None:
+            self._process = subprocess.Popen(
+                ["php", self.script_path],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1  # Line buffered
+            )
+
+    def stop(self):
+        if self._process:
+            self._process.terminate()
+            self._process = None
+
+    def parse_file(self, file_path: str) -> Dict[str, Any]:
+        self.start()
+        if not self._process or not self._process.stdin:
+            return {"status": "error", "message": "PHP process not started"}
+        
+        self._process.stdin.write(f"{file_path}\n")
+        self._process.stdin.flush()
+        
+        line = self._process.stdout.readline()
+        if not line:
+            return {"status": "error", "message": "No output from PHP process"}
+        
+        try:
+            return json.loads(line)
+        except json.JSONDecodeError:
+            return {"status": "error", "message": f"Invalid JSON: {line}"}
 
 def _qualify(name: str, namespace: Optional[str], file_path: str, root_path: str) -> str:
     """Build a fully-qualified, collision-resistant node ID.
@@ -53,99 +82,80 @@ class ParserBridge:
         file_paths: List[str],
         root_path: str = '/data'
     ) -> Tuple[List[Node], List[Edge]]:
+
         nodes: List[Node] = []
         edges: List[Edge] = []
-
-        for path in file_paths:
-            if not os.path.exists(path):
-                continue
-            try:
-                with open(path, 'r', encoding='utf-8', errors='ignore') as f:
-                    content = f.read()
-
-                # ── Namespace ──────────────────────────────────────────────
-                ns_match = _NS_PATTERN.search(content)
-                namespace: Optional[str] = ns_match.group(1) if ns_match else None
-
-                def fq(name: str) -> str:
-                    return _qualify(name, namespace, path, root_path)
-
-                methods_found = _METHOD_PATTERN.findall(content)
-
-                # ── Classes ────────────────────────────────────────────────
-                for m in _CLASS_PATTERN.finditer(content):
-                    cls_name = m.group(1)
-                    extends_name = m.group(2)
-                    implements_raw = m.group(3)
-
-                    node_id = fq(cls_name)
+        runtime = PHPRuntime()
+        from domain.utils.id_generator import generate_deterministic_id
+        
+        try:
+            for path in file_paths:
+                if not os.path.exists(path):
+                    continue
+                
+                result = runtime.parse_file(path)
+                if result.get("status") != "success":
+                    continue
+                
+                metadata = result.get("metadata", {})
+                
+                # --- Process Classes ---
+                classes = metadata.get("classes", {})
+                if isinstance(classes, list): classes = {}
+                for fqn, data in classes.items():
+                    node_id = generate_deterministic_id(fqn, NodeType.CLASS.value)
                     node = Node(
                         id=node_id,
-                        name=cls_name,
-                        namespace=namespace,
+                        name=data["name"],
+                        fqn=fqn,
+                        namespace=fqn.rsplit('\\', 1)[0] if '\\' in fqn else None,
                         node_type=NodeType.CLASS,
                         file_path=path,
-                        methods=methods_found
+                        methods=[m["name"] for m in data.get("methods", [])]
                     )
                     nodes.append(node)
-
-                    # INHERITS edge
-                    if extends_name:
+                    
+                    # INHERITS edges
+                    if data.get("extends"):
+                        target_fqn = data["extends"]
                         edges.append(Edge(
                             source_id=node_id,
-                            target_id=fq(extends_name),
+                            target_id=generate_deterministic_id(target_fqn, NodeType.CLASS.value),
                             edge_type=EdgeType.INHERITS
                         ))
-
+                    
                     # IMPLEMENTS edges
-                    if implements_raw:
-                        for iface in re.split(r'[\s,]+', implements_raw.strip()):
-                            iface = iface.strip()
-                            if iface:
-                                edges.append(Edge(
-                                    source_id=node_id,
-                                    target_id=fq(iface),
-                                    edge_type=EdgeType.IMPLEMENTS
-                                ))
+                    for iface in data.get("implements", []):
+                        edges.append(Edge(
+                            source_id=node_id,
+                            target_id=generate_deterministic_id(iface, NodeType.CLASS.value),
+                            edge_type=EdgeType.INHERITS # SCS: inherits covers implements
+                        ))
 
-                    # INSTANTIATION edges — new ClassName()
-                    for tgt in _INSTANTIATE_PATTERN.findall(content):
-                        tgt_id = fq(tgt)
-                        if tgt_id != node_id:
-                            edges.append(Edge(
-                                source_id=node_id,
-                                target_id=tgt_id,
-                                edge_type=EdgeType.INSTANTIATION
-                            ))
+                # --- Process Calls (Edges) ---
+                for call in metadata.get("calls", []):
+                    source_fqn = call.get("source")
+                    if not source_fqn:
+                        continue
+                        
+                    source_node_id = generate_deterministic_id(source_fqn, NodeType.CLASS.value)
+                    target_id = None
+                    edge_type = None
+                    
+                    if call["type"] == "static_call" or call["type"] == "instantiation":
+                        target_fqn = call.get("class")
+                        target_id = generate_deterministic_id(target_fqn, NodeType.CLASS.value)
+                        edge_type = EdgeType.CALLS if call["type"] == "static_call" else EdgeType.CALLS # SCS: calls covers both
+                    
+                    if target_id and edge_type:
+                        edges.append(Edge(
+                            source_id=source_node_id,
+                            target_id=target_id,
+                            edge_type=edge_type
+                        ))
 
-                    # METHOD_CALL edges — ClassName::method()
-                    for tgt in _STATIC_CALL_PATTERN.findall(content):
-                        tgt_id = fq(tgt)
-                        if tgt_id != node_id:
-                            edges.append(Edge(
-                                source_id=node_id,
-                                target_id=tgt_id,
-                                edge_type=EdgeType.METHOD_CALL
-                            ))
-
-                # ── Trait usage — USES_TRAIT edges ─────────────────────────
-                # trait usage inside a class body emits USES_TRAIT edges
-                # We attach them to the last class parsed in the file (simplification)
-                if nodes:
-                    last_node_id = nodes[-1].id
-                    for use_line in _USE_TRAIT_PATTERN.findall(content):
-                        for trait_name in re.split(r'[\s,]+', use_line.strip()):
-                            trait_name = trait_name.strip()
-                            if trait_name:
-                                edges.append(Edge(
-                                    source_id=last_node_id,
-                                    target_id=fq(trait_name),
-                                    edge_type=EdgeType.USES_TRAIT
-                                ))
-
-            except Exception:
-                # Individual file errors do not abort the run
-                pass
+        finally:
+            runtime.stop()
 
         return nodes, edges
 

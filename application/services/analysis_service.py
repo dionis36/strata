@@ -46,13 +46,17 @@ class AnalysisService:
                             if not graph.graph.has_node(table_node_id):
                                 table_node = Node(id=table_node_id, name=table_name, node_type=NodeType.TABLE)
                                 graph.add_node(table_node)
-                            # Add WRITES edge
-                            graph.add_edge(Edge(source_id=node.id, target_id=table_node_id, edge_type=EdgeType.WRITES))
+                            # Add WRITES_TO edge
+                            graph.add_edge(Edge(source_id=node.id, target_id=table_node_id, edge_type=EdgeType.WRITES_TO))
                     except Exception:
                         pass # Silently ignore unreadable files during behavior extraction
 
+
             for edge in edges:
                 graph.add_edge(edge)
+            
+            # 3.8 Phase 3: Persist the graph edges to SQLite (CSOT)
+            self.repo.save_graph_edges(run.id, edges)
                 
             total_files = len(files)
             total_classes = graph.get_class_count()
@@ -62,10 +66,9 @@ class AnalysisService:
             # 4. Calculate Phase 2 Structural Metrics on STRUCTURAL edge projection
             #    Excludes DB-write edges etc. to keep centrality semantically correct.
             STRUCTURAL_EDGES = [
-                EdgeType.METHOD_CALL,
-                EdgeType.INSTANTIATION,
+                EdgeType.CALLS,
                 EdgeType.INHERITS,
-                EdgeType.IMPLEMENTS,
+                EdgeType.DEPENDS_ON,
             ]
             projected = MetricCalculator.project(
                 graph.graph, edge_types=STRUCTURAL_EDGES
@@ -73,12 +76,15 @@ class AnalysisService:
             calculator = MetricCalculator(projected)
             metrics_matrix = calculator.calculate_all_metrics()
 
-            # 5. Persist structural metrics in batch (include component type from graph)
-            node_types = {
-                n: data.get('type', 'class')
-                for n, data in graph.graph.nodes(data=True)
-            }
-            self.repo.save_component_metrics(run.id, metrics_matrix, node_types)
+
+            # 5. Persist structural metrics in batch (include component type and readable FQN from graph)
+            node_types = {}
+            node_fqns = {}
+            for n, data in graph.graph.nodes(data=True):
+                node_types[n] = data.get('type', 'class')
+                node_fqns[n] = data.get('fqn', n)
+            
+            self.repo.save_component_metrics(run.id, metrics_matrix, node_types, node_fqns)
 
             # 5.2 Phase 4: Compute behavioral metrics based on WRITES edges
             behavior_calc = BehavioralMetricsCalculator(graph)

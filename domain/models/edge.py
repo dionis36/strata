@@ -1,14 +1,14 @@
 from enum import Enum
 from pydantic import BaseModel
 
+
 class EdgeType(Enum):
-    METHOD_CALL = "method_call"
-    INSTANTIATION = "instantiation"
-    INHERITS = "inherits"
-    IMPLEMENTS = "implements"
-    USES_TRAIT = "uses_trait"
+    DECLARES = "declares"  # e.g. File -> Class
+    CALLS = "calls"        # e.g. Method -> Method
+    WRITES_TO = "writes_to"
+    READS_FROM = "reads_from"
+    INHERITS = "inherits"  # Covers extends and implements
     DEPENDS_ON = "depends_on"
-    WRITES = "writes"
     UNKNOWN = "unknown"
 
 class Edge(BaseModel):

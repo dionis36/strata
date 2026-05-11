@@ -13,14 +13,15 @@ class BehavioralMetricsCalculator:
     def __init__(self, graph: GraphModel):
         self.graph = graph.graph
 
+
     def calculate_metrics(self) -> List[dict]:
-        """Calculates behavioral metrics for all class nodes in the graph based on WRITES edges."""
+        """Calculates behavioral metrics for all class nodes in the graph based on WRITES_TO edges."""
         results = []
         
         # 1. Map tables to the classes that write to them
         table_writers = defaultdict(set)
         for u, v, data in self.graph.edges(data=True):
-            if data.get("type") == EdgeType.WRITES.value:
+            if data.get("type") == EdgeType.WRITES_TO.value:
                 # u is class, v is table
                 table_writers[v].add(u)
 
@@ -30,7 +31,7 @@ class BehavioralMetricsCalculator:
                 # Find all tables this class writes to
                 written_tables = [
                     v for _, v, edge_data in self.graph.edges(node_id, data=True)
-                    if edge_data.get("type") == EdgeType.WRITES.value
+                    if edge_data.get("type") == EdgeType.WRITES_TO.value
                 ]
                 
                 # We use simple count of WRITES edges. In future phases, 
