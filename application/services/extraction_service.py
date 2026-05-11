@@ -24,7 +24,7 @@ class ExtractionService:
     def __init__(self, db: Session):
         self.db = db
 
-    def analyze_extraction(self, run_id: int) -> list[dict]:
+    def analyze_extraction(self, run_id: int, weight_overrides: dict = None) -> list[dict]:
         # 1. Fetch original risk scores for the run
         risk_rows = self.db.query(ComponentRisk).filter(ComponentRisk.run_id == run_id).all()
         if not risk_rows:
@@ -62,7 +62,7 @@ class ExtractionService:
             
         # 4. Phase 5 Pipeline
         cluster_builder = ClusterBuilder(nx_graph, original_risk_map)
-        scorer = ClusterScorer(nx_graph)
+        scorer = ClusterScorer(nx_graph, weight_overrides=weight_overrides)
         resolver = ConflictResolver(nx_graph, original_risk_map)
         simulator = GraphSimulator(nx_graph)
         analyzer = ImpactAnalyzer(nx_graph, original_risk_map)

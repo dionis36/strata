@@ -10,13 +10,22 @@ class ClusterScorer:
     Evaluates the structural and behavioral quality of a candidate cluster.
     Implements the Option B scoring formula.
     """
-    def __init__(self, nx_graph: nx.DiGraph):
+    def __init__(self, nx_graph: nx.DiGraph, weight_overrides: dict = None):
         self.G = nx_graph
         self.extractable_nodes = set(
             n for n, d in self.G.nodes(data=True) 
             if d.get("type", "").lower() in EXTRACTABLE_TYPES
             or not d.get("type")
         )
+        self.weights = {
+            "cohesion": 0.35,
+            "coupling": 0.20,
+            "size": 0.15,
+            "behavior": 0.15,
+            "isolation": 0.15
+        }
+        if weight_overrides:
+            self.weights.update(weight_overrides)
 
     def score_cluster(self, unit: ExtractionUnit) -> float:
         nodes = set(unit.nodes)
@@ -70,11 +79,11 @@ class ClusterScorer:
         boundary_ratio = min(1.0, boundary_edges / internal_edges) if internal_edges > 0 else 1.0
 
         score = (
-            0.35 * cohesion +
-            0.20 * (1.0 - coupling) +
-            0.15 * size_score +
-            0.15 * behavioral_coherence +
-            0.15 * (1.0 - boundary_ratio)
+            self.weights["cohesion"] * cohesion +
+            self.weights["coupling"] * (1.0 - coupling) +
+            self.weights["size"] * size_score +
+            self.weights["behavior"] * behavioral_coherence +
+            self.weights["isolation"] * (1.0 - boundary_ratio)
         )
 
         unit.score = round(score, 3)
