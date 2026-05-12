@@ -40,7 +40,7 @@ try:
     runs_res = requests.get(RUNS_URL, timeout=5)
     if runs_res.status_code == 200:
         available_runs = runs_res.json()
-        run_options = {f"Run {r['id']} - {r['created_at'][:10]}": r['id'] for r in available_runs if r['status'] == 'COMPLETED'}
+        run_options = {f"Run {r['id']} - {r['created_at'][:10]}": r['id'] for r in available_runs if r['status'].upper() == 'COMPLETED'}
     else:
         run_options = {}
 except Exception:
