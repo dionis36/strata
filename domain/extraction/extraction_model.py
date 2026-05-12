@@ -42,5 +42,7 @@ class ExtractionCandidate(BaseModel):
     nodes: List[str]
     score: float
     impact: ImpactMetrics
+
     recommendation: RecommendationCategory
     reasoning: List[str] = []  # Detailed text explaining the reasoning
+    node_details: List[dict] = [] # Details for refactoring (name, file_path)

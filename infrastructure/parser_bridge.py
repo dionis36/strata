@@ -1,13 +1,10 @@
-
 import os
-import re
 import json
 import subprocess
 from typing import List, Tuple, Optional, Dict, Any
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from domain.models.node import Node, NodeType
 from domain.models.edge import Edge, EdgeType
-
-# ... (regex patterns remain for fallback if needed, but we will focus on AST)
 
 class PHPRuntime:
     """Manages the PHP subprocess for AST extraction."""
@@ -37,52 +34,28 @@ class PHPRuntime:
         if not self._process or not self._process.stdin:
             return {"status": "error", "message": "PHP process not started"}
         
-        self._process.stdin.write(f"{file_path}\n")
-        self._process.stdin.flush()
-        
-        line = self._process.stdout.readline()
-        if not line:
-            return {"status": "error", "message": "No output from PHP process"}
-        
         try:
+            self._process.stdin.write(f"{file_path}\n")
+            self._process.stdin.flush()
+            
+            line = self._process.stdout.readline()
+            if not line:
+                # Check for errors in stderr
+                stderr = self._process.stderr.read()
+                return {"status": "error", "message": f"No output from PHP process. Stderr: {stderr}"}
+            
             return json.loads(line)
-        except json.JSONDecodeError:
-            return {"status": "error", "message": f"Invalid JSON: {line}"}
-
-def _qualify(name: str, namespace: Optional[str], file_path: str, root_path: str) -> str:
-    """Build a fully-qualified, collision-resistant node ID.
-
-    Priority order:
-      1. If the raw name already contains a backslash it is already qualified.
-      2. If a namespace was declared, use Namespace\\ClassName.
-      3. Fallback: relative_dir/ClassName using the file path relative to root.
-    """
-    name = name.strip()
-    if '\\' in name:
-        return name  # already fully qualified
-    if namespace:
-        return f"{namespace}\\{name}"
-    # Fallback: use directory relative to root as namespace-like prefix
-    rel = os.path.relpath(os.path.dirname(file_path), root_path)
-    if rel == '.':
-        return name
-    return rel.replace(os.sep, '\\') + '\\' + name
-
+        except BrokenPipeError:
+            return {"status": "error", "message": "Broken Pipe: PHP process crashed."}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
 
 class ParserBridge:
-    """Parses PHP source files into typed Nodes and Edges.
+    """Parses PHP source files into typed Nodes and Edges in parallel."""
 
-    Phase A upgrade:
-      - Namespace-aware fully-qualified IDs (collision-proof).
-      - Typed edges: INHERITS, IMPLEMENTS, USES_TRAIT, INSTANTIATION, METHOD_CALL.
-    """
 
-    def parse_files(
-        self,
-        file_paths: List[str],
-        root_path: str = '/data'
-    ) -> Tuple[List[Node], List[Edge]]:
-
+    def _parse_chunk(self, file_paths: List[str], root_path: str) -> Tuple[List[Node], List[Edge]]:
+        """Worker function to parse a chunk of files using a dedicated PHP runtime."""
         nodes: List[Node] = []
         edges: List[Edge] = []
         runtime = PHPRuntime()
@@ -115,7 +88,6 @@ class ParserBridge:
                     )
                     nodes.append(node)
                     
-                    # INHERITS edges
                     if data.get("extends"):
                         target_fqn = data["extends"]
                         edges.append(Edge(
@@ -124,19 +96,17 @@ class ParserBridge:
                             edge_type=EdgeType.INHERITS
                         ))
                     
-                    # IMPLEMENTS edges
                     for iface in data.get("implements", []):
                         edges.append(Edge(
                             source_id=node_id,
                             target_id=generate_deterministic_id(iface, NodeType.CLASS.value),
-                            edge_type=EdgeType.INHERITS # SCS: inherits covers implements
+                            edge_type=EdgeType.INHERITS
                         ))
 
                 # --- Process Calls (Edges) ---
                 for call in metadata.get("calls", []):
                     source_fqn = call.get("source")
-                    if not source_fqn:
-                        continue
+                    if not source_fqn: continue
                         
                     source_node_id = generate_deterministic_id(source_fqn, NodeType.CLASS.value)
                     target_id = None
@@ -145,7 +115,7 @@ class ParserBridge:
                     if call["type"] == "static_call" or call["type"] == "instantiation":
                         target_fqn = call.get("class")
                         target_id = generate_deterministic_id(target_fqn, NodeType.CLASS.value)
-                        edge_type = EdgeType.CALLS if call["type"] == "static_call" else EdgeType.CALLS # SCS: calls covers both
+                        edge_type = EdgeType.CALLS
                     
                     if target_id and edge_type:
                         edges.append(Edge(
@@ -153,30 +123,47 @@ class ParserBridge:
                             target_id=target_id,
                             edge_type=edge_type
                         ))
-
         finally:
             runtime.stop()
-
+            
         return nodes, edges
 
+    def parse_files(
+        self,
+        file_paths: List[str],
+        root_path: str = '/data',
+        workers: int = None
+    ) -> Tuple[List[Node], List[Edge]]:
+
+        if workers is None:
+            workers = os.cpu_count() or 4
+        
+        # Divide files into chunks
+        chunk_size = max(1, len(file_paths) // workers)
+        chunks = [file_paths[i:i + chunk_size] for i in range(0, len(file_paths), chunk_size)]
+        
+        all_nodes: List[Node] = []
+        all_edges: List[Edge] = []
+        
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = [executor.submit(self._parse_chunk, chunk, root_path) for chunk in chunks]
+            
+            for future in as_completed(futures):
+                nodes, edges = future.result()
+                all_nodes.extend(nodes)
+                all_edges.extend(edges)
+                
+        return all_nodes, all_edges
 
 class FileScanner:
     @staticmethod
     def scan(root_path: str, max_files: Optional[int] = None) -> List[str]:
-        """Walk `root_path` and collect PHP files.
-
-        Args:
-            root_path: Directory to scan.
-            max_files: Optional cap on number of files returned.
-                       None means no limit (Phase A+).
-        """
         php_files = []
         for root, _, files in os.walk(root_path):
-            for file in sorted(files):   # sorted = deterministic ordering
+            for file in sorted(files):
                 if file.endswith('.php'):
                     php_files.append(os.path.join(root, file))
 
         if max_files is not None:
             return php_files[:max_files]
         return php_files
-

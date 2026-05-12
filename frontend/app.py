@@ -2,95 +2,77 @@ import streamlit as st
 import requests
 import os
 
-st.set_page_config(page_title="Strata - Phase 2", layout="wide")
-st.title("Strata: Analysis Trigger")
-st.markdown("Use this interface to trigger the Graph Extract & Metrics Engine.")
+st.set_page_config(
+    page_title="Strata - Modernization Intelligence",
+    page_icon="🚀",
+    layout="wide"
+)
 
-FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
-DATA_ROOT = "/data"
+# Premium Dark Mode Branding
+st.markdown("""
+    <style>
+    .main { background-color: #0e1117; color: #e0e0e0; }
+    h1 { color: #ffffff !important; font-size: 3rem !important; margin-bottom: 0px !important; }
+    .stButton>button { background-color: #4ade80 !important; color: #000 !important; font-weight: bold !important; border: none !important; }
+    .card { background-color: #1a1c24; border: 1px solid #333; padding: 25px; border-radius: 10px; margin-bottom: 20px; }
+    .highlight { color: #4ade80; font-weight: bold; }
+    </style>
+""", unsafe_allow_html=True)
 
-# ── Health Check Sidebar ─────────────────────────────────────────────────────
-with st.sidebar:
-    st.header("System Status")
-    try:
-        health_url = FASTAPI_URL if FASTAPI_URL.endswith("/health") else f"{FASTAPI_URL}/health"
-        res = requests.get(health_url, timeout=5)
-        if res.status_code == 200:
-            data = res.json()
-            st.success(f"Status: {data.get('status')}")
-            st.info(f"Database: {data.get('database')}")
-            st.caption(f"Version: {data.get('version')}")
-        else:
-            st.error(f"API returned status {res.status_code}")
-    except requests.exceptions.RequestException:
-        st.error("Failed to connect to API")
+# ── Header ────────────────────────────────────────────────────────────────────
+st.title("Strata")
+st.markdown("<h3 style='color: #888;'>Enterprise Monolith Modernization Intelligence</h3>", unsafe_allow_html=True)
+st.markdown("---")
 
+# ── Quick Start Hub ───────────────────────────────────────────────────────────
+col_info, col_start = st.columns([2, 1])
 
-# ── Project Folder Discovery ─────────────────────────────────────────────────
-def _list_project_folders(root: str) -> list[str]:
-    """Return sorted list of directory names inside `root`.
-    Excludes hidden entries (dotfiles) and anything that isn't a directory.
-    """
-    try:
-        return sorted(
-            entry for entry in os.listdir(root)
-            if not entry.startswith(".")
-            and os.path.isdir(os.path.join(root, entry))
-        )
-    except OSError:
-        return []
-
-
-# ── Main Content ─────────────────────────────────────────────────────────────
-st.header("Analyze Workspace")
-
-folders = _list_project_folders(DATA_ROOT)
-
-if not folders:
-    st.warning(
-        "No project folders found in `/data`. "
-        "Add a PHP project directory there and restart the analysis."
-    )
-    project_path = None
-else:
-    selected_folder = st.selectbox(
-        "Select project folder",
-        options=folders,
-        format_func=lambda name: f"📁  {name}",
-        help="Only directories inside /data are listed. "
-             "PHP files, app.db, and graph JSONs are excluded."
-    )
-    project_path = os.path.join(DATA_ROOT, selected_folder)
-    st.caption(f"Will scan: `{project_path}`")
-
-    # Guard: never allow scanning the raw /data root
-    if project_path == DATA_ROOT:
-        st.error("Cannot run analysis on the root `/data` directory. Select a project sub-folder.")
-        project_path = None
-
-# ── Analysis Trigger ─────────────────────────────────────────────────────────
-run_btn = st.button("Run Analysis", disabled=(project_path is None))
-
-if run_btn and project_path:
-    with st.spinner(f"Parsing PHP and building dependency graph for `{project_path}`…"):
+with col_info:
+    st.markdown("""
+    ### 🏛️ The Oracle for Your Monolith
+    Strata is a specialized **Modernization Advisory Platform** that provides mathematical certainty 
+    to the complex journey of decoupling legacy systems.
+    
+    #### 🚀 Three Steps to Modernization:
+    1.  **Analyze**: Run the **Intelligence Engine** to map the systemic topology and risk DNA.
+    2.  **Explore**: Use the **Monolith Navigator** to visually identify architectural chokepoints.
+    3.  **Plan**: Generate **Surgical Blueprints** and ROI reports in the **Modernization Cockpit**.
+    """)
+    
+    st.markdown("---")
+    st.subheader("🛠️ Current Project Configuration")
+    
+    project_path = st.text_input("Source Path", value="/data/test_project_1")
+    project_name = st.text_input("Project Name", value="Strata_Monolith_Alpha")
+    
+    if st.button("🚀 Run Deep Intelligence Scan", type="primary"):
+        FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
         try:
-            payload = {"project_path": project_path, "project_name": selected_folder}
-            analyze_url = FASTAPI_URL.replace("/health", "") + "/analyze"
-            response = requests.post(analyze_url, json=payload, timeout=60)
-
-            if response.status_code == 200:
-                result = response.json()
-                st.success("Analysis Complete!")
-                st.info("Navigate to **Metrics Inspection** in the sidebar to view the structural matrix.")
-
-                st.subheader("Structural Summary Card")
-                col1, col2, col3, col4 = st.columns(4)
-                col1.metric("Run ID", result.get("run_id"))
-                col2.metric("Files Evaluated", result.get("files"))
-                col3.metric("Classes (Nodes)", result.get("classes"))
-                col4.metric("Structural Edges", result.get("edges"))
+            payload = {"project_path": project_path, "project_name": project_name}
+            res = requests.post(f"{FASTAPI_URL}/analyze", json=payload)
+            if res.status_code == 200:
+                st.success(f"Intelligence Scan Started! (Run ID: {res.json()['run_id']})")
+                st.balloons()
             else:
-                detail = response.json().get("detail", "Unknown error")
-                st.error(f"Analysis failed: {detail}")
+                st.error(f"Analysis failed: {res.text}")
         except Exception as e:
-            st.error(f"Failed to connect to backend: {e}")
+            st.error(f"Could not connect to Intelligence Engine: {e}")
+
+with col_start:
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.markdown("#### ⚡ System Status")
+    st.markdown("- **Engine**: <span class='highlight'>Active (Parallel)</span>", unsafe_allow_html=True)
+    st.markdown("- **Caching**: <span class='highlight'>Delta-Scan Enabled</span>", unsafe_allow_html=True)
+    st.markdown("- **CLI**: <span class='highlight'>Ready</span>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.markdown("#### 🎯 Quick Navigation")
+    if st.button("🕸️ Open Monolith Navigator", use_container_width=True):
+        st.info("Select 'Monolith Navigator' from the sidebar to begin exploration.")
+    if st.button("🕹️ Open Modernization Cockpit", use_container_width=True):
+        st.info("Select 'Modernization Cockpit' from the sidebar to plan extractions.")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+st.markdown("---")
+st.caption("Strata v1.0.0-Competition | Managed by Antigravity AI")

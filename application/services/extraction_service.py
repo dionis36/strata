@@ -85,8 +85,21 @@ class ExtractionService:
             # Measure strictly the impact of this change
             impact = analyzer.analyze(unit, g_sim)
             
+
             # Rank and formulate final response
             candidate = ranker.rank(unit, impact)
+            
+            # Enrich with node details (file paths) for refactoring engine
+            for node_id in unit.nodes:
+                if node_id in nx_graph.nodes:
+                    node_data = nx_graph.nodes[node_id]
+                    candidate.node_details.append({
+                        "id": node_id,
+                        "name": node_data.get("name"),
+                        "file_path": node_data.get("file_path"),
+                        "fqn": node_data.get("fqn")
+                    })
+            
             results.append(candidate.model_dump(by_alias=True))
             
         # Optional: Sort results. Highest score first.

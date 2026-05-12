@@ -1,49 +1,48 @@
 
 # Strata: The Master Roadmap to Product Completion (v1.0)
 
-This master roadmap outlines the transition from a **Technical Intelligence Engine** to a **Superb, Finished Product**. It is modularized into four strategic pillars that follow the completion of the "Intelligence Engine" (AST to CSOT).
+This master roadmap outlines the transition from a **Technical Intelligence Engine** to a **Superb, Finished Product**. It is modularized into four strategic pillars focused on **Modernization Decision Support**.
 
 ---
 
-## 🏗️ Module A: The Transformation & Refactoring Engine (The "Active" Layer)
-**Goal**: Move from "Understanding" to "Acting"—the system must be able to autonomously or semi-autonomously refactor the monolith.
+## 🏗️ Module A: Advanced Modernization Planning (The "Advisory" Layer)
+**Goal**: Move from "Understanding" to "Planning"—the system provides a surgical blueprint for decoupling the monolith without actually modifying the source code.
 
-### A.1. Code Generation & Transformation (LLM-Guided)
-- **Task**: Implement the "Refactoring Executor".
+### A.1. Modernization Blueprinting
+- **Task**: Implement the "Surgical Protocol Generator".
 - **Details**:
-    - Build a library of "Transformation Recipes" (e.g., Extract Class, Move Method, Encapsulate Collection).
-    - Use LLM-guided code generation to write the new, decoupled PHP code.
-    - Implement a "Strict Mode" that ensures generated code adheres to PSR-12 standards.
+    - **Refactoring Recipes**: Identify specific structural transformations (e.g., "Extract Domain Logic from Controller X").
+    - **Step-by-Step Protocol**: Generate a precise, human-readable guide for an architect to follow.
+    - **Call-Site Audit**: List every line of code that must change to satisfy the new architecture.
 
-### A.2. Automated Extraction Pipeline
-- **Task**: Physically move code from the monolith to a new service/module.
+### A.2. Impact Foresight & Simulation
+- **Task**: Visualize the "Future State" of the architecture.
 - **Details**:
-    - Handle namespace updates and `use` statement refactoring automatically.
-    - Generate "Proxy Bridges" to allow the legacy monolith to call the newly extracted service during the transition phase.
+    - **Ghost Graph**: Show the dependency graph *after* the proposed modernization plan is applied.
+    - **Boundary Analysis**: Identify the "New Service" boundaries and the number of API calls that would replace internal method calls.
 
-### A.3. Safety & Rollback Engine
-- **Task**: Ensure the product never breaks production code.
+### A.3. Safety & Assurance Diagnostics
+- **Task**: Ensure the proposed plan is mathematically sound.
 - **Details**:
-    - **Extraction Simulation**: Run the analysis on the "New" code to ensure no circular dependencies were created.
-    - **Automated Test Generation**: Use the CSOT to generate PHPUnit tests for the newly extracted modules based on their previous call sites.
+    - **Topological Pre-check**: Verify the proposed plan creates zero circular dependencies.
+    - **Contract Validation**: Ensure the extracted "Modernized" component satisfies all original interface requirements.
 
 ---
 
 ## 🎨 Module B: Strategic UX & Immersive Visualization (The "Presentation" Layer)
-**Goal**: Create a "WOW" factor for competition. The tool must be beautiful, interactive, and deeply informative.
+**Goal**: Create a "WOW" factor for decision-makers. The tool must be beautiful, interactive, and deeply informative.
 
-### B.1. The "Monolith Navigator" (3D/2D Graph UI)
-- **Task**: Replace tables with interactive networks.
+### B.1. The "Monolith Navigator" (Topological Manifest)
+- **Task**: Provide a high-fidelity diagnostic UI.
 - **Details**:
-    - Use `Cytoscape.js` or `Three.js` for a force-directed 3D graph.
-    - Implement "Heatmap Overlay": Color nodes by Risk Score or Blast Radius.
-    - Add "Semantic Zoom": Zoom into a class to see its methods and property accesses in real-time.
+    - **Topological Signature**: A visual DNA of the project's coupling and risk.
+    - **Heatmap Overlay**: Color-code the system by Risk Level or Blast Radius.
 
-### B.2. The Refactoring Simulator
-- **Task**: A "What-If" dashboard.
+### B.2. The Modernization Cockpit
+- **Task**: Interactive "What-If" planning interface.
 - **Details**:
-    - Allow users to click "Extract" on a node and see the graph instantly re-calculate its metrics.
-    - Show a "Before vs. After" risk comparison.
+    - Select a component to see its **Modernization Blueprint**.
+    - Toggle "Simulated Extraction" to see the graph change in real-time.
 
 ### B.3. Executive Intelligence Reports
 - **Task**: Automated high-level documentation.
@@ -51,7 +50,7 @@ This master roadmap outlines the transition from a **Technical Intelligence Engi
     - Generate PDF reports with "Critical Risk Heatmaps".
     - Export "Refactoring ROI" metrics (e.g., "Extracting this service reduces overall complexity by 15%").
 
----
+****
 
 ## ⚡ Module C: Operational Excellence & Scale (The "Robustness" Layer)
 **Goal**: Ensure the tool can handle enterprise-scale codebases (>1M lines of code).
@@ -68,11 +67,7 @@ This master roadmap outlines the transition from a **Technical Intelligence Engi
     - Implement file-hash-based caching.
     - Update the CSOT incrementally: Only re-parse and re-link modified files.
 
-### C.3. Enterprise Connectivity
-- **Task**: Integrate with the developer's workflow.
-- **Details**:
-    - Build a CLI tool for headless runs (e.g., `strata analyze --path ./src`).
-    - Implement a GitHub/GitLab Action to run "Risk Analysis" on every Pull Request.
+
 
 ---
 

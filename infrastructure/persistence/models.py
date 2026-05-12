@@ -108,4 +108,20 @@ class ComponentDependency(Base):
     target_id   = Column(String, nullable=False)
     edge_type   = Column(String, nullable=False)
     
+
     created_at  = Column(DateTime, default=func.now(), nullable=False)
+
+class FileCache(Base):
+    """
+    Module C.2: Incremental Analysis Cache.
+    Stores the hash and serialized AST results for each file.
+    """
+    __tablename__ = "file_cache"
+
+    id          = Column(Integer, primary_key=True, autoincrement=True)
+    file_path   = Column(String, nullable=False, index=True)
+    file_hash   = Column(String, nullable=False)
+    nodes_data  = Column(String, nullable=False)  # Serialized Node list
+    edges_data  = Column(String, nullable=False)  # Serialized Edge list
+    
+    updated_at  = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)

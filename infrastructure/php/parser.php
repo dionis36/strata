@@ -8,7 +8,11 @@ use PhpParser\NodeVisitor\NameResolver;
 use Strata\Parser\MetadataExtractor;
 
 // Initialize Parser
-$parser = (new ParserFactory())->createForNewestSupportedVersion();
+
+// Initialize Parser with Legacy Support
+// PREFER_PHP7 ensures compatibility with the most common monolith versions (5.6 - 7.4)
+// while remaining capable of parsing PHP 8.x.
+$parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP7);
 
 while ($path = fgets(STDIN)) {
     $path = trim($path);

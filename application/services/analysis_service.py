@@ -17,16 +17,73 @@ class AnalysisService:
         self.repo = AnalysisRunRepository(db)
         self.parser = ParserBridge()
 
+
     def run_analysis(self, project_id: int, project_path: str) -> dict:
         # Create "running" tracking record
         run = self.repo.create(project_id=project_id)
         
         try:
-            # 1. File ingestion — no hardcoded file limit
+            # 1. File ingestion
             files = FileScanner.scan(project_path)
+            print(f"DEBUG: Found {len(files)} files in {project_path}")
             
-            # 2. Parse into typed AST representation (Phase A+B upgrade)
-            nodes, edges = self.parser.parse_files(files, root_path=project_path)
+            # --- Module C.2: Incremental Caching ---
+            from infrastructure.persistence.models import FileCache
+            import hashlib
+            
+            all_nodes: List[Node] = []
+            all_edges: List[Edge] = []
+            to_parse = []
+            
+            # Prefetch existing cache for this project path
+            existing_cache = {c.file_path: c for c in self.db.query(FileCache).all()}
+            
+            for path in files:
+                # Calculate Hash
+                with open(path, "rb") as f:
+                    file_hash = hashlib.sha256(f.read()).hexdigest()
+                
+                cached = existing_cache.get(path)
+
+                if cached and cached.file_hash == file_hash:
+                    # Cache Hit: Deserialize fragments
+                    import json
+                    nodes_data = json.loads(cached.nodes_data)
+                    all_nodes.extend([Node(**n) for n in nodes_data])
+                    # (Edges are currently rebuilt from the CSOT/Graph projection to ensure integrity)
+                else:
+                    to_parse.append(path)
+            
+            # 2. Parse only the 'New/Modified' files in parallel
+            if to_parse:
+                new_nodes, new_edges = self.parser.parse_files(to_parse, root_path=project_path)
+                all_nodes.extend(new_nodes)
+                all_edges.extend(new_edges)
+                
+                # Update Cache in Batch
+                file_results_nodes = {}
+                for n in new_nodes:
+                    path = n.file_path
+                    if path not in file_results_nodes: file_results_nodes[path] = []
+                    file_results_nodes[path].append(n.model_dump())
+                
+                for path in to_parse:
+                    import json
+                    with open(path, "rb") as f:
+                        f_hash = hashlib.sha256(f.read()).hexdigest()
+                        
+                    cache_entry = self.db.query(FileCache).filter(FileCache.file_path == path).first()
+                    if not cache_entry:
+                        cache_entry = FileCache(file_path=path)
+                        self.db.add(cache_entry)
+                        
+                    cache_entry.file_hash = f_hash
+                    cache_entry.nodes_data = json.dumps(file_results_nodes.get(path, []))
+                    cache_entry.edges_data = json.dumps([]) 
+                
+                self.db.commit()
+
+            nodes, edges = all_nodes, all_edges
             
             # 3. Build the fully-qualified dependency graph
             graph = GraphModel()
@@ -34,22 +91,19 @@ class AnalysisService:
                 graph.add_node(node)
                 
                 # 3.5 Phase 4 Behavioral Extraction
-                # We do this here since the ParserBridge has already mapped file_paths to Node IDs
                 if getattr(node, "node_type", None) == NodeType.CLASS and getattr(node, "file_path", None):
                     try:
                         with open(node.file_path, 'r', encoding='utf-8') as f:
                             code_content = f.read()
                         behavior_res = WriteAnalyzer.analyze_file(code_content)
                         for table_name in behavior_res.get("tables", []):
-                            # Ensure TABLE node exists
                             table_node_id = f"table::{table_name}"
                             if not graph.graph.has_node(table_node_id):
                                 table_node = Node(id=table_node_id, name=table_name, node_type=NodeType.TABLE)
                                 graph.add_node(table_node)
-                            # Add WRITES_TO edge
                             graph.add_edge(Edge(source_id=node.id, target_id=table_node_id, edge_type=EdgeType.WRITES_TO))
                     except Exception:
-                        pass # Silently ignore unreadable files during behavior extraction
+                        pass
 
 
             for edge in edges:
@@ -61,18 +115,11 @@ class AnalysisService:
             total_files = len(files)
             total_classes = graph.get_class_count()
             total_edges = graph.get_edge_count()
-
             
-            # 4. Calculate Phase 2 Structural Metrics on STRUCTURAL edge projection
-            #    Excludes DB-write edges etc. to keep centrality semantically correct.
-            STRUCTURAL_EDGES = [
-                EdgeType.CALLS,
-                EdgeType.INHERITS,
-                EdgeType.DEPENDS_ON,
-            ]
-            projected = MetricCalculator.project(
-                graph.graph, edge_types=STRUCTURAL_EDGES
-            )
+            # 4. Calculate Phase 2 Structural Metrics
+            STRUCTURAL_EDGES = [EdgeType.CALLS, EdgeType.INHERITS, EdgeType.DEPENDS_ON]
+            projected = MetricCalculator.project(graph.graph, edge_types=STRUCTURAL_EDGES)
+            
             calculator = MetricCalculator(projected)
             metrics_matrix = calculator.calculate_all_metrics()
 

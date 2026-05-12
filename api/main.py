@@ -9,6 +9,7 @@ from infrastructure.persistence.database import init_db, get_db
 from infrastructure.persistence.repositories import ProjectRepository, RiskRepository
 from application.services.explanation_service import ExplanationService
 from application.services.extraction_service import ExtractionService
+from application.services.refactoring_service import RefactoringService
 from infrastructure.persistence.models import ComponentMetric, ComponentRisk
 from application.services.analysis_service import AnalysisService
 
@@ -49,6 +50,11 @@ def health_check(db: Session = Depends(get_db)):
 class AnalyzeRequest(BaseModel):
     project_path: str
     project_name: str = "default_project"
+
+class RefactorRequest(BaseModel):
+    file_path: str
+    class_name: str
+    new_namespace: str = None
 
 @app.post("/analyze")
 def analyze_project(req: AnalyzeRequest, db: Session = Depends(get_db)):
@@ -168,4 +174,20 @@ def get_extraction(run_id: int, db: Session = Depends(get_db)):
         raise
     except Exception as e:
         logger.error(f"Failed to generate extraction candidates for run {run_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+@app.post("/refactor/extract")
+def refactor_extract(req: RefactorRequest):
+    try:
+        service = RefactoringService()
+        result = service.extract_class(
+            req.file_path,
+            req.class_name,
+            req.new_namespace
+        )
+        if result.get("status") == "success":
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result.get("message", "Refactoring failed"))
+    except Exception as e:
+        logger.error(f"Refactoring failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))

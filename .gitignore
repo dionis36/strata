@@ -28,3 +28,14 @@ Thumbs.db
 
 # Streamlit
 .streamlit/secrets.toml
+
+# PHP
+infrastructure/php/vendor/
+infrastructure/php/composer.lock
+
+# Modernization Data
+/data/*.json
+/data/*.png
+/data/*.db
+/data/test_project_*
+/data/OWASPWebGoat*
