@@ -47,7 +47,7 @@ class BehavioralMetricsCalculator:
                     shared_pressure += float(len(table_writers[table]) - 1)
                     
                 results.append({
-                    "component_name": node_id,
+                    "component_name": data.get("fqn", node_id),
                     "write_intensity": write_intensity,
                     "table_dependencies": table_dependencies,
                     "shared_table_pressure": shared_pressure

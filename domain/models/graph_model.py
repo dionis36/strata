@@ -12,6 +12,7 @@ class GraphModel:
             self.graph.add_node(
                 node.id, 
                 name=node.name, 
+                fqn=node.fqn,
                 type=node.node_type.value,
                 file_path=node.file_path,
                 methods=node.methods
