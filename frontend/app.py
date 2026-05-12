@@ -29,9 +29,9 @@ col_info, col_start = st.columns([2, 1])
 
 with col_info:
     st.markdown("""
-    ### 🏛️ The Oracle for Your Monolith
-    Strata is a specialized **Modernization Advisory Platform** that provides mathematical certainty 
-    to the complex journey of decoupling legacy systems.
+    ### 🏗️ Strata: Architectural Intelligence Platform
+    Strata is a specialized **Modernization Advisory Platform** that provides technical determinism 
+    and risk quantization for the complex journey of decoupling legacy systems.
     
     #### 🚀 Three Steps to Modernization:
     1.  **Analyze**: Run the **Intelligence Engine** to map the systemic topology and risk DNA.

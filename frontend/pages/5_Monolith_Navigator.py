@@ -16,16 +16,50 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+
 st.title("🕸️ Monolith Navigator: Topological Explorer")
-st.markdown("---")
+
+# --- 💡 Architect's Guidance: Page Purpose ---
+with st.sidebar:
+    st.markdown("### 💡 Page Purpose")
+    st.info("""
+    **The Navigator** is your immersive lens into the monolith. It visualizes the 
+    'Physical Gravity' of your code—showing which components are the center of 
+    your universe and which are safely isolated.
+    """)
+    st.markdown("### 🎨 Visual Key")
+    st.write("🔴 **Crimson**: High Risk / Central Anchor")
+    st.write("🟠 **Amber**: Moderate Coupling")
+    st.write("🟢 **Emerald**: Low Risk / Extraction Candidate")
 
 FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
-RUN_ID = st.sidebar.number_input("Target Run ID:", min_value=1, step=1, value=1)
+RUNS_URL = FASTAPI_URL + "/runs"
+
+# 1. Fetch available runs
+try:
+    runs_res = requests.get(RUNS_URL, timeout=5)
+    if runs_res.status_code == 200:
+        available_runs = runs_res.json()
+        run_options = {f"Run {r['id']} - {r['created_at'][:10]}": r['id'] for r in available_runs if r['status'] == 'COMPLETED'}
+    else:
+        run_options = {}
+except Exception:
+    run_options = {}
+
+if not run_options:
+    st.warning("⚠️ No completed runs found. Please run an analysis from the Home page first.")
+    st.stop()
+
+with st.sidebar:
+    st.header("Navigator Controls")
+    selected_run_label = st.selectbox("Select Analysis Run:", list(run_options.keys()))
+    RUN_ID = run_options[selected_run_label]
+    st.markdown("---")
+    st.caption("Strata Visualization Engine v0.1")
 
 def get_graph_data(run_id):
     try:
         # We fetch the raw graph JSON from the data directory
-        # In a real product, we'd have a dedicated API endpoint for this
         graph_path = f"/data/graph_{run_id}.json"
         if os.path.exists(graph_path):
             with open(graph_path, "r") as f:

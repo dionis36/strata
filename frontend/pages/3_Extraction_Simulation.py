@@ -55,15 +55,43 @@ def generate_pdf(strategy_name, roi, risk_delta, protocol_steps):
     pdf.output(path)
     return path
 
+
 st.title("🕹️ Modernization Cockpit")
-st.markdown("---")
+
+# --- 💡 Architect's Guidance: Page Purpose ---
+with st.sidebar:
+    st.markdown("### 💡 Page Purpose")
+    st.info("""
+    **The Cockpit** is your simulation engine. Here, you can test 'What-If' modernization 
+    scenarios by virtually extracting components and measuring the impact on the system.
+    """)
+    st.markdown("### 🔭 Concepts")
+    st.write("**Ghost Graph**: A visualization of the proposed future state.")
+    st.write("**Modernization ROI**: The estimated complexity reduction if this strategy is executed.")
+    st.write("**Surgical Protocol**: Step-by-step technical instructions for the decoupling process.")
 
 FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
+RUNS_URL = FASTAPI_URL + "/runs"
 
-# ── Sidebar ───────────────────────────────────────────────────────────────────
+# 1. Fetch available runs
+try:
+    runs_res = requests.get(RUNS_URL, timeout=5)
+    if runs_res.status_code == 200:
+        available_runs = runs_res.json()
+        run_options = {f"Run {r['id']} - {r['created_at'][:10]}": r['id'] for r in available_runs if r['status'] == 'COMPLETED'}
+    else:
+        run_options = {}
+except Exception:
+    run_options = {}
+
+if not run_options:
+    st.warning("⚠️ No completed runs found. Please run an analysis from the Home page first.")
+    st.stop()
+
 with st.sidebar:
     st.header("Cockpit Controls")
-    run_id = st.number_input("Target Run ID", min_value=1, step=1, value=1)
+    selected_run_label = st.selectbox("Target Analysis Run:", list(run_options.keys()))
+    run_id = run_options[selected_run_label]
     st.markdown("---")
     st.caption("Strata Simulation Engine v1.0")
 

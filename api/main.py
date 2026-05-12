@@ -175,6 +175,28 @@ def get_extraction(run_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Failed to generate extraction candidates for run {run_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/runs")
+def list_runs(db: Session = Depends(get_db)):
+    """Returns a list of all completed analysis runs with metadata."""
+    from infrastructure.persistence.models import AnalysisRun
+    try:
+        runs = db.query(AnalysisRun).order_by(AnalysisRun.id.desc()).all()
+        return [
+            {
+                "id": r.id,
+                "project_id": r.project_id,
+                "status": r.status,
+                "created_at": r.created_at.isoformat(),
+                "total_files": r.total_files,
+                "total_classes": r.total_classes,
+                "total_edges": r.total_edges
+            }
+            for r in runs
+        ]
+    except Exception as e:
+        logger.error(f"Failed to list runs: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 @app.post("/refactor/extract")
 def refactor_extract(req: RefactorRequest):
     try:

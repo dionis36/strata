@@ -4,7 +4,22 @@ import streamlit as st
 import requests
 import pandas as pd
 
+
 st.set_page_config(page_title="Risk Analysis — Strata", layout="wide")
+
+# --- 💡 Architect's Guidance: Page Purpose ---
+with st.sidebar:
+    st.markdown("### 💡 Page Purpose")
+    st.info("""
+    **Risk Analysis** is the 'Diagnostic Lab'. It combines 
+    Structural metrics (Dependency topology) with Behavioral metrics 
+    (Database write intensity) to assign a **Final Risk Score**.
+    """)
+    st.markdown("### 🔍 Risk DNA")
+    st.write("**Criticality**: How essential is this to the system?")
+    st.write("**Instability**: Is this prone to breaking other parts?")
+    st.write("**Coupling Pressure**: Is it being crushed by dependencies?")
+
 st.title("⚠️ Structural & Behavioral Risk Analysis")
 st.markdown(
     "Full risk matrix with structural and behavioral metrics. "
@@ -12,6 +27,7 @@ st.markdown(
 )
 
 FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
+RUNS_URL = FASTAPI_URL + "/runs"
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -134,15 +150,30 @@ def show_explanation(component_name: str, run_id: int):
 # ── Main ──────────────────────────────────────────────────────────────────────
 st.header("Risk Matrix")
 
+
+# 1. Fetch available runs
+try:
+    runs_res = requests.get(RUNS_URL, timeout=5)
+    if runs_res.status_code == 200:
+        available_runs = runs_res.json()
+        run_options = {f"Run {r['id']} - {r['created_at'][:10]}": r['id'] for r in available_runs if r['status'] == 'COMPLETED'}
+    else:
+        run_options = {}
+except Exception:
+    run_options = {}
+
+if not run_options:
+    st.warning("⚠️ No completed runs found. Please run an analysis from the Home page first.")
+    st.stop()
+
 col_in, col_btn = st.columns([4, 1])
 with col_in:
-    run_id = st.number_input(
-        "Run ID", min_value=1, step=1, value=st.session_state.get("active_run_id", 1)
-    )
+    selected_run_label = st.selectbox("Select Analysis Run to Inspect:", list(run_options.keys()))
+    active_run = run_options[selected_run_label]
 with col_btn:
     st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
     if st.button("Query Risk Matrix", use_container_width=True):
-        st.session_state["active_run_id"] = run_id
+        st.session_state["active_run_id"] = active_run
 
 if "active_run_id" in st.session_state:
     active_run = st.session_state["active_run_id"]

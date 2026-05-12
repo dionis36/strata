@@ -17,17 +17,52 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+
 st.title("📂 Topological Manifest: Structural Diagnostics")
-st.markdown("---")
+
+# --- 💡 Architect's Guidance: Page Purpose ---
+with st.sidebar:
+    st.markdown("### 💡 Page Purpose")
+    st.info("""
+    **The Manifest** is your formal technical record. It provides the 'Structural Signature' 
+    of the system, identifying cycles and coupling pressures that must be addressed 
+    to achieve a clean modernization.
+    """)
+    st.markdown("### 🔍 Technical Metrics")
+    st.write("**Efferent Pressure**: The 'Weight' of a node's outgoing dependencies.")
+    st.write("**Topology Integrity**: A score representing how 'Acyclic' and clean the graph is.")
+    st.write("**Cyclic Nodes**: Components stuck in a dependency loop (The 'Ball of Mud').")
 
 FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
-RUN_ID = st.sidebar.number_input("Target Run ID:", min_value=1, step=1, value=1)
+RUNS_URL = FASTAPI_URL + "/runs"
+
+# 1. Fetch available runs
+try:
+    runs_res = requests.get(RUNS_URL, timeout=5)
+    if runs_res.status_code == 200:
+        available_runs = runs_res.json()
+        run_options = {f"Run {r['id']} - {r['created_at'][:10]}": r['id'] for r in available_runs if r['status'] == 'COMPLETED'}
+    else:
+        run_options = {}
+except Exception:
+    run_options = {}
+
+if not run_options:
+    st.warning("⚠️ No completed runs found. Please run an analysis from the Home page first.")
+    st.stop()
+
+with st.sidebar:
+    st.header("Manifest Controls")
+    selected_run_label = st.selectbox("Select Analysis Run:", list(run_options.keys()))
+    RUN_ID = run_options[selected_run_label]
+    st.markdown("---")
+    st.caption("Strata Topological Engine v0.1")
 
 def fetch_intel(run_id):
     try:
         risk_res = requests.get(f"{FASTAPI_URL}/risk/{run_id}")
         metrics_res = requests.get(f"{FASTAPI_URL}/metrics/{run_id}")
-        if risk_res.status_code == 200 and metrics_res.json():
+        if risk_res.status_code == 200:
             return risk_res.json(), metrics_res.json()
         return None, None
     except:
@@ -36,7 +71,7 @@ def fetch_intel(run_id):
 risk_data, metrics_data = fetch_intel(RUN_ID)
 
 if not risk_data:
-    st.info("Awaiting System Synchronization. Enter Run ID to generate Topological Manifest.")
+    st.info("Awaiting System Synchronization. Select a Run ID to generate the Topological Manifest.")
 else:
     # 1. TOPOLOGICAL SIGNATURE
     st.header("🔬 Topological Signature")
