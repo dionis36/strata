@@ -19,13 +19,24 @@ class GraphModel:
             )
 
     def add_edge(self, edge: Edge):
-        """Adds a directed edge between two nodes only if both exist and it is not a self-loop."""
+        """Adds a directed edge between two nodes. Creates target node if missing (Ghost Node)."""
         if edge.source_id == edge.target_id:
             return  # Reject self-loops
 
-        if self.graph.has_node(edge.source_id) and self.graph.has_node(edge.target_id):
+        if self.graph.has_node(edge.source_id):
+            # Ensure target node exists (as a Ghost Node if necessary)
+            if not self.graph.has_node(edge.target_id):
+                target_name = edge.target_fqn.rsplit('\\', 1)[-1] if edge.target_fqn else "Unknown"
+                self.graph.add_node(
+                    edge.target_id,
+                    name=target_name,
+                    fqn=edge.target_fqn or "Unknown",
+                    type=NodeType.CLASS.value,
+                    is_external=True  # Mark as external component
+                )
+
             if self.graph.has_edge(edge.source_id, edge.target_id):
-                # Increment weight for duplicate calls to formalize frequency
+                # Increment weight for duplicate calls
                 self.graph[edge.source_id][edge.target_id]['weight'] += 1
             else:
                 self.graph.add_edge(

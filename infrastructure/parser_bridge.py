@@ -88,19 +88,22 @@ class ParserBridge:
                     )
                     nodes.append(node)
                     
+
                     if data.get("extends"):
                         target_fqn = data["extends"]
                         edges.append(Edge(
                             source_id=node_id,
                             target_id=generate_deterministic_id(target_fqn, NodeType.CLASS.value),
-                            edge_type=EdgeType.INHERITS
+                            edge_type=EdgeType.INHERITS,
+                            target_fqn=target_fqn
                         ))
                     
                     for iface in data.get("implements", []):
                         edges.append(Edge(
                             source_id=node_id,
                             target_id=generate_deterministic_id(iface, NodeType.CLASS.value),
-                            edge_type=EdgeType.INHERITS
+                            edge_type=EdgeType.INHERITS,
+                            target_fqn=iface
                         ))
 
                 # --- Process Calls (Edges) ---
@@ -111,6 +114,7 @@ class ParserBridge:
                     source_node_id = generate_deterministic_id(source_fqn, NodeType.CLASS.value)
                     target_id = None
                     edge_type = None
+                    target_fqn = None
                     
                     if call["type"] == "static_call" or call["type"] == "instantiation":
                         target_fqn = call.get("class")
@@ -121,7 +125,8 @@ class ParserBridge:
                         edges.append(Edge(
                             source_id=source_node_id,
                             target_id=target_id,
-                            edge_type=edge_type
+                            edge_type=edge_type,
+                            target_fqn=target_fqn
                         ))
         finally:
             runtime.stop()

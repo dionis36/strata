@@ -11,8 +11,10 @@ class EdgeType(Enum):
     DEPENDS_ON = "depends_on"
     UNKNOWN = "unknown"
 
+from typing import Optional
+
 class Edge(BaseModel):
     source_id: str
     target_id: str
     edge_type: EdgeType
-    # In future phases, weight and other metadata will go here.
+    target_fqn: Optional[str] = None
