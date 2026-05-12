@@ -42,13 +42,27 @@ with col_info:
     st.markdown("---")
     st.subheader("🛠️ Current Project Configuration")
     
-    project_path = st.text_input("Source Path", value="/data/test_project_1")
-    project_name = st.text_input("Project Name", value="Strata_Monolith_Alpha")
+    # --- Auto-Discovery for /data folder ---
+    data_dir = "/data"
+    try:
+        available_projects = [d for d in os.listdir(data_dir) if os.path.isdir(os.path.join(data_dir, d))]
+        available_projects = sorted(available_projects)
+    except Exception:
+        available_projects = []
+
+    if not available_projects:
+        st.warning("⚠️ No projects found in /data. Please add your monolith to the 'data/' folder on your host.")
+        project_name_slug = st.text_input("Project Name (Slug)", value="Strata_Monolith")
+        project_path = "/data" # Fallback
+    else:
+        selected_project = st.selectbox("Select Monolith from In-Box (/data)", available_projects)
+        project_path = os.path.join(data_dir, selected_project)
+        project_name_slug = st.text_input("Project Name (Slug)", value=selected_project.replace("-", "_").capitalize())
     
     if st.button("🚀 Run Deep Intelligence Scan", type="primary"):
         FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
         try:
-            payload = {"project_path": project_path, "project_name": project_name}
+            payload = {"project_path": project_path, "project_name": project_name_slug}
             res = requests.post(f"{FASTAPI_URL}/analyze", json=payload)
             if res.status_code == 200:
                 st.success(f"Intelligence Scan Started! (Run ID: {res.json()['run_id']})")
@@ -61,9 +75,9 @@ with col_info:
 with col_start:
     st.markdown("<div class='card'>", unsafe_allow_html=True)
     st.markdown("#### ⚡ System Status")
-    st.markdown("- **Engine**: <span class='highlight'>Active (Parallel)</span>", unsafe_allow_html=True)
-    st.markdown("- **Caching**: <span class='highlight'>Delta-Scan Enabled</span>", unsafe_allow_html=True)
-    st.markdown("- **CLI**: <span class='highlight'>Ready</span>", unsafe_allow_html=True)
+    st.markdown("- **Engine**: <span class='highlight'>Active (Parallel)</span><br><small>Multi-core AST parsing enabled.</small>", unsafe_allow_html=True)
+    st.markdown("- **Caching**: <span class='highlight'>Delta-Scan Enabled</span><br><small>Hash-based incremental analysis.</small>", unsafe_allow_html=True)
+    st.markdown("- **CLI**: <span class='highlight'>Ready</span><br><small>Headless mode available for CI/CD.</small>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
     
     st.markdown("<div class='card'>", unsafe_allow_html=True)
@@ -75,4 +89,4 @@ with col_start:
     st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("---")
-st.caption("Strata v1.0.0-Competition | Managed by Antigravity AI")
+st.caption("Strata v1.0.0-Competition | Advanced Modernization Advisor")
