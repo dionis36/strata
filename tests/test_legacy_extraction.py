@@ -30,6 +30,10 @@ def test_legacy_chaos():
     legacy_insights = result.get('legacy_insights', {})
     print("\n--- Legacy Insights (Requirement 1, 8, 9) ---")
     print(f"Era: {legacy_insights.get('php_era')}")
+    print(f"Framework: {legacy_insights.get('detected_framework')}")
+    print(f"DB Layer: {legacy_insights.get('db_layer')}")
+    print(f"Auth Layer: {legacy_insights.get('auth_layer')}")
+    print(f"Template Layer: {legacy_insights.get('template_layer')}")
     print(f"Modernization Score: {legacy_insights.get('total_modernization_score')}")
     
     # Check DB for Legacy Metrics

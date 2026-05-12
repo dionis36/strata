@@ -3,6 +3,7 @@
 namespace Strata\Parser;
 
 use PhpParser\Node;
+use PhpParser\NodeVisitorAbstract;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\Interface_;
 use PhpParser\Node\Stmt\Trait_;
@@ -11,7 +12,6 @@ use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\New_;
-use PhpParser\NodeVisitorAbstract;
 
 class MetadataExtractor extends NodeVisitorAbstract
 {
@@ -111,6 +111,11 @@ class MetadataExtractor extends NodeVisitorAbstract
             ];
         }
 
+        // --- Autoloading (Requirement 10) ---
+        if ($node instanceof Node\Stmt\Function_ && (string)$node->name === '__autoload') {
+            $this->metadata['requirements'][] = ['type' => 'LEGACY_AUTOLOAD', 'line' => $node->getLine()];
+        }
+
         // --- Include Tree Extraction (Requirement 3B) ---
         if ($node instanceof Node\Expr\Include_) {
             $includePath = null;
@@ -168,9 +173,27 @@ class MetadataExtractor extends NodeVisitorAbstract
             ];
         }
 
+        // --- Variable Variables (Requirement 6) ---
+        if ($node instanceof Node\Expr\Variable) {
+            if ($node->name instanceof Node\Expr) {
+                $this->metadata['requirements'][] = [
+                    'type' => 'VARIABLE_VARIABLE',
+                    'line' => $node->getLine(),
+                    'source_class' => $this->currentClass,
+                    'source_method' => $this->currentMethod
+                ];
+            }
+        }
+
         // --- Config Detection (Requirement 14) ---
         if ($node instanceof Node\Expr\FuncCall && $node->name instanceof Node\Name) {
             $funcName = strtolower((string)$node->name);
+            
+            # Auth Patterns (Requirement 13)
+            if (in_array($funcName, ['session_set_save_handler', 'session_start'])) {
+                $this->metadata['requirements'][] = ['type' => 'CUSTOM_AUTH', 'line' => $node->getLine()];
+            }
+
             if ($funcName === 'define' && count($node->args) >= 2) {
                 $constName = null;
                 if ($node->args[0]->value instanceof Node\Scalar\String_) {
@@ -181,6 +204,18 @@ class MetadataExtractor extends NodeVisitorAbstract
                     'line' => $node->getLine(),
                     'source_class' => $this->currentClass,
                     'source_method' => $this->currentMethod
+                ];
+            }
+        }
+
+        // --- Raw SQL Inference (Requirement 11) ---
+        if ($node instanceof Node\Scalar\String_) {
+            $val = strtolower($node->value);
+            if (strpos($val, 'select ') === 0 || strpos($val, 'insert into ') === 0 || strpos($val, 'update ') === 0 || strpos($val, 'delete from ') === 0) {
+                $this->metadata['requirements'][] = [
+                    'type' => 'RAW_SQL', 
+                    'line' => $node->getLine(), 
+                    'snippet' => substr($val, 0, 20)
                 ];
             }
         }
@@ -223,19 +258,6 @@ class MetadataExtractor extends NodeVisitorAbstract
             }
         }
 
-        // --- Variable Variables (Requirement 6) ---
-        if ($node instanceof Node\Expr\Variable) {
-            if ($node->name instanceof Node\Expr) {
-                // This is a $$variable call
-                $this->metadata['requirements'][] = [
-                    'type' => 'VARIABLE_VARIABLE',
-                    'line' => $node->getLine(),
-                    'source_class' => $this->currentClass,
-                    'source_method' => $this->currentMethod
-                ];
-            }
-        }
-
         // --- Side-Effect Detection ---
         $this->detectSideEffects($node);
 
@@ -267,6 +289,8 @@ class MetadataExtractor extends NodeVisitorAbstract
         $dangerSinks = ['eval', 'extract', 'exec', 'passthru', 'system', 'shell_exec'];
         // Hosting/Runtime Sinks (Requirement 15)
         $hostingSinks = ['ini_set', 'set_time_limit', 'header', 'move_uploaded_file'];
+        // Template Sinks (Requirement 12)
+        $templateSinks = ['render', 'display', 'view', 'fetch'];
 
         $type = null;
         $lname = strtolower($name);
@@ -275,13 +299,22 @@ class MetadataExtractor extends NodeVisitorAbstract
         elseif (in_array($lname, $netSinks)) $type = 'NET';
         elseif (in_array($lname, $dangerSinks)) $type = 'DANGER';
         elseif (in_array($lname, $hostingSinks)) $type = 'HOSTING';
+        elseif (in_array($lname, $templateSinks)) $type = 'TEMPLATE';
         elseif (in_array($lname, ['md5', 'sha1'])) $type = 'LEGACY_HASH'; # Requirement 13
         elseif (in_array($lname, ['session_start', 'session_regenerate_id'])) $type = 'AUTH';
 
-        if ($type && $this->currentClass && $this->currentMethod) {
-            $methodIndex = count($this->metadata['classes'][$this->currentClass]['methods']) - 1;
-            if ($methodIndex >= 0) {
-                $this->metadata['classes'][$this->currentClass]['methods'][$methodIndex]['side_effects'][] = $type;
+        if ($type) {
+            if ($this->currentClass && $this->currentMethod) {
+                $methodIndex = count($this->metadata['classes'][$this->currentClass]['methods']) - 1;
+                if ($methodIndex >= 0) {
+                    $this->metadata['classes'][$this->currentClass]['methods'][$methodIndex]['side_effects'][] = $type;
+                }
+            } else {
+                // Procedural side effect (Requirement 1, 3B, 3C)
+                $this->metadata['file_side_effects'][] = [
+                    'type' => $type,
+                    'line' => $node->getLine()
+                ];
             }
         }
     }
@@ -300,6 +333,3 @@ class MetadataExtractor extends NodeVisitorAbstract
         return null;
     }
 }
-
-
-

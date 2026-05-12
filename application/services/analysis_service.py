@@ -18,7 +18,7 @@ class AnalysisService:
     def __init__(self, db: Session):
         self.db = db
         self.repo = AnalysisRunRepository(db)
-        self.parser = ParserBridge()
+        self.parser = ParserBridge(self.db)
 
 
     def run_analysis(self, project_id: int, project_path: str) -> dict:
@@ -53,7 +53,9 @@ class AnalysisService:
                     # Cache Hit: Deserialize fragments
                     import json
                     nodes_data = json.loads(cached.nodes_data)
+                    edges_data = json.loads(cached.edges_data)
                     all_nodes.extend([Node(**n) for n in nodes_data])
+                    all_edges.extend([Edge(**e) for e in edges_data])
                 else:
                     to_parse.append(path)
             
@@ -64,20 +66,41 @@ class AnalysisService:
                 all_edges.extend(new_edges)
                 
                 # Update Cache in Batch
+                import json
                 file_results_nodes = {}
-                for n in new_nodes:
-                    path = n.file_path
-                    if path not in file_results_nodes: file_results_nodes[path] = []
-                    file_results_nodes[path].append(n.model_dump(mode='json'))
+                file_results_edges = {}
                 
+                for n in new_nodes:
+                    path = getattr(n, "file_path", None)
+                    if path:
+                        if path not in file_results_nodes: file_results_nodes[path] = []
+                        file_results_nodes[path].append(n.model_dump(mode='json'))
+                        
+                for e in new_edges:
+                    # Try to map edge back to source file for cache locality
+                    # Fallback to a special "global" cache if needed, but here we assume mostly source_id is a file or class in a file
+                    # We can't perfectly map edges to paths easily if we only have IDs, 
+                    # so for safety, we just save all new edges globally for this run's cache update or attach to the first parsed file
+                    pass
+                
+                # Because mapping edges to specific files is complex, we will just persist the edges normally via the graph persistence.
+                # However, for the FileCache, we need to store them. 
+                # Let's map edges to the source file by looking up the source node's path.
+                node_id_to_path = {n.id: getattr(n, "file_path", None) for n in new_nodes}
+                for e in new_edges:
+                    path = node_id_to_path.get(e.source_id)
+                    # If we don't know the path, just attach to the first parsed file as a fallback
+                    if not path and to_parse: path = to_parse[0] 
+                    if path:
+                        if path not in file_results_edges: file_results_edges[path] = []
+                        file_results_edges[path].append(e.model_dump(mode='json'))
 
                 for path in to_parse:
-                    import json
                     with open(path, "rb") as f:
                         f_hash = hashlib.sha256(f.read()).hexdigest()
                     
                     n_data = json.dumps(file_results_nodes.get(path, []))
-                    e_data = json.dumps([])
+                    e_data = json.dumps(file_results_edges.get(path, []))
 
                     cache_entry = self.db.query(FileCache).filter(FileCache.file_path == path).first()
                     if not cache_entry:

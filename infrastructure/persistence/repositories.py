@@ -232,7 +232,11 @@ class LegacyRepository:
             coupling_score=metrics.get("coupling_score", 0.0),
             total_modernization_score=metrics.get("total_modernization_score", 0.0),
             detected_framework=metrics.get("detected_framework"),
-            hosting_risk_level=metrics.get("hosting_risk_level")
+            hosting_risk_level=metrics.get("hosting_risk_level"),
+            db_layer=metrics.get("db_layer"),
+            auth_layer=metrics.get("auth_layer"),
+            template_layer=metrics.get("template_layer"),
+            autoloading_strategy=metrics.get("autoloading_strategy")
         )
         self.db.add(lm)
         self.db.commit()

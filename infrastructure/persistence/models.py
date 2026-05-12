@@ -154,4 +154,10 @@ class LegacyMetrics(Base):
     # Requirement 15: Hosting Assumptions
     hosting_risk_level = Column(String, nullable=True)
     
+    # Phase 3: Deep Technical Profiling (Req 10-13)
+    db_layer           = Column(String, nullable=True)
+    auth_layer         = Column(String, nullable=True)
+    template_layer     = Column(String, nullable=True)
+    autoloading_strategy = Column(String, nullable=True)
+    
     created_at     = Column(DateTime, default=func.now(), nullable=False)

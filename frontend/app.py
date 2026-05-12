@@ -103,22 +103,30 @@ with col_info:
                     
                     st.markdown("---")
                     
+                    st.markdown("#### ⚙️ Deep Technical Profile")
+                    t_col1, t_col2 = st.columns(2)
+                    t_col1.write(f"🗄️ **Database Layer**: {legacy.get('db_layer', 'Unknown')}")
+                    t_col1.write(f"🔐 **Auth Strategy**: {legacy.get('auth_layer', 'Unknown')}")
+                    t_col2.write(f"🎨 **Template Engine**: {legacy.get('template_layer', 'Unknown')}")
+                    t_col2.write(f"🚚 **Autoloading**: {legacy.get('autoloading_strategy', 'Unknown')}")
+                    
+                    st.markdown("---")
+
                     col_score, col_rec = st.columns([2, 1])
                     
                     with col_score:
                         st.markdown("#### 🎯 Modernization Scoreboard")
-                        # 7 Dimensions from FINAL.md
-                        s_col1, s_col2 = st.columns(2)
-                        s_col1.write(f"🚀 **Version Compatibility**: {legacy.get('version_score', 0)}/20")
-                        s_col1.write(f"🏷️ **Namespace Adoption**: {legacy.get('namespace_score', 0)}/10")
-                        s_col1.write(f"🗄️ **DB Layer Quality**: {legacy.get('db_layer_score', 0)}/15")
-                        s_col1.write(f"🛡️ **Security Risk**: {legacy.get('security_score', 0)}/20")
-                        s_col2.write(f"📦 **Framework Alignment**: {legacy.get('framework_score', 0)}/10")
-                        s_col2.write(f"🧪 **Testability**: {legacy.get('testability_score', 0)}/10")
-                        s_col2.write(f"🔗 **Coupling Density**: {legacy.get('coupling_score', 0)}/15")
+                        # 7 Dimensions from FINAL.md - Flattened to avoid nesting error
+                        st.write(f"🚀 **Version Compatibility**: {legacy.get('version_score', 0)}/20")
+                        st.write(f"🏷️ **Namespace Adoption**: {legacy.get('namespace_score', 0)}/10")
+                        st.write(f"🗄️ **DB Layer Quality**: {legacy.get('db_layer_score', 0)}/15")
+                        st.write(f"🛡️ **Security Risk**: {legacy.get('security_score', 0)}/20")
+                        st.write(f"📦 **Framework Alignment**: {legacy.get('framework_score', 0)}/10")
+                        st.write(f"🧪 **Testability**: {legacy.get('testability_score', 0)}/10")
+                        st.write(f"🔗 **Coupling Density**: {legacy.get('coupling_score', 0)}/15")
                         
                         st.markdown(f"**Total Modernization Score: {legacy.get('total_modernization_score', 0)}/100**")
-                        st.progress(legacy.get('total_modernization_score', 0) / 100)
+                        st.progress(float(legacy.get('total_modernization_score', 0)) / 100)
 
                     with col_rec:
                         # Call Recommendation Engine (Placeholder for now, but we can logic it here based on score)
@@ -165,4 +173,32 @@ with col_start:
     st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("---")
+
+if st.session_state.get("active_run_id"):
+    st.subheader("📊 Phase 5: Enterprise Artifacts")
+    st.write("Generate industry-standard documentation and AI-friendly knowledge graphs.")
+    
+    run_id = st.session_state["active_run_id"]
+    FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
+    
+    @st.cache_data
+    def fetch_reports(rid):
+        return {
+            "roadmap": requests.get(f"{FASTAPI_URL}/report/roadmap/{rid}").json().get("markdown", ""),
+            "dot": requests.get(f"{FASTAPI_URL}/report/graphviz/{rid}").json().get("dot", ""),
+            "cypher": requests.get(f"{FASTAPI_URL}/report/neo4j/{rid}").json().get("cypher", ""),
+            "ai": str(requests.get(f"{FASTAPI_URL}/report/ai-chunks/{rid}").json().get("chunks", []))
+        }
+    
+    try:
+        reports = fetch_reports(run_id)
+        c1, c2, c3, c4 = st.columns(4)
+        with c1: st.download_button("🗺️ Executive Roadmap", reports["roadmap"], file_name=f"roadmap_{run_id}.md", use_container_width=True)
+        with c2: st.download_button("🕸️ Graphviz (.dot)", reports["dot"], file_name=f"graph_{run_id}.dot", use_container_width=True)
+        with c3: st.download_button("🗄️ Neo4j Cypher", reports["cypher"], file_name=f"neo4j_{run_id}.cypher", use_container_width=True)
+        with c4: st.download_button("🤖 AI-Ready JSON", reports["ai"], file_name=f"ai_chunks_{run_id}.json", use_container_width=True)
+    except Exception as e:
+        st.error("Failed to generate Phase 5 artifacts.")
+
 st.caption("Strata v1.0.0-Competition | Advanced Modernization Advisor")
+

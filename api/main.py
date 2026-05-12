@@ -213,3 +213,39 @@ def refactor_extract(req: RefactorRequest):
     except Exception as e:
         logger.error(f"Refactoring failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# --- Phase 5: Enterprise Reporting ---
+from application.services.report_service import ReportService
+
+@app.get("/report/roadmap/{run_id}")
+def get_roadmap(run_id: int, db: Session = Depends(get_db)):
+    try:
+        service = ReportService(db)
+        return service.generate_roadmap(run_id)
+    except Exception as e:
+        logger.error(f"Failed to generate roadmap: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/report/graphviz/{run_id}")
+def get_graphviz(run_id: int, db: Session = Depends(get_db)):
+    try:
+        service = ReportService(db)
+        return {"dot": service.generate_graphviz(run_id)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/report/neo4j/{run_id}")
+def get_neo4j(run_id: int, db: Session = Depends(get_db)):
+    try:
+        service = ReportService(db)
+        return {"cypher": service.generate_neo4j_cypher(run_id)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/report/ai-chunks/{run_id}")
+def get_ai_chunks(run_id: int, db: Session = Depends(get_db)):
+    try:
+        service = ReportService(db)
+        return {"chunks": service.generate_ai_chunks(run_id)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
