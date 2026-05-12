@@ -80,73 +80,81 @@ def get_risk_data(run_id):
 graph_data = get_graph_data(RUN_ID)
 risk_map = get_risk_data(RUN_ID)
 
+# --- 🛰️ Mission Control Explorer ---
 if not graph_data:
     st.info("Awaiting Topological Data. Ensure a project analysis has been completed for this Run ID.")
 else:
-    # 1. GRAPH CONSTRUCTION
     st.sidebar.header("Filter & View")
-    node_limit = st.sidebar.slider("Node Visibility Limit", 10, 500, 100)
+    node_limit = st.sidebar.slider("Node Visibility Limit", 10, 500, 200)
     
-    # Initialize Pyvis Network
-    net = Network(height="700px", width="100%", bgcolor="#0e1117", font_color="white", directed=True)
+    # Initialize Pyvis Network with professional dark styling
+    net = Network(height="700px", width="100%", bgcolor="#0b0e14", font_color="#e0e0e0", directed=True)
     
-    # Physics options for a professional feel
     net.set_options("""
     var options = {
+      "nodes": {
+        "shadow": { "enabled": true, "color": "rgba(0,0,0,0.5)" },
+        "font": { "face": "Inter, sans-serif" }
+      },
+      "edges": {
+        "smooth": { "type": "continuous", "forceDirection": "none" },
+        "color": { "inherit": "both" },
+        "width": 1.5
+      },
       "physics": {
-        "forceAtlas2Based": {
-          "gravitationalConstant": -50,
-          "centralGravity": 0.01,
-          "springLength": 100,
-          "springConstant": 0.08
-        },
-        "maxVelocity": 50,
+        "forceAtlas2Based": { "gravitationalConstant": -60, "springLength": 120, "springConstant": 0.08 },
         "solver": "forceAtlas2Based",
-        "timestep": 0.35,
-        "stabilization": { "iterations": 150 }
+        "stabilization": { "iterations": 100 }
       }
     }
     """)
 
-    # Map Colors based on Risk
     def get_color(risk_val):
-        if risk_val > 0.7: return "#ff4b4b" # High Risk
-        if risk_val > 0.4: return "#ffa500" # Moderate
-        return "#00cc96" # Low Risk
+        if risk_val > 0.6: return "#ff4b4b" # Crimson (High)
+        if risk_val > 0.25: return "#f9a825" # Amber (Moderate)
+        return "#00cc96" # Emerald (Low)
 
     nodes = graph_data.get("nodes", [])[:node_limit]
     node_ids = {n["id"] for n in nodes}
     
     for n in nodes:
-        name = n.get("name", "Unknown")
-        risk_info = risk_map.get(name, {})
+        fqn = n.get("fqn", "Unknown")
+        # --- 🔗 SYNCHRONIZED FQN LOOKUP ---
+        risk_info = next((v for k, v in risk_map.items() if k.lower() == fqn.lower()), {})
+        
         risk_val = risk_info.get("final_risk", 0.0)
-        role = risk_info.get("type", "Unknown")
+        role = n.get("type", "class")
         
         color = get_color(risk_val)
         
-        label = f"{name}\n({role})"
-        title = f"FQN: {n.get('fqn')}\nRisk: {risk_val:.2f}\nRole: {role}"
+        label = n.get("name", "Unknown")
+        title = f"<b>{fqn}</b><br>Risk: {risk_val:.2f}<br>Role: {role}"
         
-        net.add_node(n["id"], label=label, title=title, color=color, border_width=2)
+        net.add_node(n["id"], label=label, title=title, color=color, border_width=2, size=25 if risk_val > 0.4 else 15)
 
     for link in graph_data.get("links", []):
-        source = link.get("source") or link.get("caller")
-        target = link.get("target") or link.get("callee")
+        source, target = link.get("source"), link.get("target")
         if source in node_ids and target in node_ids:
-            net.add_edge(source, target, color="#444", arrowsize=0.5)
+            net.add_edge(source, target, color="rgba(100, 100, 100, 0.3)", arrowsize=0.4)
 
-    # 2. RENDER
+    # --- 🏗️ THE BOUNDED UI ---
+    st.markdown("""
+        <div style="border: 2px solid #1f2937; border-radius: 12px; padding: 10px; background: #0b0e14; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #1f2937; padding-bottom: 5px;">
+                <span style="color: #6b7280; font-size: 0.8rem; font-family: monospace;">STRATA_VIS_ENGINE_V1.0</span>
+                <span style="color: #6b7280; font-size: 0.8rem; font-family: monospace;">REAL_TIME_TOPOLOGY</span>
+            </div>
+    """, unsafe_allow_html=True)
+    
     path = "/tmp/nx_graph.html"
     net.save_graph(path)
-    
     with open(path, "r", encoding="utf-8") as f:
         html_content = f.read()
-        
-    components.html(html_content, height=750)
-
-    st.markdown("---")
-    st.caption("🔍 **Interactive Tips**: Use your mouse to zoom and drag. Hover over nodes to see FQN and Risk Coefficients.")
+    
+    components.html(html_content, height=710)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+    st.caption("🔍 **Interactive Tips**: Nodes are sized by Risk Magnitude. Red/Amber nodes represent structural anchors or high-pressure components.")
 
 st.sidebar.markdown("---")
 st.sidebar.caption("Strata Visualization Engine v0.1")
