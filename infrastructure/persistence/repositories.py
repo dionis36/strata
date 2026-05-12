@@ -208,3 +208,39 @@ class RiskRepository:
             .order_by(ComponentRisk.final_risk.desc())
             .all()
         )
+
+
+class LegacyRepository:
+    """
+    Phase 2: Handles persistence for specialized legacy insights (Era, Framework, Scores).
+    """
+
+    def __init__(self, db: Session):
+        self.db = db
+
+    def save_legacy_metrics(self, run_id: int, metrics: dict) -> None:
+        from infrastructure.persistence.models import LegacyMetrics
+        
+        lm = LegacyMetrics(
+            run_id=run_id,
+            php_era=metrics.get("php_era"),
+            version_score=metrics.get("version_score", 0.0),
+            namespace_score=metrics.get("namespace_score", 0.0),
+            db_layer_score=metrics.get("db_layer_score", 0.0),
+            security_score=metrics.get("security_score", 0.0),
+            testability_score=metrics.get("testability_score", 0.0),
+            coupling_score=metrics.get("coupling_score", 0.0),
+            total_modernization_score=metrics.get("total_modernization_score", 0.0),
+            detected_framework=metrics.get("detected_framework"),
+            hosting_risk_level=metrics.get("hosting_risk_level")
+        )
+        self.db.add(lm)
+        self.db.commit()
+
+    def get_legacy_metrics(self, run_id: int):
+        from infrastructure.persistence.models import LegacyMetrics
+        return (
+            self.db.query(LegacyMetrics)
+            .filter(LegacyMetrics.run_id == run_id)
+            .first()
+        )

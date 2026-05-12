@@ -3,9 +3,11 @@ import logging
 from typing import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from dotenv import load_dotenv
-
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 # We resolve the DATABASE_URL. In local local dev, we might use a relative path if /data isn't mapped
 # This logic accommodates the Docker `/data/app.db` path vs local `./data/app.db`

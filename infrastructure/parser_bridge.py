@@ -72,6 +72,16 @@ class ParserBridge:
                 
                 metadata = result.get("metadata", {})
                 
+                # --- Process File Node ---
+                file_id = generate_deterministic_id(path, NodeType.FILE.value)
+                nodes.append(Node(
+                    id=file_id,
+                    name=os.path.basename(path),
+                    fqn=path,
+                    node_type=NodeType.FILE,
+                    file_path=path
+                ))
+
                 # --- Process Classes ---
                 classes = metadata.get("classes", {})
                 if isinstance(classes, list): classes = {}
@@ -88,6 +98,12 @@ class ParserBridge:
                     )
                     nodes.append(node)
                     
+                    # File -> Class (Declares)
+                    edges.append(Edge(
+                        source_id=file_id,
+                        target_id=node_id,
+                        edge_type=EdgeType.DECLARES
+                    ))
 
                     if data.get("extends"):
                         target_fqn = data["extends"]
@@ -106,12 +122,76 @@ class ParserBridge:
                             target_fqn=iface
                         ))
 
+                # --- Process Includes (Requirement 3B) ---
+                for inc in metadata.get("includes", []):
+                    inc_path = inc.get("path")
+                    if not inc_path: continue
+                    
+                    # Attempt simple resolution for relative includes
+                    abs_inc_path = inc_path
+                    if not os.path.isabs(inc_path):
+                        abs_inc_path = os.path.normpath(os.path.join(os.path.dirname(path), inc_path))
+                    
+                    target_file_id = generate_deterministic_id(abs_inc_path, NodeType.FILE.value)
+                    
+                    # Determine source (Class or File)
+                    source_id = file_id
+                    if inc.get("source_class"):
+                        source_id = generate_deterministic_id(inc["source_class"], NodeType.CLASS.value)
+                    
+                    edges.append(Edge(
+                        source_id=source_id,
+                        target_id=target_file_id,
+                        edge_type=EdgeType.DEPENDS_ON,
+                        target_fqn=abs_inc_path
+                    ))
+
+                # --- Process Globals (Requirement 3C) ---
+                for glob in metadata.get("globals", []):
+                    var_name = glob.get("name")
+                    if not var_name: continue
+                    
+                    global_node_id = generate_deterministic_id(var_name, NodeType.GLOBAL_VAR.value)
+                    
+                    source_id = file_id
+                    if glob.get("source_class"):
+                        source_id = generate_deterministic_id(glob["source_class"], NodeType.CLASS.value)
+                    
+                    edges.append(Edge(
+                        source_id=source_id,
+                        target_id=global_node_id,
+                        edge_type=EdgeType.READS_FROM,
+                        target_fqn=var_name
+                    ))
+
+                # --- Process Config/Constants (Requirement 14) ---
+                for const in metadata.get("constants", []):
+                    const_name = const.get("name")
+                    if not const_name: continue
+                    
+                    const_node_id = generate_deterministic_id(const_name, NodeType.GLOBAL_VAR.value)
+                    
+                    source_id = file_id
+                    if const.get("source_class"):
+                        source_id = generate_deterministic_id(const["source_class"], NodeType.CLASS.value)
+                    
+                    # File/Class -> Constant (Writes/Defines)
+                    edges.append(Edge(
+                        source_id=source_id,
+                        target_id=const_node_id,
+                        edge_type=EdgeType.WRITES_TO,
+                        target_fqn=const_name
+                    ))
+
                 # --- Process Calls (Edges) ---
                 for call in metadata.get("calls", []):
                     source_fqn = call.get("source")
-                    if not source_fqn: continue
+                    if not source_fqn:
+                        # Procedural call? Use file as source
+                        source_node_id = file_id
+                    else:
+                        source_node_id = generate_deterministic_id(source_fqn, NodeType.CLASS.value)
                         
-                    source_node_id = generate_deterministic_id(source_fqn, NodeType.CLASS.value)
                     target_id = None
                     edge_type = None
                     target_fqn = None
@@ -128,10 +208,26 @@ class ParserBridge:
                             edge_type=edge_type,
                             target_fqn=target_fqn
                         ))
+                
+                # --- Process Side Effects (Requirement 6, 11, 13) ---
+                for fqn, data in classes.items():
+                    class_node_id = generate_deterministic_id(fqn, NodeType.CLASS.value)
+                    for method in data.get("methods", []):
+                        for effect in method.get("side_effects", []):
+                            # Create a virtual node for the sink type
+                            sink_id = f"sink::{effect}"
+                            edges.append(Edge(
+                                source_id=class_node_id,
+                                target_id=generate_deterministic_id(sink_id, NodeType.UNKNOWN.value),
+                                edge_type=EdgeType.DEPENDS_ON,
+                                target_fqn=sink_id
+                            ))
+                            
         finally:
             runtime.stop()
             
         return nodes, edges
+
 
     def parse_files(
         self,

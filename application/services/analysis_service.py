@@ -1,6 +1,7 @@
 import traceback
+import logging
 from sqlalchemy.orm import Session
-from infrastructure.persistence.repositories import AnalysisRunRepository
+from infrastructure.persistence.repositories import AnalysisRunRepository, BehaviorRepository
 from infrastructure.parser_bridge import ParserBridge, FileScanner
 from domain.models.graph_model import GraphModel
 from domain.models.edge import Edge, EdgeType
@@ -9,7 +10,9 @@ from domain.services.metric_calculator import MetricCalculator
 from application.services.risk_service import RiskService
 from domain.behavior.write_analyzer import WriteAnalyzer
 from domain.behavior.behavioral_metrics import BehavioralMetricsCalculator
-from infrastructure.persistence.repositories import BehaviorRepository
+from application.services.legacy_analysis_service import LegacyAnalysisService
+
+logger = logging.getLogger(__name__)
 
 class AnalysisService:
     def __init__(self, db: Session):
@@ -30,6 +33,7 @@ class AnalysisService:
             # --- Module C.2: Incremental Caching ---
             from infrastructure.persistence.models import FileCache
             import hashlib
+            from typing import List
             
             all_nodes: List[Node] = []
             all_edges: List[Edge] = []
@@ -50,7 +54,6 @@ class AnalysisService:
                     import json
                     nodes_data = json.loads(cached.nodes_data)
                     all_nodes.extend([Node(**n) for n in nodes_data])
-                    # (Edges are currently rebuilt from the CSOT/Graph projection to ensure integrity)
                 else:
                     to_parse.append(path)
             
@@ -126,7 +129,7 @@ class AnalysisService:
             total_edges = graph.get_edge_count()
             
             # 4. Calculate Phase 2 Structural Metrics
-            STRUCTURAL_EDGES = [EdgeType.CALLS, EdgeType.INHERITS, EdgeType.DEPENDS_ON]
+            STRUCTURAL_EDGES = [EdgeType.CALLS, EdgeType.INHERITS, EdgeType.DEPENDS_ON, EdgeType.DECLARES]
             projected = MetricCalculator.project(graph.graph, edge_types=STRUCTURAL_EDGES)
             
             calculator = MetricCalculator(projected)
@@ -150,9 +153,14 @@ class AnalysisService:
                 b_repo.save_behavior_metrics(run.id, behavior_metrics)
 
             # 5.5 Phase 3: Compute structural risk scores from Phase 2 metrics.
-            #     Runs synchronously — risk scores are always ready with the analysis.
             risk_service = RiskService(self.db)
             risk_service.compute_risk(run.id)
+            
+            # --- Phase 2: Legacy Domain Intelligence (Requirements 1, 8, 9) ---
+            legacy_service = LegacyAnalysisService(self.db)
+            nodes_dict = [n.model_dump(mode='json') for n in nodes]
+            edges_dict = [e.model_dump(mode='json') for e in edges]
+            legacy_insights = legacy_service.analyze_legacy_environment(run.id, nodes_dict, edges_dict)
 
             # 6. Save Graph JSON locally
             graph_data = graph.to_json_dict()
@@ -166,7 +174,8 @@ class AnalysisService:
                 "run_id": run.id,
                 "files": total_files,
                 "classes": total_classes,
-                "edges": total_edges
+                "edges": total_edges,
+                "legacy_insights": legacy_insights
             }
             
         except Exception as e:

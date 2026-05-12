@@ -125,3 +125,33 @@ class FileCache(Base):
     edges_data  = Column(String, nullable=False)  # Serialized Edge list
     
     updated_at  = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
+
+class LegacyMetrics(Base):
+    """
+    Requirements 1, 8, 9: specialized modernization indicators.
+    Stores the 'Specialist' insights about the legacy environment.
+    """
+    __tablename__ = "legacy_metrics"
+
+    id             = Column(Integer, primary_key=True, autoincrement=True)
+    run_id         = Column(Integer, ForeignKey("analysis_run.id"), nullable=False)
+    
+    # Requirement 1: Era Classification
+    php_era        = Column(String, nullable=True) # Era A, B, C, D
+    
+    # Requirement 8: Modernization Score Dimensions
+    version_score  = Column(Float, default=0.0)
+    namespace_score = Column(Float, default=0.0)
+    db_layer_score = Column(Float, default=0.0)
+    security_score = Column(Float, default=0.0)
+    testability_score = Column(Float, default=0.0)
+    coupling_score = Column(Float, default=0.0)
+    total_modernization_score = Column(Float, default=0.0)
+    
+    # Requirement 9: Framework Fingerprinting
+    detected_framework = Column(String, nullable=True)
+    
+    # Requirement 15: Hosting Assumptions
+    hosting_risk_level = Column(String, nullable=True)
+    
+    created_at     = Column(DateTime, default=func.now(), nullable=False)

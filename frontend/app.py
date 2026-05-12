@@ -78,8 +78,71 @@ with col_info:
                     col_c.metric("Classes Identified", data.get("classes", 0))
                     col_e.metric("Dependencies Mapped", data.get("edges", 0))
                     
+                    # --- 🧠 Legacy Intelligence Section (Requirement 1, 8, 16) ---
+                    st.markdown("---")
+                    st.markdown("### 🧠 Legacy Intelligence Advisory")
+                    
+                    legacy = data.get("legacy_insights", {})
+                    era = legacy.get("php_era", "Unknown")
+                    
+                    # Era Badge
+                    era_color = "#f87171" if "Era A" in era or "Era B" in era else "#fbbf24" if "Era C" in era else "#4ade80"
+                    st.markdown(f"""
+                        <div style="background-color: {era_color}; color: #000; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
+                            <h2 style="margin:0; color: #000;">{era}</h2>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # New Intelligence Metrics (Requirement 9 & 15)
+                    col_fw, col_host = st.columns(2)
+                    col_fw.metric("🛠️ Framework Identity", legacy.get("detected_framework", "Custom"))
+                    
+                    h_risk = legacy.get("hosting_risk_level", "low").upper()
+                    h_color = "red" if h_risk == "HIGH" else "orange" if h_risk == "MEDIUM" else "green"
+                    col_host.markdown(f"**🌐 Hosting Assumption Risk**: <span style='color:{h_color}'>{h_risk}</span>", unsafe_allow_html=True)
+                    
+                    st.markdown("---")
+                    
+                    col_score, col_rec = st.columns([2, 1])
+                    
+                    with col_score:
+                        st.markdown("#### 🎯 Modernization Scoreboard")
+                        # 7 Dimensions from FINAL.md
+                        s_col1, s_col2 = st.columns(2)
+                        s_col1.write(f"🚀 **Version Compatibility**: {legacy.get('version_score', 0)}/20")
+                        s_col1.write(f"🏷️ **Namespace Adoption**: {legacy.get('namespace_score', 0)}/10")
+                        s_col1.write(f"🗄️ **DB Layer Quality**: {legacy.get('db_layer_score', 0)}/15")
+                        s_col1.write(f"🛡️ **Security Risk**: {legacy.get('security_score', 0)}/20")
+                        s_col2.write(f"📦 **Framework Alignment**: {legacy.get('framework_score', 0)}/10")
+                        s_col2.write(f"🧪 **Testability**: {legacy.get('testability_score', 0)}/10")
+                        s_col2.write(f"🔗 **Coupling Density**: {legacy.get('coupling_score', 0)}/15")
+                        
+                        st.markdown(f"**Total Modernization Score: {legacy.get('total_modernization_score', 0)}/100**")
+                        st.progress(legacy.get('total_modernization_score', 0) / 100)
+
+                    with col_rec:
+                        # Call Recommendation Engine (Placeholder for now, but we can logic it here based on score)
+                        score = legacy.get('total_modernization_score', 0)
+                        if score > 70:
+                            strategy = "Option A — Incremental"
+                            icon = "🛠️"
+                        elif score > 40:
+                            strategy = "Option B — Strangler Fig"
+                            icon = "🌿"
+                        else:
+                            strategy = "Option C — Full Rewrite"
+                            icon = "🏗️"
+                            
+                        st.markdown(f"""
+                        <div class='card' style='border-left: 5px solid #4ade80;'>
+                            <h4>{icon} Recommended Strategy</h4>
+                            <p class='highlight'>{strategy}</p>
+                            <small>Based on architectural topology and era classification.</small>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
                     st.session_state["active_run_id"] = data["run_id"]
-                    st.info("💡 Use the sidebar to explore the specific metrics and risk profiles for this run.")
+                    st.info("💡 Use the 'Modernization Cockpit' in the sidebar to view full reports and extraction blueprints.")
                 else:
                     st.error(f"Scan Failed: {res.text}")
             except Exception as e:
