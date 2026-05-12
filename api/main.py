@@ -187,7 +187,7 @@ def list_runs(db: Session = Depends(get_db)):
                 "id": r.id,
                 "project_id": r.project_id,
                 "status": r.status,
-                "created_at": r.created_at.isoformat(),
+                "started_at": r.started_at.isoformat(),
                 "total_files": r.total_files,
                 "total_classes": r.total_classes,
                 "total_edges": r.total_edges

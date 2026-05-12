@@ -59,18 +59,31 @@ with col_info:
         project_path = os.path.join(data_dir, selected_project)
         project_name_slug = st.text_input("Project Name (Slug)", value=selected_project.replace("-", "_").capitalize())
     
-    if st.button("🚀 Run Deep Intelligence Scan", type="primary"):
-        FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
-        try:
-            payload = {"project_path": project_path, "project_name": project_name_slug}
-            res = requests.post(f"{FASTAPI_URL}/analyze", json=payload)
-            if res.status_code == 200:
-                st.success(f"Intelligence Scan Started! (Run ID: {res.json()['run_id']})")
-                st.balloons()
-            else:
-                st.error(f"Analysis failed: {res.text}")
-        except Exception as e:
-            st.error(f"Could not connect to Intelligence Engine: {e}")
+    FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
+    if st.button("🚀 Run Deep Intelligence Scan", use_container_width=True):
+        with st.spinner("Executing Deep Intelligence Pipeline..."):
+            try:
+                res = requests.post(f"{FASTAPI_URL}/analyze", json={
+                    "project_name": project_name_slug,
+                    "project_path": project_path
+                }, timeout=300)
+                if res.status_code == 200:
+                    data = res.json()
+                    st.success(f"✅ Intelligence Scan Complete! (Run ID: {data['run_id']})")
+                    
+                    # --- 📊 Instant Summary Card ---
+                    st.markdown("### 📊 Scan Summary")
+                    col_f, col_c, col_e = st.columns(3)
+                    col_f.metric("Files Processed", data.get("files", 0))
+                    col_c.metric("Classes Identified", data.get("classes", 0))
+                    col_e.metric("Dependencies Mapped", data.get("edges", 0))
+                    
+                    st.session_state["active_run_id"] = data["run_id"]
+                    st.info("💡 Use the sidebar to explore the specific metrics and risk profiles for this run.")
+                else:
+                    st.error(f"Scan Failed: {res.text}")
+            except Exception as e:
+                st.error(f"Connection Error: {e}")
 
 with col_start:
     st.markdown("<div class='card'>", unsafe_allow_html=True)

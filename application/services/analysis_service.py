@@ -65,21 +65,30 @@ class AnalysisService:
                 for n in new_nodes:
                     path = n.file_path
                     if path not in file_results_nodes: file_results_nodes[path] = []
-                    file_results_nodes[path].append(n.model_dump())
+                    file_results_nodes[path].append(n.model_dump(mode='json'))
                 
+
                 for path in to_parse:
                     import json
                     with open(path, "rb") as f:
                         f_hash = hashlib.sha256(f.read()).hexdigest()
-                        
+                    
+                    n_data = json.dumps(file_results_nodes.get(path, []))
+                    e_data = json.dumps([])
+
                     cache_entry = self.db.query(FileCache).filter(FileCache.file_path == path).first()
                     if not cache_entry:
-                        cache_entry = FileCache(file_path=path)
+                        cache_entry = FileCache(
+                            file_path=path,
+                            file_hash=f_hash,
+                            nodes_data=n_data,
+                            edges_data=e_data
+                        )
                         self.db.add(cache_entry)
-                        
-                    cache_entry.file_hash = f_hash
-                    cache_entry.nodes_data = json.dumps(file_results_nodes.get(path, []))
-                    cache_entry.edges_data = json.dumps([]) 
+                    else:
+                        cache_entry.file_hash = f_hash
+                        cache_entry.nodes_data = n_data
+                        cache_entry.edges_data = e_data
                 
                 self.db.commit()
 

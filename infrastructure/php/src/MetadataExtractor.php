@@ -63,8 +63,10 @@ class MetadataExtractor extends NodeVisitorAbstract
             $this->currentNamespace = (string) $node->name;
         }
 
+
         if ($node instanceof Class_) {
-            $this->currentClass = (string) $node->namespacedName;
+            $namespacedName = $node->namespacedName ? (string) $node->namespacedName : (string) $node->name;
+            $this->currentClass = $namespacedName;
             $this->metadata['classes'][$this->currentClass] = [
                 'name' => (string) $node->name,
                 'fqn' => $this->currentClass,
@@ -76,7 +78,8 @@ class MetadataExtractor extends NodeVisitorAbstract
         }
 
         if ($node instanceof Interface_) {
-            $this->metadata['interfaces'][(string) $node->namespacedName] = [
+            $namespacedName = $node->namespacedName ? (string) $node->namespacedName : (string) $node->name;
+            $this->metadata['interfaces'][$namespacedName] = [
                 'name' => (string) $node->name,
                 'extends' => array_map(fn($e) => (string) $e, $node->extends),
                 'line' => $node->getLine()
@@ -84,7 +87,8 @@ class MetadataExtractor extends NodeVisitorAbstract
         }
 
         if ($node instanceof Trait_) {
-            $this->metadata['traits'][(string) $node->namespacedName] = [
+            $namespacedName = $node->namespacedName ? (string) $node->namespacedName : (string) $node->name;
+            $this->metadata['traits'][$namespacedName] = [
                 'name' => (string) $node->name,
                 'line' => $node->getLine()
             ];

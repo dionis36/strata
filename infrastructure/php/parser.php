@@ -9,10 +9,12 @@ use Strata\Parser\MetadataExtractor;
 
 // Initialize Parser
 
+
 // Initialize Parser with Legacy Support
-// PREFER_PHP7 ensures compatibility with the most common monolith versions (5.6 - 7.4)
-// while remaining capable of parsing PHP 8.x.
-$parser = (new ParserFactory())->create(ParserFactory::PREFER_PHP7);
+// PHP-Parser v5.x uses a new factory pattern. 
+// We use the newest supported version to ensure maximum compatibility with both 
+// modern and legacy (PHP 5.x/7.x) syntax.
+$parser = (new ParserFactory())->createForNewestSupportedVersion();
 
 while ($path = fgets(STDIN)) {
     $path = trim($path);
