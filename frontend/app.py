@@ -173,32 +173,6 @@ with col_start:
     st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("---")
-
-if st.session_state.get("active_run_id"):
-    st.subheader("📊 Phase 5: Enterprise Artifacts")
-    st.write("Generate industry-standard documentation and AI-friendly knowledge graphs.")
-    
-    run_id = st.session_state["active_run_id"]
-    FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
-    
-    @st.cache_data
-    def fetch_reports(rid):
-        return {
-            "roadmap": requests.get(f"{FASTAPI_URL}/report/roadmap/{rid}").json().get("markdown", ""),
-            "dot": requests.get(f"{FASTAPI_URL}/report/graphviz/{rid}").json().get("dot", ""),
-            "cypher": requests.get(f"{FASTAPI_URL}/report/neo4j/{rid}").json().get("cypher", ""),
-            "ai": str(requests.get(f"{FASTAPI_URL}/report/ai-chunks/{rid}").json().get("chunks", []))
-        }
-    
-    try:
-        reports = fetch_reports(run_id)
-        c1, c2, c3, c4 = st.columns(4)
-        with c1: st.download_button("🗺️ Executive Roadmap", reports["roadmap"], file_name=f"roadmap_{run_id}.md", use_container_width=True)
-        with c2: st.download_button("🕸️ Graphviz (.dot)", reports["dot"], file_name=f"graph_{run_id}.dot", use_container_width=True)
-        with c3: st.download_button("🗄️ Neo4j Cypher", reports["cypher"], file_name=f"neo4j_{run_id}.cypher", use_container_width=True)
-        with c4: st.download_button("🤖 AI-Ready JSON", reports["ai"], file_name=f"ai_chunks_{run_id}.json", use_container_width=True)
-    except Exception as e:
-        st.error("Failed to generate Phase 5 artifacts.")
-
 st.caption("Strata v1.0.0-Competition | Advanced Modernization Advisor")
+
 

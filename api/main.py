@@ -214,6 +214,16 @@ def refactor_extract(req: RefactorRequest):
         logger.error(f"Refactoring failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+from application.services.tree_service import TreeService
+@app.get("/graph/{run_id}/includes")
+def get_includes(run_id: int, db: Session = Depends(get_db)):
+    try:
+        service = TreeService(db)
+        return service.get_bootstrap_analysis(run_id)
+    except Exception as e:
+        logger.error(f"Failed to generate include tree: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # --- Phase 5: Enterprise Reporting ---
 from application.services.report_service import ReportService
 
