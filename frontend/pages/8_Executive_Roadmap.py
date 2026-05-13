@@ -58,9 +58,16 @@ with tab_roadmap:
 
 with tab_graphviz:
     st.markdown("### Graphviz Network Topology")
-    st.write("Use this DOT file to render the exact reachability and context maps of the legacy monolith.")
+    st.write("Visual representation of the exact reachability and context maps of the legacy monolith.")
     st.download_button("📥 Download .dot File", reports["dot"], file_name=f"graph_{run_id}.dot", type="primary")
-    with st.expander("Preview Raw Graphviz Code", expanded=True):
+    
+    st.markdown("#### Interactive Diagram")
+    try:
+        st.graphviz_chart(reports["dot"], use_container_width=True)
+    except Exception as e:
+        st.error("Graph is too large or complex to render directly in the browser. Please download the .dot file to view in a dedicated desktop viewer.")
+        
+    with st.expander("View Raw Graphviz Code", expanded=False):
         st.code(reports["dot"][:2000] + "\n... (truncated)", language="dot")
 
 with tab_neo4j:

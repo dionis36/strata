@@ -47,3 +47,4 @@ class Node(BaseModel):
 
     # Internal representation convenience
     methods: List[str] = []
+    metadata: dict = {}  # Raw AST metadata (requirements, globals, includes etc.)

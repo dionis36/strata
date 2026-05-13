@@ -60,7 +60,7 @@ class ParserBridge:
                         sink_name = f"sink::{effect_data['type']}"
                         s_id = generate_deterministic_id(sink_name, NodeType.UNKNOWN.value)
                         if s_id not in added_sinks:
-                            nodes.append(Node(id=s_id, name=sink_name, node_type=NodeType.UNKNOWN, fqn=sink_name))
+                            nodes.append(Node(id=s_id, name=sink_name, node_type=NodeType.UNKNOWN, fqn=sink_name, file_path=path))
                             added_sinks.add(s_id)
                         edges.append(Edge(source_id=f_id, target_id=s_id, edge_type=EdgeType.DEPENDS_ON, target_fqn=sink_name))
                     
@@ -68,7 +68,7 @@ class ParserBridge:
                         sink_name = f"sink::{req['type']}"
                         s_id = generate_deterministic_id(sink_name, NodeType.UNKNOWN.value)
                         if s_id not in added_sinks:
-                            nodes.append(Node(id=s_id, name=sink_name, node_type=NodeType.UNKNOWN, fqn=sink_name))
+                            nodes.append(Node(id=s_id, name=sink_name, node_type=NodeType.UNKNOWN, fqn=sink_name, file_path=path))
                             added_sinks.add(s_id)
                         edges.append(Edge(source_id=f_id, target_id=s_id, edge_type=EdgeType.DEPENDS_ON, target_fqn=sink_name))
 
@@ -76,16 +76,37 @@ class ParserBridge:
                     classes = metadata.get("classes", {})
                     for fqn, cdata in classes.items():
                         c_id = generate_deterministic_id(fqn, NodeType.CLASS.value)
-                        nodes.append(Node(id=c_id, name=cdata["name"], node_type=NodeType.CLASS, namespace=fqn.rsplit("\\", 1)[0] if "\\" in fqn else None, fqn=fqn, metadata=cdata))
+                        nodes.append(Node(
+                            id=c_id, 
+                            name=cdata["name"], 
+                            node_type=NodeType.CLASS, 
+                            namespace=fqn.rsplit("\\", 1)[0] if "\\" in fqn else None, 
+                            fqn=fqn, 
+                            file_path=path, # Critical for caching
+                            metadata=cdata
+                        ))
                         edges.append(Edge(source_id=f_id, target_id=c_id, edge_type=EdgeType.CONTAINS))
                         for method in cdata.get("methods", []):
                             for effect in method.get("side_effects", []):
                                 sink_name = f"sink::{effect}"
                                 s_id = generate_deterministic_id(sink_name, NodeType.UNKNOWN.value)
                                 if s_id not in added_sinks:
-                                    nodes.append(Node(id=s_id, name=sink_name, node_type=NodeType.UNKNOWN, fqn=sink_name))
+                                    nodes.append(Node(id=s_id, name=sink_name, node_type=NodeType.UNKNOWN, fqn=sink_name, file_path=path))
                                     added_sinks.add(s_id)
                                 edges.append(Edge(source_id=c_id, target_id=s_id, edge_type=EdgeType.DEPENDS_ON, target_fqn=sink_name))
+
+                    # Globals (Requirement 3C)
+                    for glob in metadata.get("globals", []):
+                        g_name = f"global::{glob['name']}"
+                        # Append the type if it's a mutation so we can tell the difference in reachability
+                        if glob.get("type") == "mutation":
+                            g_name += " (Mutated)"
+                        
+                        g_id = generate_deterministic_id(g_name, NodeType.UNKNOWN.value)
+                        if g_id not in added_sinks:
+                            nodes.append(Node(id=g_id, name=g_name, node_type=NodeType.UNKNOWN, fqn=g_name, file_path=path))
+                            added_sinks.add(g_id)
+                        edges.append(Edge(source_id=f_id, target_id=g_id, edge_type=EdgeType.DEPENDS_ON, target_fqn=g_name))
 
                     # Includes
                     for inc in metadata.get("includes", []):

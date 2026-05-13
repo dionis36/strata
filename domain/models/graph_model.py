@@ -15,7 +15,8 @@ class GraphModel:
                 fqn=node.fqn,
                 type=node.node_type.value,
                 file_path=node.file_path,
-                methods=node.methods
+                methods=node.methods,
+                metadata=node.metadata or {}
             )
 
     def add_edge(self, edge: Edge):

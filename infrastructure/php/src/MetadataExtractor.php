@@ -148,28 +148,41 @@ class MetadataExtractor extends NodeVisitorAbstract
                     $varName = (string)$var->name;
                     $this->metadata['globals'][] = [
                         'name' => $varName,
-                        'line' => $node->getLine(),
-                        'source_class' => $this->currentClass,
-                        'source_method' => $this->currentMethod
+                        'type' => 'explicit_global',
+                        'line' => $node->getLine()
                     ];
-                    
-                    if ($this->currentClass && $this->currentMethod) {
-                        $methodIndex = count($this->metadata['classes'][$this->currentClass]['methods']) - 1;
-                        if ($methodIndex >= 0) {
-                            $this->metadata['classes'][$this->currentClass]['methods'][$methodIndex]['globals'][] = $varName;
-                        }
-                    }
                 }
             }
         }
 
-        if ($node instanceof Node\Expr\Variable && (string)$node->name === 'GLOBALS') {
+        $superglobals = ['GLOBALS', '_SESSION', '_POST', '_GET', '_COOKIE', '_SERVER', '_REQUEST', '_ENV'];
+        
+        // Detect Mutations
+        if ($node instanceof Node\Expr\Assign) {
+            if ($node->var instanceof Node\Expr\Variable && in_array((string)$node->var->name, $superglobals)) {
+                $this->metadata['globals'][] = [
+                    'name' => (string)$node->var->name,
+                    'type' => 'mutation',
+                    'line' => $node->getLine()
+                ];
+            }
+            if ($node->var instanceof Node\Expr\ArrayDimFetch && $node->var->var instanceof Node\Expr\Variable) {
+                if (in_array((string)$node->var->var->name, $superglobals)) {
+                    $this->metadata['globals'][] = [
+                        'name' => (string)$node->var->var->name,
+                        'type' => 'mutation',
+                        'line' => $node->getLine()
+                    ];
+                }
+            }
+        }
+
+        // Detect Usage
+        if ($node instanceof Node\Expr\Variable && in_array((string)$node->name, $superglobals)) {
             $this->metadata['globals'][] = [
-                'name' => 'GLOBALS',
-                'type' => 'superglobal_access',
-                'line' => $node->getLine(),
-                'source_class' => $this->currentClass,
-                'source_method' => $this->currentMethod
+                'name' => (string)$node->name,
+                'type' => 'usage',
+                'line' => $node->getLine()
             ];
         }
 
@@ -194,6 +207,12 @@ class MetadataExtractor extends NodeVisitorAbstract
                 $this->metadata['requirements'][] = ['type' => 'CUSTOM_AUTH', 'line' => $node->getLine()];
             }
 
+            if ($funcName === 'mysqli_connect' || $funcName === 'mysql_connect') {
+                if (count($node->args) > 0 && $node->args[0]->value instanceof Node\Scalar\String_) {
+                    $this->metadata['requirements'][] = ['type' => 'HARDCODED_DB_CREDENTIALS', 'line' => $node->getLine()];
+                }
+            }
+
             if ($funcName === 'define' && count($node->args) >= 2) {
                 $constName = null;
                 if ($node->args[0]->value instanceof Node\Scalar\String_) {
@@ -210,18 +229,35 @@ class MetadataExtractor extends NodeVisitorAbstract
 
         // --- Raw SQL Inference (Requirement 11) ---
         if ($node instanceof Node\Scalar\String_) {
-            $val = strtolower($node->value);
-            if (strpos($val, 'select ') === 0 || strpos($val, 'insert into ') === 0 || strpos($val, 'update ') === 0 || strpos($val, 'delete from ') === 0) {
+            $val = strtolower(trim($node->value));
+            if (strpos($val, 'select ') === 0 || strpos($val, 'insert into ') === 0 || 
+                strpos($val, 'update ') === 0 || strpos($val, 'delete from ') === 0 ||
+                strpos($val, 'call ') === 0 || strpos($val, 'exec ') === 0) {
+                
+                $type = 'RAW_SQL';
+                if (strpos($val, 'call ') === 0 || strpos($val, 'exec ') === 0) {
+                    $type = 'STORED_PROCEDURE';
+                }
+                
                 $this->metadata['requirements'][] = [
-                    'type' => 'RAW_SQL', 
+                    'type' => $type, 
                     'line' => $node->getLine(), 
-                    'snippet' => substr($val, 0, 20)
+                    'snippet' => substr($val, 0, 50),
+                    'full_query' => $val
                 ];
             }
         }
 
         // --- Call Extraction ---
-        if ($node instanceof MethodCall) {
+        if ($node instanceof MethodCall && $node->name instanceof Node\Identifier) {
+            $methodName = strtolower((string) $node->name);
+            if (in_array($methodName, ['begintransaction', 'commit', 'rollback'])) {
+                $this->metadata['requirements'][] = [
+                    'type' => 'DB_TRANSACTION',
+                    'line' => $node->getLine()
+                ];
+            }
+            
             $this->metadata['calls'][] = [
                 'type' => 'method_call',
                 'method' => (string) $node->name,
@@ -231,7 +267,7 @@ class MetadataExtractor extends NodeVisitorAbstract
             ];
         }
 
-        if ($node instanceof StaticCall) {
+        if ($node instanceof StaticCall && $node->class instanceof Node\Name && $node->name instanceof Node\Identifier) {
             $class = $this->resolveClassName((string) $node->class);
             if ($class) {
                 $this->metadata['calls'][] = [
@@ -245,9 +281,15 @@ class MetadataExtractor extends NodeVisitorAbstract
             }
         }
 
-        if ($node instanceof New_) {
+        if ($node instanceof New_ && $node->class instanceof Node\Name) {
             $class = $this->resolveClassName((string) $node->class);
             if ($class) {
+                if (strtolower($class) === 'pdo' && count($node->args) > 0) {
+                    if ($node->args[0]->value instanceof Node\Scalar\String_) {
+                        $this->metadata['requirements'][] = ['type' => 'HARDCODED_DB_CREDENTIALS', 'line' => $node->getLine()];
+                    }
+                }
+                
                 $this->metadata['calls'][] = [
                     'type' => 'instantiation',
                     'class' => $class,
