@@ -60,7 +60,7 @@ class ReportService:
 
     def generate_ai_chunks(self, run_id: int) -> list:
         """
-        Requirement 23: Generate embeddings-ready metadata for AI-orchestrated refactoring.
+        Requirement 23: Generate embeddings-ready metadata for AI-assisted analysis and interpretation.
         """
         risks = self.db.query(ComponentRisk).filter(ComponentRisk.run_id == run_id).all()
         
@@ -71,7 +71,7 @@ class ReportService:
                 "type": r.component_type,
                 "embedding_text": f"Component '{r.component_name}' is a {r.component_type} with a risk level of {r.risk_level}. "
                                   f"It has a high coupling pressure of {r.coupling_pressure} and instability of {r.instability}. "
-                                  f"Blast radius is {r.norm_blast_radius}. This file needs refactoring.",
+                                  f"Blast radius is {r.norm_blast_radius}. This component is a high-risk node in the system topology.",
                 "metadata": {
                     "risk_score": r.risk_score,
                     "criticality": r.criticality_index

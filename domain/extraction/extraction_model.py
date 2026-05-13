@@ -45,4 +45,4 @@ class ExtractionCandidate(BaseModel):
 
     recommendation: RecommendationCategory
     reasoning: List[str] = []  # Detailed text explaining the reasoning
-    node_details: List[dict] = [] # Details for refactoring (name, file_path)
+    node_details: List[dict] = [] # Details for modernization planning (name, file_path)

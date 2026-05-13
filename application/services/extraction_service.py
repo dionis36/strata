@@ -89,7 +89,7 @@ class ExtractionService:
             # Rank and formulate final response
             candidate = ranker.rank(unit, impact)
             
-            # Enrich with node details (file paths) for refactoring engine
+            # Enrich with node details (file paths) for manual modernization planning
             for node_id in unit.nodes:
                 if node_id in nx_graph.nodes:
                     node_data = nx_graph.nodes[node_id]
