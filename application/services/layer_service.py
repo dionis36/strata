@@ -16,7 +16,7 @@ class LayerService:
             graph_data = json.load(f)
             
         nodes = graph_data.get("nodes", [])
-        edges = graph_data.get("edges", [])
+        edges = graph_data.get("links", [])
         
         # --- Layer 1: File System & Folder Classification ---
         file_types = defaultdict(int)
@@ -68,8 +68,10 @@ class LayerService:
         
         # Map side-effects to their source
         for e in edges:
-            if "sink::" in e["target_id"] or "global::" in e["target_id"]:
-                class_to_sinks[e["source_id"]].append(e["target_id"])
+            target = str(e.get("target", ""))
+            source = str(e.get("source", ""))
+            if "sink::" in target or "global::" in target:
+                class_to_sinks[source].append(target)
         
         for n in nodes:
             if n.get("type") == "class":
@@ -85,27 +87,45 @@ class LayerService:
                 })
 
         # --- Layer 3: Semantic Architecture & Bounded Contexts ---
-        # Group logic files by their top-level directory to infer bounded contexts
+        # Group logic into logical domains and calculate coupling metrics
         contexts = defaultdict(lambda: {"files": set(), "internal_edges": 0, "external_edges": 0, "db_access": False, "auth_access": False})
         
         node_to_context = {}
-        for n in nodes:
-            if n.get("type") in ["file", "class"] and "vendor" not in n.get("fqn", ""):
-                # Naive bounded context grouping: Top level directory after project root
-                parts = n.get("fqn", "").strip("/").split("/")
-                # If path has at least 2 parts (e.g. data/proj/app/Billing), take the 4th part as context
-                # To be safe, we'll just take the 2nd to last directory
+        
+        def get_context(fqn: str) -> str:
+            if not fqn: return "Global"
+            # Remove method/function boundaries to get base entity
+            base_fqn = fqn.split("::")[0]
+            
+            # Era 3 / Namespaced Era 2 mapping
+            if "\\" in base_fqn:
+                parts = base_fqn.split("\\")
+                return parts[0] if parts[0] else "Global"
+            # Era 1 / File-based mapping
+            elif "/" in base_fqn:
+                parts = base_fqn.strip("/").split("/")
                 if len(parts) >= 2:
-                    ctx = parts[-2]
-                else:
-                    ctx = "Root"
-                    
-                contexts[ctx]["files"].add(n["id"])
-                node_to_context[n["id"]] = ctx
+                    return parts[-2]
+            return "Global"
+
+        # Pass 1: Assign EVERY node (not just files) to a Bounded Context
+        for n in nodes:
+            fqn = n.get("fqn", "")
+            # Skip pure vendor/plugin files from taking over our domain logic
+            if "vendor" in fqn.lower() or "plugin" in fqn.lower():
+                continue
                 
+            ctx = get_context(fqn)
+            node_to_context[n["id"]] = ctx
+            
+            # Count the 'Physical' size of the domain
+            if n.get("type") in ["file", "class", "interface", "trait", "entry_point", "config"]:
+                contexts[ctx]["files"].add(n["id"])
+                
+        # Pass 2: Calculate Edge Boundaries
         for e in edges:
-            src_ctx = node_to_context.get(e["source_id"])
-            tgt_ctx = node_to_context.get(e["target_id"])
+            src_ctx = node_to_context.get(e.get("source"))
+            tgt_ctx = node_to_context.get(e.get("target"))
             
             if src_ctx:
                 if tgt_ctx and src_ctx == tgt_ctx:
@@ -113,10 +133,11 @@ class LayerService:
                 elif tgt_ctx and src_ctx != tgt_ctx:
                     contexts[src_ctx]["external_edges"] += 1
                     
-                # Flow Analysis
-                if "sink::RAW_SQL" in e["target_id"] or "table::" in e["target_id"]:
+                # Intelligent Flow Analysis (Detecting Sinks)
+                tgt_id = str(e.get("target", "")).lower()
+                if "sink::raw_sql" in tgt_id or "table::" in tgt_id or "pdo" in tgt_id or "mysql" in tgt_id:
                     contexts[src_ctx]["db_access"] = True
-                if "sink::CUSTOM_AUTH" in e["target_id"] or "global::_SESSION" in e["target_id"]:
+                if "sink::custom_auth" in tgt_id or "global::_session" in tgt_id or "auth" in tgt_id:
                     contexts[src_ctx]["auth_access"] = True
                     
         # Clean up contexts for serialization
