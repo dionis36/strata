@@ -51,15 +51,26 @@ class MetadataExtractor extends NodeVisitorAbstract
         return $type ? (string) $type : null;
     }
 
-    private function resolveClassName(string $name): ?string
+    private function resolveClassName($node): ?string
     {
+        if ($node instanceof Node\Name && $node->isFullyQualified()) {
+            return ltrim((string) $node, '\\');
+        }
+
+        $name = (string) $node;
         if ($name === 'self' || $name === 'static') {
             return $this->currentClass;
         }
         if ($name === 'parent') {
             return $this->metadata['classes'][$this->currentClass]['extends'] ?? null;
         }
-        return $name;
+
+        # If it's a namespaced name that wasn't FQN, it might have been resolved by NameResolver
+        if ($node instanceof Node\Name && $node->hasAttribute('resolvedName')) {
+            return ltrim((string) $node->getAttribute('resolvedName'), '\\');
+        }
+
+        return ltrim($name, '\\');
     }
 
     public function enterNode(Node $node)
@@ -87,7 +98,7 @@ class MetadataExtractor extends NodeVisitorAbstract
         }
 
         if ($node instanceof Class_) {
-            $namespacedName = $node->namespacedName ? (string) $node->namespacedName : (string) $node->name;
+            $namespacedName = $node->namespacedName ? ltrim((string) $node->namespacedName, '\\') : (string) $node->name;
             $this->currentClass = $namespacedName;
             $this->metadata['classes'][$this->currentClass] = [
                 'name' => (string) $node->name,
@@ -100,7 +111,7 @@ class MetadataExtractor extends NodeVisitorAbstract
         }
 
         if ($node instanceof Interface_) {
-            $namespacedName = $node->namespacedName ? (string) $node->namespacedName : (string) $node->name;
+            $namespacedName = $node->namespacedName ? ltrim((string) $node->namespacedName, '\\') : (string) $node->name;
             $this->metadata['interfaces'][$namespacedName] = [
                 'name' => (string) $node->name,
                 'extends' => array_map(fn($e) => (string) $e, $node->extends),
@@ -109,7 +120,7 @@ class MetadataExtractor extends NodeVisitorAbstract
         }
 
         if ($node instanceof Trait_) {
-            $namespacedName = $node->namespacedName ? (string) $node->namespacedName : (string) $node->name;
+            $namespacedName = $node->namespacedName ? ltrim((string) $node->namespacedName, '\\') : (string) $node->name;
             $this->metadata['traits'][$namespacedName] = [
                 'name' => (string) $node->name,
                 'line' => $node->getLine()
@@ -185,7 +196,10 @@ class MetadataExtractor extends NodeVisitorAbstract
                     $this->metadata['globals'][] = [
                         'name' => $varName,
                         'type' => 'explicit_global',
-                        'line' => $node->getLine()
+                        'line' => $node->getLine(),
+                        'sourceClass' => $this->currentClass,
+                        'sourceMethod' => $this->currentMethod,
+                        'sourceFunction' => $this->currentFunction
                     ];
                 }
             }
@@ -199,7 +213,10 @@ class MetadataExtractor extends NodeVisitorAbstract
                 $this->metadata['globals'][] = [
                     'name' => (string)$node->var->name,
                     'type' => 'mutation',
-                    'line' => $node->getLine()
+                    'line' => $node->getLine(),
+                    'sourceClass' => $this->currentClass,
+                    'sourceMethod' => $this->currentMethod,
+                    'sourceFunction' => $this->currentFunction
                 ];
             }
             if ($node->var instanceof Node\Expr\ArrayDimFetch && $node->var->var instanceof Node\Expr\Variable) {
@@ -207,7 +224,10 @@ class MetadataExtractor extends NodeVisitorAbstract
                     $this->metadata['globals'][] = [
                         'name' => (string)$node->var->var->name,
                         'type' => 'mutation',
-                        'line' => $node->getLine()
+                        'line' => $node->getLine(),
+                        'sourceClass' => $this->currentClass,
+                        'sourceMethod' => $this->currentMethod,
+                        'sourceFunction' => $this->currentFunction
                     ];
                 }
             }
@@ -218,7 +238,10 @@ class MetadataExtractor extends NodeVisitorAbstract
             $this->metadata['globals'][] = [
                 'name' => (string)$node->name,
                 'type' => 'usage',
-                'line' => $node->getLine()
+                'line' => $node->getLine(),
+                'sourceClass' => $this->currentClass,
+                'sourceMethod' => $this->currentMethod,
+                'sourceFunction' => $this->currentFunction
             ];
         }
 
@@ -234,22 +257,23 @@ class MetadataExtractor extends NodeVisitorAbstract
             }
         }
 
-        // --- Config Detection (Requirement 14) ---
+        // --- Config Detection & Procedural Calls (Requirement 14) ---
         if ($node instanceof Node\Expr\FuncCall && $node->name instanceof Node\Name) {
-            $funcName = strtolower((string)$node->name);
+            $funcName = (string)$node->name;
+            $funcNameLower = strtolower($funcName);
             
             # Auth Patterns (Requirement 13)
-            if (in_array($funcName, ['session_set_save_handler', 'session_start'])) {
+            if (in_array($funcNameLower, ['session_set_save_handler', 'session_start'])) {
                 $this->metadata['requirements'][] = ['type' => 'CUSTOM_AUTH', 'line' => $node->getLine()];
             }
 
-            if ($funcName === 'mysqli_connect' || $funcName === 'mysql_connect') {
+            if ($funcNameLower === 'mysqli_connect' || $funcNameLower === 'mysql_connect') {
                 if (count($node->args) > 0 && $node->args[0]->value instanceof Node\Scalar\String_) {
                     $this->metadata['requirements'][] = ['type' => 'HARDCODED_DB_CREDENTIALS', 'line' => $node->getLine()];
                 }
             }
 
-            if ($funcName === 'define' && count($node->args) >= 2) {
+            if ($funcNameLower === 'define' && count($node->args) >= 2) {
                 $constName = null;
                 if ($node->args[0]->value instanceof Node\Scalar\String_) {
                     $constName = $node->args[0]->value->value;
@@ -261,6 +285,16 @@ class MetadataExtractor extends NodeVisitorAbstract
                     'source_method' => $this->currentMethod
                 ];
             }
+
+            # Register as a general call for the Linker
+            $this->metadata['calls'][] = [
+                'type' => 'function_call',
+                'method' => $funcName, # We use 'method' key for compatibility with the Linker
+                'line' => $node->getLine(),
+                'source' => $this->currentClass,
+                'sourceMethod' => $this->currentMethod,
+                'sourceFunction' => $this->currentFunction
+            ];
         }
 
         // --- Raw SQL Inference (Requirement 11) ---
@@ -304,21 +338,33 @@ class MetadataExtractor extends NodeVisitorAbstract
         }
 
         if ($node instanceof StaticCall && $node->class instanceof Node\Name && $node->name instanceof Node\Identifier) {
-            $class = $this->resolveClassName((string) $node->class);
+            $class = $this->resolveClassName($node->class);
             if ($class) {
+                # Custom Framework Detection: jf::import
+                if (strtolower($class) === 'jf' && strtolower((string)$node->name) === 'import' && count($node->args) > 0) {
+                    if ($node->args[0]->value instanceof Node\Scalar\String_) {
+                        $this->metadata['includes'][] = [
+                            'type' => 'jf_import',
+                            'path' => $node->args[0]->value->value,
+                            'line' => $node->getLine()
+                        ];
+                    }
+                }
+
                 $this->metadata['calls'][] = [
                     'type' => 'static_call',
                     'class' => $class,
                     'method' => (string) $node->name,
                     'line' => $node->getLine(),
                     'source' => $this->currentClass,
-                    'sourceMethod' => $this->currentMethod
+                    'sourceMethod' => $this->currentMethod,
+                    'sourceFunction' => $this->currentFunction
                 ];
             }
         }
 
         if ($node instanceof New_ && $node->class instanceof Node\Name) {
-            $class = $this->resolveClassName((string) $node->class);
+            $class = $this->resolveClassName($node->class);
             if ($class) {
                 if (strtolower($class) === 'pdo' && count($node->args) > 0) {
                     if ($node->args[0]->value instanceof Node\Scalar\String_) {

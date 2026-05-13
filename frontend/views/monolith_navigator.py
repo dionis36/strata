@@ -96,9 +96,10 @@ def show_monolith_navigator():
         df_oop["Interactions"] = df_oop["side_effects"].apply(lambda x: ", ".join([s.split("::")[-1] for s in x]))
         df_oop["Complexity"] = df_oop["methods_count"].apply(lambda x: "High" if x > 20 else ("Medium" if x > 10 else "Low"))
         
-        # Rename for clarity
-        display_df = df_oop[["name", "namespace", "Complexity", "Interactions", "is_interface", "is_trait"]].copy()
-        display_df.columns = ["Name", "Namespace", "Structural Complexity", "System Interactions", "Interface?", "Trait?"]
+        # Rename for clarity and replace empty boolean columns with concrete metrics
+        df_oop["parent_class"] = df_oop["parent_class"].fillna("None")
+        display_df = df_oop[["name", "namespace", "parent_class", "methods_count", "Complexity", "Interactions"]].copy()
+        display_df.columns = ["Name", "Namespace", "Parent Class", "Method Count", "Structural Complexity", "System Interactions"]
         
         st.dataframe(display_df, use_container_width=True, hide_index=True)
     else:
