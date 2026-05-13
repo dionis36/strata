@@ -27,6 +27,7 @@ while ($path = fgets(STDIN)) {
 
     try {
         $code = file_get_contents($path);
+        $loc = substr_count($code, "\n") + 1;
         $stmts = $parser->parse($code);
 
         $extractor = new MetadataExtractor();
@@ -35,10 +36,13 @@ while ($path = fgets(STDIN)) {
         $traverser->addVisitor($extractor);
         $traverser->traverse($stmts);
 
+        $metadata = $extractor->metadata;
+        $metadata['loc'] = $loc;
+
         echo json_encode([
             'status' => 'success',
             'path' => $path,
-            'metadata' => $extractor->metadata
+            'metadata' => $metadata
         ]) . "\n";
 
     } catch (PhpParser\Error $error) {

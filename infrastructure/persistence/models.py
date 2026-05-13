@@ -7,6 +7,7 @@ class Project(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
+    root_path = Column(String, nullable=True)  # Persisted for one-click rescanning
     created_at = Column(DateTime, default=func.now(), nullable=False)
 
 class AnalysisRun(Base):
@@ -17,7 +18,13 @@ class AnalysisRun(Base):
     started_at = Column(DateTime, default=func.now(), nullable=False)
     completed_at = Column(DateTime, nullable=True)
     status = Column(String, nullable=False)  # e.g., 'started', 'completed', 'failed'
+    
+    # Aggregate Metrics (A. Dashboard)
     total_files = Column(Integer, nullable=True)
+    total_loc = Column(Integer, nullable=True)
+    avg_complexity = Column(Float, nullable=True)
+    avg_maintainability = Column(Float, nullable=True)
+    
     total_classes = Column(Integer, nullable=True)
     total_edges = Column(Integer, nullable=True)
     error_message = Column(String, nullable=True)

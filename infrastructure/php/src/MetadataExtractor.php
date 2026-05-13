@@ -23,7 +23,8 @@ class MetadataExtractor extends NodeVisitorAbstract
         'includes' => [],
         'globals' => [],
         'constants' => [],
-        'requirements' => [] # For Era/Quality flags
+        'requirements' => [], # For Era/Quality flags
+        'complexity' => 1 # Base cyclomatic complexity per file
     ];
 
     private ?string $currentNamespace = null;
@@ -60,6 +61,19 @@ class MetadataExtractor extends NodeVisitorAbstract
 
     public function enterNode(Node $node)
     {
+        // --- Cyclomatic Complexity Heuristic ---
+        if ($node instanceof Node\Stmt\If_ || 
+            $node instanceof Node\Stmt\For_ || 
+            $node instanceof Node\Stmt\Foreach_ || 
+            $node instanceof Node\Stmt\While_ || 
+            $node instanceof Node\Stmt\Do_ || 
+            $node instanceof Node\Stmt\Catch_ || 
+            $node instanceof Node\Expr\BinaryOp\BooleanAnd || 
+            $node instanceof Node\Expr\BinaryOp\BooleanOr || 
+            $node instanceof Node\Expr\Ternary) {
+            $this->metadata['complexity']++;
+        }
+
         if ($node instanceof Namespace_) {
             $this->currentNamespace = (string) $node->name;
         }

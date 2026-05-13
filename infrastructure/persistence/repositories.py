@@ -9,11 +9,15 @@ class ProjectRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_or_create(self, name: str) -> Project:
+    def get_or_create(self, name: str, root_path: str = None) -> Project:
         project = self.db.query(Project).filter(Project.name == name).first()
         if not project:
-            project = Project(name=name)
+            project = Project(name=name, root_path=root_path)
             self.db.add(project)
+            self.db.commit()
+            self.db.refresh(project)
+        elif root_path and project.root_path != root_path:
+            project.root_path = root_path
             self.db.commit()
             self.db.refresh(project)
         return project
@@ -29,12 +33,15 @@ class AnalysisRunRepository:
         self.db.refresh(run)
         return run
 
-    def update_metrics(self, run_id: int, total_files: int, total_classes: int, total_edges: int) -> AnalysisRun:
+    def update_metrics(self, run_id: int, metrics: dict) -> AnalysisRun:
         run = self.db.query(AnalysisRun).filter(AnalysisRun.id == run_id).first()
         if run:
-            run.total_files = total_files
-            run.total_classes = total_classes
-            run.total_edges = total_edges
+            run.total_files = metrics.get('total_files')
+            run.total_loc = metrics.get('total_loc')
+            run.avg_complexity = metrics.get('avg_complexity')
+            run.avg_maintainability = metrics.get('avg_maintainability')
+            run.total_classes = metrics.get('total_classes')
+            run.total_edges = metrics.get('total_edges')
             self.db.commit()
             self.db.refresh(run)
         return run

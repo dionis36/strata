@@ -184,7 +184,11 @@ def list_runs(db: Session = Depends(get_db)):
                 "project_id": r.project_id,
                 "status": r.status,
                 "started_at": r.started_at.isoformat(),
+                "completed_at": r.completed_at.isoformat() if r.completed_at else None,
                 "total_files": r.total_files,
+                "total_loc": r.total_loc,
+                "avg_complexity": r.avg_complexity,
+                "avg_maintainability": r.avg_maintainability,
                 "total_classes": r.total_classes,
                 "total_edges": r.total_edges
             }
@@ -258,4 +262,53 @@ def get_ai_chunks(run_id: int, db: Session = Depends(get_db)):
         service = ReportService(db)
         return {"chunks": service.generate_ai_chunks(run_id)}
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+@app.get("/dashboard/{project_id}")
+def get_dashboard(project_id: int, db: Session = Depends(get_db)):
+    """Requirement 4.A: Returns the executive dashboard summary for a project."""
+    from infrastructure.persistence.models import Project, AnalysisRun, LegacyMetrics
+    try:
+        project = db.query(Project).filter(Project.id == project_id).first()
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        latest_run = (
+            db.query(AnalysisRun)
+            .filter(AnalysisRun.project_id == project_id, AnalysisRun.status == "completed")
+            .order_by(AnalysisRun.id.desc())
+            .first()
+        )
+        
+        if not latest_run:
+            return {
+                "project": {
+                    "name": project.name,
+                    "root_path": project.root_path,
+                    "created_at": project.created_at.isoformat()
+                },
+                "latest_run": None
+            }
+            
+        legacy = db.query(LegacyMetrics).filter(LegacyMetrics.run_id == latest_run.id).first()
+        
+        return {
+            "project": {
+                "name": project.name,
+                "root_path": project.root_path,
+                "created_at": project.created_at.isoformat()
+            },
+            "latest_run": {
+                "id": latest_run.id,
+                "completed_at": latest_run.completed_at.isoformat(),
+                "total_files": latest_run.total_files,
+                "total_loc": latest_run.total_loc,
+                "avg_complexity": latest_run.avg_complexity,
+                "avg_maintainability": latest_run.avg_maintainability,
+                "risk_score": legacy.total_modernization_score if legacy else 0.0,
+                "php_era": legacy.php_era if legacy else "Unknown",
+                "framework": legacy.detected_framework if legacy else "Unknown"
+            }
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch dashboard: {e}")
         raise HTTPException(status_code=500, detail=str(e))

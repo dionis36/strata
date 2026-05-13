@@ -55,19 +55,19 @@ from views.legacy_bootstrapper import show_legacy_bootstrapper
 
 # Modern Streamlit Navigation (v1.31+)
 pages = {
-    "Strategic Command": [
-        st.Page(show_dashboard, title="Dashboard", icon=":material/dashboard:"),
+    "A. Command & Strategy": [
+        st.Page(show_dashboard, title="Executive Dashboard", icon=":material/dashboard:"),
         st.Page(show_executive_roadmap, title="Strategic Roadmap", icon=":material/insights:"),
     ],
-    "Structural Discovery": [
+    "B. Architectural Discovery": [
         st.Page(show_monolith_navigator, title="Monolith Navigator", icon=":material/hub:"),
-        st.Page(show_layered_architecture, title="Layered Architecture", icon=":material/layers:"),
+        st.Page(show_layered_architecture, title="Layered View", icon=":material/layers:"),
     ],
-    "Technical Intelligence": [
+    "C. Intelligence Reports": [
         st.Page(show_database_intelligence, title="Database Intelligence", icon=":material/storage:"),
         st.Page(show_risk_audit, title="Modernization Risk", icon=":material/gpp_maybe:"),
     ],
-    "Modernization Factory": [
+    "D. Artifact Generation": [
         st.Page(show_extraction_simulator, title="Extraction Simulator", icon=":material/biotech:"),
         st.Page(show_legacy_bootstrapper, title="Legacy Bootstrapper", icon=":material/build:"),
     ]
