@@ -304,6 +304,8 @@ def get_dashboard(project_id: int, db: Session = Depends(get_db)):
                 "total_loc": latest_run.total_loc,
                 "avg_complexity": latest_run.avg_complexity,
                 "avg_maintainability": latest_run.avg_maintainability,
+                "total_classes": latest_run.total_classes,
+                "total_edges": latest_run.total_edges,
                 "risk_score": legacy.total_modernization_score if legacy else 0.0,
                 "php_era": legacy.php_era if legacy else "Unknown",
                 "framework": legacy.detected_framework if legacy else "Unknown"

@@ -12,7 +12,7 @@ class TechStackProfiler:
         Profiles the DB, Auth, Template, and Autoloading layers.
         """
         # Collect 'virtual sink' edges
-        sinks = {e.get('target_fqn', '') for e in edges if 'sink::' in e.get('target_fqn', '')}
+        sinks = {(e.get('target_fqn') or '') for e in edges if 'sink::' in (e.get('target_fqn') or '')}
         
         # Collect requirements-specific metadata (e.g., RAW_SQL, LEGACY_AUTOLOAD)
         # Note: These are often attached to Nodes as 'requirements' list

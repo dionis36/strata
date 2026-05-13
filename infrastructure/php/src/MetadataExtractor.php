@@ -19,6 +19,8 @@ class MetadataExtractor extends NodeVisitorAbstract
         'classes' => [],
         'interfaces' => [],
         'traits' => [],
+        'functions' => [], # STANDALONE FUNCTIONS (B requirement)
+        'namespaces' => [], # ALL NAMESPACES IN FILE
         'calls' => [],
         'includes' => [],
         'globals' => [],
@@ -30,6 +32,7 @@ class MetadataExtractor extends NodeVisitorAbstract
     private ?string $currentNamespace = null;
     private ?string $currentClass = null;
     private ?string $currentMethod = null;
+    private ?string $currentFunction = null;
 
     private function resolveType($type): ?string
     {
@@ -75,7 +78,12 @@ class MetadataExtractor extends NodeVisitorAbstract
         }
 
         if ($node instanceof Namespace_) {
-            $this->currentNamespace = (string) $node->name;
+            $nsName = (string) $node->name;
+            $this->currentNamespace = $nsName;
+            $this->metadata['namespaces'][] = [
+                'name' => $nsName,
+                'line' => $node->getLine()
+            ];
         }
 
         if ($node instanceof Class_) {
@@ -125,9 +133,23 @@ class MetadataExtractor extends NodeVisitorAbstract
             ];
         }
 
-        // --- Autoloading (Requirement 10) ---
-        if ($node instanceof Node\Stmt\Function_ && (string)$node->name === '__autoload') {
-            $this->metadata['requirements'][] = ['type' => 'LEGACY_AUTOLOAD', 'line' => $node->getLine()];
+        // --- Autoloading & Standalone Functions (Requirement B) ---
+        if ($node instanceof Node\Stmt\Function_) {
+            $funcName = (string)$node->name;
+            $fqn = $this->currentNamespace ? $this->currentNamespace . '\\' . $funcName : $funcName;
+            $this->currentFunction = $fqn;
+            
+            $this->metadata['functions'][$fqn] = [
+                'name' => $funcName,
+                'fqn' => $fqn,
+                'line' => $node->getLine(),
+                'returnType' => $this->resolveType($node->returnType),
+                'side_effects' => []
+            ];
+
+            if ($funcName === '__autoload') {
+                $this->metadata['requirements'][] = ['type' => 'LEGACY_AUTOLOAD', 'line' => $node->getLine()];
+            }
         }
 
         // --- Include Tree Extraction (Requirement 3B) ---
@@ -365,6 +387,8 @@ class MetadataExtractor extends NodeVisitorAbstract
                 if ($methodIndex >= 0) {
                     $this->metadata['classes'][$this->currentClass]['methods'][$methodIndex]['side_effects'][] = $type;
                 }
+            } elseif ($this->currentFunction) {
+                $this->metadata['functions'][$this->currentFunction]['side_effects'][] = $type;
             } else {
                 // Procedural side effect (Requirement 1, 3B, 3C)
                 $this->metadata['file_side_effects'][] = [
@@ -385,6 +409,9 @@ class MetadataExtractor extends NodeVisitorAbstract
         }
         if ($node instanceof ClassMethod) {
             $this->currentMethod = null;
+        }
+        if ($node instanceof Node\Stmt\Function_) {
+            $this->currentFunction = null;
         }
         return null;
     }

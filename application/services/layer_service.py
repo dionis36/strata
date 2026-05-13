@@ -19,34 +19,48 @@ class LayerService:
         edges = graph_data.get("edges", [])
         
         # --- Layer 1: File System & Folder Classification ---
-        file_types = {"php": 0, "js": 0, "css": 0, "html": 0, "other": 0}
+        file_types = defaultdict(int)
         directories = defaultdict(lambda: {"count": 0, "type": "src", "files": []})
         entry_points = []
         
+        from domain.models.node import NodeType
+        
+        # Valid file-like node types from our new taxonomy
+        FILE_ROLES = [
+            NodeType.FILE.value, NodeType.ENTRY_POINT.value, NodeType.BOOTSTRAP.value,
+            NodeType.CONTROLLER.value, NodeType.VIEW.value, NodeType.CONFIG.value,
+            NodeType.ASSET.value, NodeType.JOB.value, NodeType.VENDOR.value
+        ]
+        
         for n in nodes:
-            if n.get("type") == "file":
+            ntype = n.get("type")
+            if ntype in FILE_ROLES:
                 path = n.get("fqn", "")
                 ext = path.split('.')[-1].lower() if '.' in path else 'other'
-                if ext in file_types:
-                    file_types[ext] += 1
-                else:
-                    file_types["other"] += 1
+                file_types[ext] += 1
                 
                 # Classify Directories
                 dir_name = os.path.dirname(path)
                 if not dir_name: dir_name = "/"
                 
-                cat = "src"
-                if "/vendor/" in path: cat = "vendor"
-                elif "/public/" in path or "/htdocs/" in path or path.endswith("index.php"): 
-                    cat = "entry_point"
+                # Use the node's assigned role as the directory type hint
+                # (We take the most 'important' role in the directory)
+                current_cat = directories[dir_name]["type"]
+                if ntype == NodeType.ENTRY_POINT.value: 
+                    directories[dir_name]["type"] = "entry_point"
                     entry_points.append(path)
-                elif "/assets/" in path or ext in ['css', 'js', 'jpg', 'png']: cat = "asset"
-                elif "/uploads/" in path: cat = "upload"
+                elif ntype == NodeType.VENDOR.value: # Assuming we might add VENDOR later
+                    directories[dir_name]["type"] = "vendor"
+                elif ntype == NodeType.ASSET.value and current_cat != "entry_point":
+                    directories[dir_name]["type"] = "asset"
+                elif ntype == NodeType.CONFIG.value and current_cat not in ["entry_point", "asset"]:
+                    directories[dir_name]["type"] = "config"
                 
-                directories[dir_name]["type"] = cat
                 directories[dir_name]["count"] += 1
-                directories[dir_name]["files"].append(os.path.basename(path))
+                directories[dir_name]["files"].append({
+                    "name": os.path.basename(path),
+                    "role": ntype
+                })
 
         # --- Layer 2: PHP AST OOP Manifest ---
         oop_entities = []

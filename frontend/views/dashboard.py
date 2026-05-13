@@ -80,12 +80,15 @@ def show_dashboard():
         st.markdown("<br>", unsafe_allow_html=True)
         
         # ── KPI Bento Grid ───────────────────────────────────────────────────────
-        k1, k2, k3, k4 = st.columns(4)
+        # --- Primary KPI Row ---
+        st.markdown("### 📊 System Vitality")
+        kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
         
-        k1.metric("Scale (LOC)", f"{run['total_loc']:,}")
-        k2.metric("Files Scanned", f"{run['total_files']:,}")
-        k3.metric("Complexity (Avg)", f"{run['avg_complexity']}")
-        k4.metric("Maintainability", f"{round(run['avg_maintainability'], 1)}%")
+        kpi1.metric("Total Files", f"{run.get('total_files', 0):,}")
+        kpi2.metric("Lines of Code", f"{run.get('total_loc', 0):,}")
+        kpi3.metric("Avg Complexity", round(run.get('avg_complexity', 0), 2))
+        kpi4.metric("Total Classes", f"{run.get('total_classes', 0):,}")
+        kpi5.metric("Connectivity", f"{run.get('total_edges', 0):,}")
 
     else:
         st.info("Select a project or start a new analysis to populate the dashboard.")

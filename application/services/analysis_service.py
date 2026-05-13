@@ -113,6 +113,9 @@ class AnalysisService:
                 
             total_files = len(files)
             total_classes = graph.get_class_count()
+            total_methods = graph.get_method_count()
+            total_functions = graph.get_function_count()
+            total_namespaces = graph.get_namespace_count()
             total_edges = graph.get_edge_count()
             
             # Aggregate Dashboard KPIs
@@ -169,6 +172,9 @@ class AnalysisService:
                 "avg_complexity": avg_complexity,
                 "avg_maintainability": avg_mi,
                 "total_classes": total_classes,
+                "total_methods": total_methods,
+                "total_functions": total_functions,
+                "total_namespaces": total_namespaces,
                 "total_edges": total_edges
             })
             self.repo.mark_completed(run.id)

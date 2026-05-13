@@ -26,6 +26,9 @@ class AnalysisRun(Base):
     avg_maintainability = Column(Float, nullable=True)
     
     total_classes = Column(Integer, nullable=True)
+    total_methods = Column(Integer, nullable=True)
+    total_functions = Column(Integer, nullable=True)
+    total_namespaces = Column(Integer, nullable=True)
     total_edges = Column(Integer, nullable=True)
     error_message = Column(String, nullable=True)
 

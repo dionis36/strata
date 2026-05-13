@@ -47,7 +47,7 @@ st.markdown("""
 from views.dashboard import show_dashboard
 from views.executive_roadmap import show_executive_roadmap
 from views.monolith_navigator import show_monolith_navigator
-from views.layered_architecture import show_layered_architecture
+from views.layered_architecture import show_layered_architecture, show_system_topology, show_bounded_contexts
 from views.database_intelligence import show_database_intelligence
 from views.risk_audit import show_risk_audit
 from views.extraction_simulator import show_extraction_simulator
@@ -55,19 +55,21 @@ from views.legacy_bootstrapper import show_legacy_bootstrapper
 
 # Modern Streamlit Navigation (v1.31+)
 pages = {
-    "A. Command & Strategy": [
+    "A. Command Center": [
         st.Page(show_dashboard, title="Executive Dashboard", icon=":material/dashboard:"),
-        st.Page(show_executive_roadmap, title="Strategic Roadmap", icon=":material/insights:"),
     ],
     "B. Architectural Discovery": [
         st.Page(show_monolith_navigator, title="Monolith Navigator", icon=":material/hub:"),
-        st.Page(show_layered_architecture, title="Layered View", icon=":material/layers:"),
+        st.Page(show_layered_architecture, title="Layered Structure", icon=":material/layers:"),
+        st.Page(show_system_topology, title="System Topology", icon=":material/account_tree:"),
+        st.Page(show_bounded_contexts, title="Bounded Contexts", icon=":material/group_work:"),
     ],
     "C. Intelligence Reports": [
         st.Page(show_database_intelligence, title="Database Intelligence", icon=":material/storage:"),
         st.Page(show_risk_audit, title="Modernization Risk", icon=":material/gpp_maybe:"),
     ],
-    "D. Artifact Generation": [
+    "D. Strategic Advisory": [
+        st.Page(show_executive_roadmap, title="Strategic Roadmap", icon=":material/insights:"),
         st.Page(show_extraction_simulator, title="Extraction Simulator", icon=":material/biotech:"),
         st.Page(show_legacy_bootstrapper, title="Legacy Bootstrapper", icon=":material/build:"),
     ]
@@ -111,10 +113,10 @@ with st.sidebar:
     # ── Process Flow Guide ──
     st.markdown("##### Modernization Journey")
     st.markdown("""
-    - **A. Strategy**: Dashboard & Roadmap
-    - **B. Discovery**: Map the structure
+    - **A. Dashboard**: Project Overview
+    - **B. Discovery**: Map the structure & Topology
     - **C. Intelligence**: Audit deep risks
-    - **D. Generation**: Extract artifacts
+    - **D. Roadmap**: Strategic Advisory
     """)
     st.markdown("---")
 

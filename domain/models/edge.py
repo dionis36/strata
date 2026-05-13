@@ -9,6 +9,7 @@ class EdgeType(Enum):
     READS_FROM = "reads_from"
     INHERITS = "inherits"  # Covers extends and implements
     DEPENDS_ON = "depends_on"
+    CONTAINS = "contains"
     UNKNOWN = "unknown"
 
 from typing import Optional

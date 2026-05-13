@@ -56,6 +56,15 @@ class GraphModel:
     def get_class_count(self) -> int:
         return sum(1 for _, data in self.graph.nodes(data=True) if data.get('type') == NodeType.CLASS.value)
 
+    def get_method_count(self) -> int:
+        return sum(1 for _, data in self.graph.nodes(data=True) if data.get('type') == NodeType.METHOD.value)
+
+    def get_function_count(self) -> int:
+        return sum(1 for _, data in self.graph.nodes(data=True) if data.get('type') == NodeType.FUNCTION.value)
+
+    def get_namespace_count(self) -> int:
+        return sum(1 for _, data in self.graph.nodes(data=True) if data.get('type') == NodeType.NAMESPACE.value)
+
     def to_json_dict(self) -> dict:
         """Serializes the graph to a JSON-compatible dictionary Deterministically."""
         data = nx.node_link_data(self.graph)

@@ -66,14 +66,14 @@ class LegacyAnalysisService:
         namespaced_classes = sum(1 for n in class_nodes if n.get('namespace'))
         
         # Check for legacy DB sinks (Requirement 1 & 11)
-        db_sinks = [e for e in edges if 'sink::DB' in e.get('target_fqn', '')]
+        db_sinks = [e for e in edges if 'sink::DB' in (e.get('target_fqn') or '')]
         legacy_db_ratio = 1.0 if db_sinks else 0.0 
         
         # Check for Dangerous patterns (Requirement 6)
-        danger_count = sum(1 for e in edges if 'sink::DANGER' in e.get('target_fqn', ''))
+        danger_count = sum(1 for e in edges if 'sink::DANGER' in (e.get('target_fqn') or ''))
         
         # Check for Hosting assumptions (Requirement 15)
-        hosting_sink_count = sum(1 for e in edges if 'sink::HOSTING' in e.get('target_fqn', ''))
+        hosting_sink_count = sum(1 for e in edges if 'sink::HOSTING' in (e.get('target_fqn') or ''))
         has_htaccess = any(n.get('name') == '.htaccess' for n in nodes if n.get('node_type') == 'file')
         
         has_composer = any(n.get('name') == 'composer.json' for n in nodes if n.get('node_type') == 'file')
