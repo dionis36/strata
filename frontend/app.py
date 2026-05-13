@@ -36,10 +36,10 @@ st.markdown("""
     }
     .stButton>button:hover { border-color: #8b949e !important; background-color: #30363d !important; }
     
-    /* Hide Streamlit Branding */
+    /* Hide Streamlit Top Bar but preserve Sidebar Headers */
+    [data-testid="stHeader"] {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -111,10 +111,10 @@ with st.sidebar:
     # ── Process Flow Guide ──
     st.markdown("##### Modernization Journey")
     st.markdown("""
-    1.  **Dashboard**: Overview & Scan
-    2.  **Discovery**: Map the structure
-    3.  **Intelligence**: Audit deep risks
-    4.  **Factory**: Plan the extraction
+    - **A. Strategy**: Dashboard & Roadmap
+    - **B. Discovery**: Map the structure
+    - **C. Intelligence**: Audit deep risks
+    - **D. Generation**: Extract artifacts
     """)
     st.markdown("---")
 
