@@ -18,7 +18,16 @@ class SecurityRiskService:
             data = json.load(f)
             
         nodes = data.get("nodes", [])
+        edges = data.get("edges", [])
         
+        # Calculate Fan-Out dynamically
+        fan_out_map = {}
+        for e in edges:
+            # Source can be a method, so we match it roughly or just track globally.
+            # In our AST, methods IDs start with a hash or the FQN.
+            src = e.get("source_id") or e.get("source")
+            fan_out_map[src] = fan_out_map.get(src, 0) + 1
+            
         file_matrix = []
         vulnerabilities = []
         architectural_rot = []
@@ -86,6 +95,34 @@ class SecurityRiskService:
                         "Impact": f"{num_classes} classes defined in one file. Violates PSR-1/PSR-4."
                     })
                     
+                # Composite Volumetrics
+                nesting = meta.get("nesting_depth", 0)
+                max_method_loc = meta.get("max_method_loc", 0)
+                
+                # Approximate Fan-out by summing fan-out of the file and its methods
+                # Method IDs usually start with the file path hash or are inside the file.
+                # For simplicity, we'll assign a heuristic fan-out based on includes and class dependencies if edge matching is complex,
+                # or just use the length of dependencies found in requirements.
+                fan_out = len(meta.get("includes", [])) + len(meta.get("calls", []))
+                
+                # Rule A: Strong Logic (High Refactor Risk)
+                if cc > 20 and fan_out > 15 and global_usage > 5:
+                    architectural_rot.append({
+                        "Risk Magnitude": "CRITICAL",
+                        "Defect Type": "High Refactor Risk",
+                        "File": fqn,
+                        "Impact": f"Complexity ({cc}), Fan-Out ({fan_out}), Globals ({global_usage}). Direct extraction is highly unstable."
+                    })
+                    
+                # Rule B: Microservice Blocker
+                if file_sinks > 2 and global_usage > 10:
+                    architectural_rot.append({
+                        "Risk Magnitude": "CRITICAL",
+                        "Defect Type": "Microservice Extraction Blocker",
+                        "File": fqn,
+                        "Impact": f"Contains {file_sinks} severe sinks and {global_usage} global accesses. Direct microservice extraction is blocked."
+                    })
+                    
                 overall_risk = "CRITICAL" if file_sinks > 0 or cc > 20 else ("HIGH" if cc > 10 else "LOW")
                 # Maintainability Index heuristic (0-100)
                 mi = max(0, 100 - (cc * 2.5) - (file_sinks * 10) - (global_usage * 2))
@@ -95,10 +132,11 @@ class SecurityRiskService:
                     "Overall Risk": overall_risk,
                     "Maintainability Index": round(mi, 1),
                     "Cyclomatic Complexity": cc,
+                    "Max Nesting Depth": nesting,
+                    "Max Method LOC": max_method_loc,
+                    "Fan-Out": fan_out,
                     "Security Sinks": file_sinks,
-                    "Global Accesses": global_usage,
-                    "Classes Defined": num_classes,
-                    "Functions": num_funcs
+                    "Global Accesses": global_usage
                 })
 
         avg_mi = sum(f["Maintainability Index"] for f in file_matrix) / len(file_matrix) if file_matrix else 100

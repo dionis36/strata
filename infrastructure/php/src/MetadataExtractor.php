@@ -26,13 +26,19 @@ class MetadataExtractor extends NodeVisitorAbstract
         'globals' => [],
         'constants' => [],
         'requirements' => [], # For Era/Quality flags
-        'complexity' => 1 # Base cyclomatic complexity per file
+        'complexity' => 1, # Base cyclomatic complexity per file
+        'nesting_depth' => 0,
+        'max_method_loc' => 0
     ];
 
     private ?string $currentNamespace = null;
     private ?string $currentClass = null;
     private ?string $currentMethod = null;
     private ?string $currentFunction = null;
+    
+    private int $currentNestingDepth = 0;
+    private int $maxNestingDepth = 0;
+    private int $maxMethodLoc = 0;
 
     private function resolveType($type): ?string
     {
@@ -88,6 +94,20 @@ class MetadataExtractor extends NodeVisitorAbstract
             $this->metadata['complexity']++;
         }
 
+        // --- Nesting Depth ---
+        if ($node instanceof Node\Stmt\If_ || 
+            $node instanceof Node\Stmt\For_ || 
+            $node instanceof Node\Stmt\Foreach_ || 
+            $node instanceof Node\Stmt\While_ || 
+            $node instanceof Node\Stmt\Do_ || 
+            $node instanceof Node\Stmt\Catch_) {
+            $this->currentNestingDepth++;
+            if ($this->currentNestingDepth > $this->maxNestingDepth) {
+                $this->maxNestingDepth = $this->currentNestingDepth;
+                $this->metadata['nesting_depth'] = $this->maxNestingDepth;
+            }
+        }
+
         if ($node instanceof Namespace_) {
             $nsName = (string) $node->name;
             $this->currentNamespace = $nsName;
@@ -132,6 +152,12 @@ class MetadataExtractor extends NodeVisitorAbstract
             $this->currentMethod = $methodName;
             
             $isMagic = strpos($methodName, '__') === 0;
+            
+            $loc = $node->getEndLine() - $node->getStartLine() + 1;
+            if ($loc > $this->maxMethodLoc) {
+                $this->maxMethodLoc = $loc;
+                $this->metadata['max_method_loc'] = $this->maxMethodLoc;
+            }
 
             $this->metadata['classes'][$this->currentClass]['methods'][] = [
                 'name' => $methodName,
@@ -140,6 +166,7 @@ class MetadataExtractor extends NodeVisitorAbstract
                 'isMagic' => $isMagic,
                 'returnType' => $this->resolveType($node->returnType),
                 'line' => $node->getLine(),
+                'loc' => $loc,
                 'globals' => []
             ];
         }
@@ -540,6 +567,15 @@ class MetadataExtractor extends NodeVisitorAbstract
 
     public function leaveNode(Node $node)
     {
+        if ($node instanceof Node\Stmt\If_ || 
+            $node instanceof Node\Stmt\For_ || 
+            $node instanceof Node\Stmt\Foreach_ || 
+            $node instanceof Node\Stmt\While_ || 
+            $node instanceof Node\Stmt\Do_ || 
+            $node instanceof Node\Stmt\Catch_) {
+            $this->currentNestingDepth--;
+        }
+
         if ($node instanceof Namespace_) {
             $this->currentNamespace = null;
         }

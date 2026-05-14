@@ -98,6 +98,9 @@ def show_risk_audit():
                     "Overall File Risk": st.column_config.TextColumn("Overall File Risk", help="CRITICAL if Security Sinks > 0 or CC > 20"),
                     "Maintainability Index": st.column_config.ProgressColumn("Maintainability (0-100)", min_value=0, max_value=100, format="%d"),
                     "Cyclomatic Complexity": st.column_config.NumberColumn("Cyclomatic Complexity"),
+                    "Max Nesting Depth": st.column_config.NumberColumn("Nesting Depth", help="Max nesting depth of loops/conditionals."),
+                    "Max Method LOC": st.column_config.NumberColumn("Method LOC", help="Lines of Code in the largest method."),
+                    "Fan-Out": st.column_config.NumberColumn("Fan-Out", help="Number of external dependencies."),
                     "Security Sinks": st.column_config.NumberColumn("Sinks"),
                     "Global Accesses": st.column_config.NumberColumn("Global Accesses"),
                 }
@@ -170,6 +173,22 @@ def show_risk_audit():
     with tabs[2]:
         st.markdown("#### Architectural Debt & Extensibility Blockers")
         st.caption("Structural violations that prevent automated refactoring or containerization. **HIGH** indicates a severe blocker (e.g., extreme global coupling, missing PSR-4 autoloading).")
+
+        # --- Extraction Feasibility UI ---
+        st.markdown("##### 🔬 Extraction Feasibility Profiles")
+        st.markdown("The system runs composite 'Strong Logic' heuristics to determine the exact extraction friction of a module.")
+        
+        blockers = [r for r in rot if r.get("Defect Type") in ["High Refactor Risk", "Microservice Extraction Blocker"]]
+        if blockers:
+            for b in blockers[:5]:
+                with st.container():
+                    st.error(f"**{b.get('File')}** Extraction Profile")
+                    st.markdown(f"**Evidence:** {b.get('Impact')}")
+                    st.markdown(f"**Conclusion:** Direct microservice extraction is **{b.get('Blocker Severity', 'High Risk')}**.")
+            st.markdown("---")
+        else:
+            st.success("✅ No modules detected with High Refactor Risk or Microservice Extraction Blockers.")
+            st.markdown("---")
 
         if rot:
             df_rot = pd.DataFrame(rot)
