@@ -250,6 +250,17 @@ def get_legacy_intelligence(run_id: int, db: Session = Depends(get_db)):
         logger.error(f"Failed to generate legacy intelligence: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+from application.services.boundary_intelligence_service import BoundaryIntelligenceService
+@app.get("/boundary-intelligence/{run_id}")
+def get_boundary_intelligence(run_id: int, db: Session = Depends(get_db)):
+    """Module C+: Boundary Intelligence (MVC, API, Vendor)"""
+    try:
+        service = BoundaryIntelligenceService(db)
+        return service.get_boundary_intelligence(run_id)
+    except Exception as e:
+        logger.error(f"Failed to generate boundary intelligence: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 from application.services.security_risk_service import SecurityRiskService
 @app.get("/security-risk/{run_id}")
 def get_security_risk(run_id: int, db: Session = Depends(get_db)):

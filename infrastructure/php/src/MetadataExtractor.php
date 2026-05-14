@@ -28,7 +28,12 @@ class MetadataExtractor extends NodeVisitorAbstract
         'requirements' => [], # For Era/Quality flags
         'complexity' => 1, # Base cyclomatic complexity per file
         'nesting_depth' => 0,
-        'max_method_loc' => 0
+        'max_method_loc' => 0,
+        'html_nodes' => 0,
+        'echo_nodes' => 0,
+        'api_headers' => 0,
+        'json_encode' => 0,
+        'server_request_uri' => 0
     ];
 
     private ?string $currentNamespace = null;
@@ -105,6 +110,23 @@ class MetadataExtractor extends NodeVisitorAbstract
             if ($this->currentNestingDepth > $this->maxNestingDepth) {
                 $this->maxNestingDepth = $this->currentNestingDepth;
                 $this->metadata['nesting_depth'] = $this->maxNestingDepth;
+            }
+        }
+
+        // --- Presentation Layer (MVC Deficit) ---
+        if ($node instanceof Node\Stmt\InlineHTML) {
+            $this->metadata['html_nodes']++;
+        }
+        if ($node instanceof Node\Stmt\Echo_ || $node instanceof Node\Stmt\Print_) {
+            $this->metadata['echo_nodes']++;
+        }
+
+        // --- API Surface: REQUEST_URI ---
+        if ($node instanceof Node\Expr\ArrayDimFetch && $node->var instanceof Node\Expr\Variable) {
+            if ($node->var->name === '_SERVER' && $node->dim instanceof Node\Scalar\String_) {
+                if ($node->dim->value === 'REQUEST_URI') {
+                    $this->metadata['server_request_uri']++;
+                }
             }
         }
 
@@ -359,15 +381,26 @@ class MetadataExtractor extends NodeVisitorAbstract
                 ];
             }
 
-            // include-based routing (Requirement G)
-            if (in_array($funcNameLower, ['include', 'require', 'include_once', 'require_once'])) {
-                // Flag if the included path is dynamic (variable, not a fixed string)
-                if (count($node->args) > 0 && !($node->args[0]->value instanceof Node\Scalar\String_)) {
-                    $this->metadata['requirements'][] = [
-                        'type' => 'INCLUDE_ROUTING',
-                        'line' => $node->getLine(),
-                    ];
+            // --- API Surface: JSON & Headers ---
+            if ($funcNameLower === 'json_encode') {
+                $this->metadata['json_encode']++;
+            }
+            if ($funcNameLower === 'header') {
+                if (isset($node->args[0]) && $node->args[0]->value instanceof Node\Scalar\String_) {
+                    $headerVal = strtolower($node->args[0]->value->value);
+                    if (strpos($headerVal, 'application/json') !== false) {
+                        $this->metadata['api_headers']++;
+                    }
                 }
+            }
+
+            // include-based routing (Requirement G)
+            if (in_array($funcNameLower, ['include', 'require', 'include_once', 'require_once', 'exec', 'system', 'shell_exec', 'passthru'])) {
+                $this->metadata['requirements'][] = [
+                    'type' => in_array($funcNameLower, ['include', 'require', 'include_once', 'require_once']) ? 'INCLUDE_ROUTING' : 'DANGER',
+                    'sink' => $funcNameLower,
+                    'line' => $node->getLine(),
+                ];
             }
 
             if ($funcNameLower === 'define' && count($node->args) >= 2) {
@@ -391,6 +424,14 @@ class MetadataExtractor extends NodeVisitorAbstract
                 'source' => $this->currentClass,
                 'sourceMethod' => $this->currentMethod,
                 'sourceFunction' => $this->currentFunction
+            ];
+        }
+
+        if ($node instanceof Node\Expr\Eval_) {
+            $this->metadata['requirements'][] = [
+                'type' => 'DANGER',
+                'sink' => 'eval',
+                'line' => $node->getLine()
             ];
         }
 

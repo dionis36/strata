@@ -20,17 +20,45 @@ class SecurityRiskService:
         nodes = data.get("nodes", [])
         edges = data.get("edges", [])
         
-        # Calculate Fan-Out dynamically
+        # Calculate Fan-Out and Fan-In dynamically
         fan_out_map = {}
+        fan_in_map = {}
+        adj = {} # Adjacency map for flow tracing
         for e in edges:
-            # Source can be a method, so we match it roughly or just track globally.
-            # In our AST, methods IDs start with a hash or the FQN.
-            src = e.get("source_id") or e.get("source")
-            fan_out_map[src] = fan_out_map.get(src, 0) + 1
+            u = e.get("source_id") or e.get("source")
+            v = e.get("target_id") or e.get("target")
+            if u and v:
+                fan_out_map[u] = fan_out_map.get(u, 0) + 1
+                fan_in_map[v] = fan_in_map.get(v, 0) + 1
+                if u not in adj: adj[u] = []
+                adj[u].append(v)
             
         file_matrix = []
         vulnerabilities = []
         architectural_rot = []
+        
+        # Identify entry points (sources) for taint flow
+        entry_points = []
+        for n in nodes:
+            meta = n.get("metadata", {})
+            if meta.get("server_request_uri", 0) > 0 or (len(meta.get("classes", {})) == 0 and len(meta.get("functions", {})) == 0 and meta.get("html_nodes", 0) > 0):
+                entry_points.append(n.get("fqn") or n.get("name"))
+
+        def find_taint_flow(sink_fqn):
+            """Heuristic to see if any entry point can reach this sink."""
+            for ep in entry_points:
+                # BFS/DFS check
+                visited = {ep}
+                stack = [ep]
+                while stack:
+                    curr = stack.pop()
+                    if curr == sink_fqn:
+                        return f"Flow Trace: {ep} -> [Path] -> {sink_fqn}"
+                    for neighbor in adj.get(curr, []):
+                        if neighbor not in visited:
+                            visited.add(neighbor)
+                            stack.append(neighbor)
+            return None
         
         def find_keys(obj, key):
             if isinstance(obj, dict):
@@ -67,12 +95,17 @@ class SecurityRiskService:
                         classification = "Security" if t in ['DANGER', 'MYSQL_LEGACY', 'LEGACY_HASH'] else "Architectural"
                         if t == 'DANGER': total_danger += 1
                         
+                        flow = find_taint_flow(fqn)
+                        evidence = f"Detected '{vuln_type}' signature in AST."
+                        if flow:
+                            evidence += f" {flow}"
+                        
                         vulnerabilities.append({
                             "Risk Classification": classification,
                             "Risk Magnitude": magnitude,
                             "Vulnerability Type": vuln_type,
                             "File": fqn,
-                            "Evidence": f"Detected '{vuln_type}' signature in AST"
+                            "Evidence": evidence
                         })
                         
                 global_usage = sum(1 for g in meta.get("globals", []))
@@ -93,6 +126,16 @@ class SecurityRiskService:
                         "Defect Type": "Multiple Classes per File",
                         "File": fqn,
                         "Impact": f"{num_classes} classes defined in one file. Violates PSR-1/PSR-4."
+                    })
+                
+                # Gap 4: Dead Code Heuristic
+                fan_in = fan_in_map.get(n.get("id"), 0)
+                if fan_in == 0 and fqn not in entry_points and "/vendor/" not in fqn.lower():
+                    architectural_rot.append({
+                        "Risk Magnitude": "MEDIUM",
+                        "Defect Type": "Potential Dead Code",
+                        "File": fqn,
+                        "Impact": "Orphaned file with 0 incoming connections. Candidates for deletion."
                     })
                     
                 # Composite Volumetrics

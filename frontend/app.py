@@ -55,6 +55,8 @@ from views.risk_audit import show_risk_audit
 from views.extraction_simulator import show_extraction_simulator
 from views.legacy_bootstrapper import show_legacy_bootstrapper
 
+from views.boundary_intelligence import show_boundary_intelligence
+
 # Modern Streamlit Navigation (v1.31+)
 pages = {
     "A. Command Center": [
@@ -71,6 +73,7 @@ pages = {
         st.Page(show_global_state_intelligence, title="Runtime & Global State", icon=":material/memory:"),
         st.Page(show_legacy_intelligence, title="Legacy PHP Intelligence", icon=":material/history:"),
         st.Page(show_risk_audit, title="Modernization Risk", icon=":material/gpp_maybe:"),
+        st.Page(show_boundary_intelligence, title="Boundary Intelligence", icon=":material/public:"),
     ],
     "D. Strategic Advisory": [
         st.Page(show_executive_roadmap, title="Strategic Roadmap", icon=":material/insights:"),

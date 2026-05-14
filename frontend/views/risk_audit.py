@@ -5,6 +5,7 @@ import os
 import json
 
 def show_risk_audit():
+    from views.boundary_intelligence import show_boundary_intelligence
     st.title("Security & Risk Audit")
     st.markdown("##### Maintainability Index · Security Sinks · Architectural Deficits")
 
@@ -110,22 +111,30 @@ def show_risk_audit():
 
         # Insight Block
         high_cc = sum(1 for f in file_matrix if f.get("Cyclomatic Complexity", 0) > 15)
+        critical_count = lvl_counts["CRITICAL"]
+        total_files = len(file_matrix)
         avg_mi = kpis.get("Average Maintainability", 0)
+        critical_pct = f"{(critical_count / total_files * 100):.1f}" if total_files > 0 else "0"
         st.markdown("---")
         st.info("#### 📋 File Risk Assessment")
-        st.markdown("**METRIC**: Maintainability Index & Cyclomatic Complexity")
+        st.markdown("**METRIC**: Maintainability Index (MI) & Cyclomatic Complexity (CC) — per-file composite scoring")
         st.markdown(
-            "**INTERPRETATION**: The Maintainability Index (MI) calculates the relative ease of maintaining the code. "
-            "An MI below 50 indicates that a file is too convoluted to safely refactor without causing regressions. "
-            "Cyclomatic Complexity measures the number of decision branches (if/else/for) inside the file. Industry standard maximum is 15."
+            f"**INTERPRETATION**: This codebase has an average Maintainability Index of **{avg_mi}/100**. "
+            f"Of the {total_files} files analyzed, **{critical_count} ({critical_pct}%) are classified as CRITICAL** — "
+            "meaning they combine structural complexity and active security risk in a way that makes safe, automated extraction mathematically improbable. "
+            "The Cyclomatic Complexity metric specifically counts decision branches (if/else, loops, catches) — each branch is a separate path a test must cover. "
+            "High CC files are not just risky to change; they are expensive to verify after a change."
         )
         st.markdown(
-            f"**EVIDENCE**: There are `{high_cc}` files in this codebase with a Cyclomatic Complexity exceeding the maximum threshold of 15. "
-            f"The codebase average Maintainability Index is `{avg_mi}/100`."
+            f"**EVIDENCE**:\n"
+            f"1. `{high_cc}` files exceed the industry-maximum CC threshold of 15 — each one represents a refactoring blocker that requires manual decomposition before it can be safely extracted.\n"
+            f"2. The codebase average MI is `{avg_mi}/100`. An MI below 65 is considered 'difficult to maintain'; below 25 is 'unmaintainable' by industry standard (SEI).\n"
+            f"3. Sort the matrix by **Sinks** to reveal which high-complexity files also carry active security vulnerabilities — these are your highest-risk intersection points."
         )
         st.markdown(
-            "**RECOMMENDATION**: Do not attempt to automatically migrate or refactor files with an MI below 50 or CC above 20. "
-            "They must be manually audited and heavily unit-tested before extraction, or entirely rewritten (Strangler Fig pattern)."
+            "**RECOMMENDATION**: The Risk Matrix above is your structural map. Before moving to the Security or Architectural tabs, "
+            "study which files cluster at the intersection of high CC and low MI — those files represent the tightest coupling in the system. "
+            "Understanding their role (is this a router, a model, a helper?) will clarify whether they are candidates for extraction or for wrapping."
         )
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -152,20 +161,32 @@ def show_risk_audit():
         st.markdown("---")
         total_vulns = len(vulns)
         rce_count = sum(1 for v in vulns if v.get("Vulnerability Type") == "DANGER")
+        sqli_count = sum(1 for v in vulns if v.get("Vulnerability Type") == "MYSQL_LEGACY")
+        lfi_count = sum(1 for v in vulns if v.get("Vulnerability Type") == "INCLUDE_ROUTING")
         st.warning("#### 🛡️ Security Assessment") if total_vulns > 0 else st.success("#### 🛡️ Security Assessment")
-        st.markdown("**METRIC**: Detected Security Sinks (RCE, SQLi, LFI)")
-        st.markdown(
-            "**INTERPRETATION**: This registry lists exact occurrences of highly dangerous PHP functions. "
-            "`DANGER` indicates Remote Code Execution (RCE) vectors like `eval()` or `exec()`. "
-            "`INCLUDE_ROUTING` indicates Local File Inclusion (LFI) via variable-based includes."
-        )
-        st.markdown(
-            f"**EVIDENCE**: `{total_vulns}` critical security incidents logged. `{rce_count}` instance(s) of potential RCE (`DANGER`) detected."
-        )
-        st.markdown(
-            "**RECOMMENDATION**: Immediate remediation required. Security sinks cannot be migrated to a modern microservice. "
-            "Any file listed here containing `DANGER` must have the `eval/exec` removed and replaced with standard language constructs."
-        )
+        st.markdown("**METRIC**: AST-detected Security Sinks — functions or patterns that directly enable a known attack class")
+        if total_vulns > 0:
+            st.markdown(
+                f"**INTERPRETATION**: This codebase contains **{total_vulns} confirmed security sink instances**. "
+                "The engine has performed a **Taint Flow Discovery** pass: for each sink, it attempted to trace a logical path back to a known entry point (URL or Direct Script). "
+                "A sink with a confirmed 'Flow Trace' is exponentially more dangerous because it proves an execution path exists from the external surface to the vulnerability. "
+                "The presence of `DANGER` sinks (`eval`, `exec`) with a Flow Trace means the application is likely vulnerable to Remote Code Execution."
+            )
+            st.markdown(
+                f"**EVIDENCE**:\n"
+                f"1. **{rce_count} RCE vector(s)** detected. Check the 'Evidence' column for 'Flow Trace' to see the data entry point.\n"
+                f"2. **{sqli_count} deprecated MySQL API** usage(s). These lack protection and are high-priority for removal.\n"
+                f"3. **{lfi_count} dynamic include(s)**. These are candidates for Local File Inclusion if path variables are attacker-controlled."
+            )
+            st.markdown(
+                "**RECOMMENDATION**: Notice how the sinks in this registry map onto specific files in the Risk Matrix. "
+                "Cross-reference the **File** column above with the Tab 1 matrix — files that appear in both the 'CRITICAL' risk row *and* this security log "
+                "are your highest-priority stabilization targets before any modernization work can begin. The Security tab reveals *what* the risk is; the Matrix reveals *how structurally difficult* fixing it will be."
+            )
+        else:
+            st.markdown("**INTERPRETATION**: No active security sinks were detected in this analysis. This indicates the codebase does not directly use the most dangerous PHP constructs (`eval`, `exec`, legacy `mysql_*`).")
+            st.markdown("**EVIDENCE**: 0 security sinks detected across all scanned files.")
+            st.markdown("**RECOMMENDATION**: Proceed to the Architectural Rot tab to assess the structural blockers that remain even in a clean codebase — complexity and coupling are often the more costly problem to resolve than security.")
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     # TAB 2 — Architectural Rot
@@ -206,20 +227,31 @@ def show_risk_audit():
         # Insight Block
         st.markdown("---")
         total_rot = len(rot)
+        global_coupling = sum(1 for r in rot if r.get("Defect Type") == "Global State Coupling")
+        multi_class = sum(1 for r in rot if r.get("Defect Type") == "Multiple Classes per File")
+        dead_code = sum(1 for r in rot if r.get("Defect Type") == "Potential Dead Code")
+        blocker_count = sum(1 for r in rot if r.get("Defect Type") in ["High Refactor Risk", "Microservice Extraction Blocker"])
         st.info("#### 🏗️ Extensibility Assessment")
-        st.markdown("**METRIC**: Global State Coupling & Structural Anti-Patterns")
+        st.markdown("**METRIC**: Composite Structural Anti-Patterns — Global State, Dead Code, and PSR violations")
         st.markdown(
-            "**INTERPRETATION**: Architectural rot represents design choices that actively block modernization. "
-            "For example, 'Global State Coupling' means a file relies heavily on `$GLOBALS`, making it impossible to unit test in isolation. "
-            "Defining multiple classes in a single file breaks PSR-4 autoloading, a prerequisite for Composer adoption."
+            f"**INTERPRETATION**: This codebase carries **{total_rot} architectural debt instances**. "
+            "The engine has added a **Dead Code Heuristic**: it identifies 'Orphaned Files' that have zero incoming connections and are not registered entry points. "
+            f"**{dead_code} files** are candidates for immediate deletion, reducing the migration surface area. "
+            f"**{global_coupling} files** are tightly coupled to global state, blocking isolation."
         )
         st.markdown(
-            f"**EVIDENCE**: `{total_rot}` instances of architectural debt recorded. See the 'Impact' column for exact technical blockers."
+            f"**EVIDENCE**:\n"
+            f"1. **{dead_code} Potential Dead Code file(s)** — orphaned components with zero incoming dependency edges.\n"
+            f"2. **{global_coupling} Global State Coupling instance(s)** — hidden runtime dependencies blocking unit testing.\n"
+            f"3. **{blocker_count} Composite Extraction Blocker(s)** — high-complexity/high-coupling nodes that failed extraction logic."
         )
         st.markdown(
-            "**RECOMMENDATION**: Prioritize resolving 'Multiple Classes per File' first by splitting them into separate files. "
-            "Then, begin injecting the required `$GLOBALS` via constructor injection to break the temporal coupling."
+            "**RECOMMENDATION**: Consider the Extraction Feasibility Profiles above as your primary discovery output from this tab. "
+            "Before any further analysis, ask: do the modules listed as 'High Refactor Risk' correspond to features you intend to extract early? "
+            "If so, those files reveal the minimum set of dependencies you must untangle *first* — understanding their structure is the prerequisite for planning extraction in the Strategic Advisory module."
         )
+        if st.button("🌐 Map External Boundaries"):
+            st.switch_page(st.Page(show_boundary_intelligence))
 
 if __name__ == "__main__":
     show_risk_audit()

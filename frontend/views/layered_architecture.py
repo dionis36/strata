@@ -307,7 +307,11 @@ def show_system_topology():
                     ev2_bn = "Connections are distributed."
                     
                 st.markdown(f"**EVIDENCE**: \n1. {ev1_bn}\n2. {ev2_bn}")
-                st.markdown("**RECOMMENDATION**: Examine this bottleneck. If it is a generic utility (e.g., a logger), it can be extracted to a shared library. If it is business logic, it must be untangled before any dependent services can be isolated.")
+                st.markdown(
+                    "**RECOMMENDATION**: The most central node in a legacy system is almost never a coincidence — it accumulated connections because it was the most convenient place to put shared logic. "
+                    "Consider what *role* this node was originally intended to play. Is it a technical utility (a logger, a config loader) that crept into business logic? "
+                    "Or is it a core business object that became a catch-all? That distinction determines whether it belongs in a shared library, a dedicated service, or needs to be decomposed entirely."
+                )
 
             with col3:
                 st.warning("#### 🔄 Circular Dependencies")
@@ -319,9 +323,16 @@ def show_system_topology():
                 st.markdown(f"**EVIDENCE**: \n1. {ev1_circ}\n2. {ev2_circ}")
                 
                 if circular_count > 0:
-                    st.markdown("**RECOMMENDATION**: Immediate action required. You must break these loops by introducing an interface or moving the shared logic into a third, independent component before attempting any extraction.")
+                    st.markdown(
+                        "**RECOMMENDATION**: Circular dependencies are the architectural equivalent of a structural loop — neither component can be moved without moving the other. "
+                        "Before deciding how to break them, understand *why* they formed: did two modules genuinely need to share behaviour, or was one module just reaching across a boundary out of convenience? "
+                        "The answer will tell you whether to introduce an interface, extract the shared logic into a third component, or merge the two modules into a single bounded context."
+                    )
                 else:
-                    st.markdown("**RECOMMENDATION**: Excellent. The lack of direct circular dependencies indicates a healthy, unidirectional flow of logic in this architectural slice.")
+                    st.markdown(
+                        "**RECOMMENDATION**: The absence of circular dependencies in this slice indicates that the original call flow was directional — logic moved in one consistent direction through these components. "
+                        "Note whether this continues to hold as you explore the full topology, or whether circular dependencies appear only in specific subsystems."
+                    )
     except Exception as e:
         st.error(f"Could not render topology: {e}")
 
