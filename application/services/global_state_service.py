@@ -29,7 +29,7 @@ class GlobalStateService:
         superglobal_mutations: list = []
         superglobal_totals: dict = defaultdict(int)
 
-        SUPERGLOBALS = ["_SESSION", "_POST", "_GET", "_COOKIE", "_SERVER", "_REQUEST", "_ENV", "GLOBALS"]
+        SUPERGLOBALS = ["_SESSION", "_POST", "_GET", "_COOKIE", "_FILES", "_SERVER", "_REQUEST", "_ENV", "GLOBALS"]
 
         for n in nodes:
             fqn = n.get("fqn", n.get("file_path", ""))
@@ -105,9 +105,22 @@ class GlobalStateService:
                 for se in func.get("side_effects", []):
                     side_effect_summary[src_name][se] += 1
 
-            # Procedural side effects
+            # Procedural side effects (also captures eval() at file/procedure scope)
             for se in metadata.get("file_side_effects", []):
-                side_effect_summary[src_name][se.get("type", "UNKNOWN")] += 1
+                se_type = se.get("type", "UNKNOWN")
+                side_effect_summary[src_name][se_type] += 1
+                if se_type == "DANGER":
+                    danger_files.append({
+                        "file": fqn,
+                        "method": "(procedural scope)",
+                        "line": se.get("line"),
+                    })
+                if se_type == "LEGACY_HASH":
+                    legacy_hash_files.append({
+                        "file": fqn,
+                        "method": "(procedural scope)",
+                        "line": se.get("line"),
+                    })
 
         # ---------------------------------------------------------------
         # 4. Global Variable Tracker (non-superglobal explicit globals)

@@ -205,7 +205,7 @@ class MetadataExtractor extends NodeVisitorAbstract
             }
         }
 
-        $superglobals = ['GLOBALS', '_SESSION', '_POST', '_GET', '_COOKIE', '_SERVER', '_REQUEST', '_ENV'];
+        $superglobals = ['GLOBALS', '_SESSION', '_POST', '_GET', '_COOKIE', '_FILES', '_SERVER', '_REQUEST', '_ENV'];
         
         // Detect Mutations
         if ($node instanceof Node\Expr\Assign) {
@@ -390,6 +390,12 @@ class MetadataExtractor extends NodeVisitorAbstract
 
     private function detectSideEffects(Node $node)
     {
+        // eval() is a PHP language construct, NOT a FuncCall — handle it explicitly
+        if ($node instanceof Node\Expr\Eval_) {
+            $this->recordSideEffect('DANGER', $node->getLine());
+            return;
+        }
+
         $name = null;
         if ($node instanceof MethodCall) {
             $name = (string) $node->name;
@@ -442,6 +448,23 @@ class MetadataExtractor extends NodeVisitorAbstract
                     'line' => $node->getLine()
                 ];
             }
+        }
+    }
+
+    private function recordSideEffect(string $type, int $line)
+    {
+        if ($this->currentClass && $this->currentMethod) {
+            $methodIndex = count($this->metadata['classes'][$this->currentClass]['methods']) - 1;
+            if ($methodIndex >= 0) {
+                $this->metadata['classes'][$this->currentClass]['methods'][$methodIndex]['side_effects'][] = $type;
+            }
+        } elseif ($this->currentFunction) {
+            $this->metadata['functions'][$this->currentFunction]['side_effects'][] = $type;
+        } else {
+            $this->metadata['file_side_effects'][] = [
+                'type' => $type,
+                'line' => $line
+            ];
         }
     }
 
