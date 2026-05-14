@@ -122,6 +122,8 @@ class LayerService:
             if n.get("type") in ["file", "class", "interface", "trait", "entry_point", "config"]:
                 contexts[ctx]["files"].add(n["id"])
                 
+        id_to_fqn = {n["id"]: str(n.get("fqn", "")).lower() for n in nodes}
+        
         # Pass 2: Calculate Edge Boundaries
         for e in edges:
             src_ctx = node_to_context.get(e.get("source"))
@@ -134,10 +136,10 @@ class LayerService:
                     contexts[src_ctx]["external_edges"] += 1
                     
                 # Intelligent Flow Analysis (Detecting Sinks)
-                tgt_id = str(e.get("target", "")).lower()
-                if "sink::raw_sql" in tgt_id or "table::" in tgt_id or "pdo" in tgt_id or "mysql" in tgt_id:
+                tgt_fqn = id_to_fqn.get(e.get("target"), "")
+                if "sink::raw_sql" in tgt_fqn or "table::" in tgt_fqn or "pdo" in tgt_fqn or "mysql" in tgt_fqn:
                     contexts[src_ctx]["db_access"] = True
-                if "sink::custom_auth" in tgt_id or "global::_session" in tgt_id or "auth" in tgt_id:
+                if "sink::custom_auth" in tgt_fqn or "global::_session" in tgt_fqn or "auth" in tgt_fqn:
                     contexts[src_ctx]["auth_access"] = True
                     
         # Clean up contexts for serialization

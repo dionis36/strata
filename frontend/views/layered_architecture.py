@@ -104,6 +104,38 @@ def show_layered_architecture():
         ftypes = l1.get("file_types", {})
         st.dataframe(pd.DataFrame(list(ftypes.items()), columns=["Ext", "Count"]), hide_index=True, use_container_width=True)
 
+        st.markdown("---")
+        st.markdown("### 🧠 Architectural Layer Insight")
+        
+        # Calculate layer distribution dynamically
+        role_counts = {}
+        total_files = 0
+        for info in dirs.values():
+            for f in info.get("files", []):
+                total_files += 1
+                role = f.get("role", "file") if isinstance(f, dict) else "file"
+                role_counts[role] = role_counts.get(role, 0) + 1
+        
+        presentation_roles = ["view", "controller", "asset"]
+        presentation_count = sum(role_counts.get(r, 0) for r in presentation_roles)
+        presentation_ratio = (presentation_count / total_files * 100) if total_files > 0 else 0
+        top_layer = sorted(role_counts.items(), key=lambda x: x[1], reverse=True)[0] if role_counts else ("none", 0)
+
+        st.info("#### 🏗️ Presentation vs. Logic")
+        st.markdown("**METRIC**: MVC / Role Distribution Ratio")
+        st.markdown("**INTERPRETATION**: This metric assesses whether the codebase maintains a healthy separation of concerns. A high presentation ratio indicates a UI-heavy monolith, whereas a high 'file' ratio indicates unstructured procedural logic.")
+        
+        ev1 = f"{presentation_ratio:.1f}% of classified files handle Presentation/Routing."
+        ev2 = f"The most populated architectural layer is `{top_layer[0]}` with {top_layer[1]} files."
+        st.markdown(f"**EVIDENCE**: \n1. {ev1}\n2. {ev2}")
+        
+        if top_layer[0] == "file":
+            st.markdown("**RECOMMENDATION**: The majority of your codebase consists of unstructured `file` components. Focus on extracting business logic from these generic files into dedicated service classes.")
+        elif presentation_ratio > 60:
+            st.markdown("**RECOMMENDATION**: The system is highly UI-coupled. Extracting microservices will be difficult until the presentation layer (Views/Templates) is completely decoupled from the backend routing logic.")
+        else:
+            st.markdown("**RECOMMENDATION**: The application demonstrates a structured layer distribution. Proceed to the System Topology view to analyze the depth of entanglement between these physical layers.")
+
 def show_system_topology():
     st.title("System Topology")
     st.markdown("##### Relational Graph & Connectivity Analysis")
@@ -204,6 +236,49 @@ def show_system_topology():
             with open("/tmp/topology_graph.html", "r", encoding="utf-8") as f:
                 html = f.read()
             components.html(html, height=760)
+            
+            st.markdown("---")
+            st.markdown("### 🧠 System Topology Intelligence")
+            
+            # Find the most connected node
+            max_degree_node = None
+            max_degree = 0
+            for n in top_nodes:
+                d = node_degree.get(n["id"], 0)
+                if d > max_degree:
+                    max_degree = d
+                    max_degree_node = n
+                    
+            # Calculate density
+            total_edges = len(links)
+            total_visible = len(top_nodes)
+            density = total_edges / (total_visible * max(1, total_visible - 1)) if total_visible > 1 else 0
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                st.info("#### 🕸️ Network Density & Coupling")
+                st.markdown("**METRIC**: Graph Edge Density")
+                st.markdown("**INTERPRETATION**: Density indicates how intertwined the components are. A 'Spaghetti Code' monolith will have an extremely dense, highly connected graph, whereas a modular system will appear as distinct, lightly-connected clusters.")
+                
+                ev1 = f"Total rendered connections: {total_edges}."
+                ev2 = "The graph visually forms distinct clusters." if density < 0.05 else "The graph forms a dense, highly entangled web."
+                st.markdown(f"**EVIDENCE**: \n1. {ev1}\n2. {ev2}")
+                st.markdown("**RECOMMENDATION**: If the graph is a dense web, do not attempt to split it immediately. Look for natural fault lines between the colored clusters to identify potential service boundaries.")
+
+            with col2:
+                st.success("#### 🎯 Structural Bottlenecks")
+                st.markdown("**METRIC**: Component Centrality & Degree")
+                st.markdown("**INTERPRETATION**: The node with the highest number of connections acts as a primary structural bottleneck. These are often core utilities, base controllers, or global configuration files that every other file depends on.")
+                
+                if max_degree_node:
+                    ev1_bn = f"The most central node is `{max_degree_node.get('name')}` (Type: {max_degree_node.get('type')})."
+                    ev2_bn = f"It single-handedly manages {max_degree} direct connections."
+                else:
+                    ev1_bn = "No central bottleneck identified."
+                    ev2_bn = "Connections are distributed."
+                    
+                st.markdown(f"**EVIDENCE**: \n1. {ev1_bn}\n2. {ev2_bn}")
+                st.markdown("**RECOMMENDATION**: Examine this bottleneck. If it is a generic utility (e.g., a logger), it can be extracted to a shared library. If it is business logic, it must be untangled before any dependent services can be isolated.")
     except Exception as e:
         st.error(f"Could not render topology: {e}")
 
@@ -233,6 +308,42 @@ def show_bounded_contexts():
             df_ctx = pd.DataFrame(contexts)
             df_ctx.columns = ["Domain Name", "Files", "Internal Calls", "External Calls", "Coupling Ratio", "DB?", "Auth?"]
             st.dataframe(df_ctx, use_container_width=True, hide_index=True)
+            
+            st.markdown("---")
+            st.markdown("### 🧠 Domain Extractability Intelligence")
+            
+            # Find insights
+            high_coupling = sorted(contexts, key=lambda x: x["coupling_ratio"], reverse=True)
+            most_coupled = high_coupling[0] if high_coupling else None
+            
+            isolated_domains = [c for c in contexts if c["coupling_ratio"] <= 0.3 and c["file_count"] > 1]
+            best_candidate = sorted(isolated_domains, key=lambda x: x["file_count"], reverse=True)[0] if isolated_domains else None
+
+            col1, col2 = st.columns(2)
+            with col1:
+                st.info("#### 🧩 Domain Cohesion Insight")
+                st.markdown("**METRIC**: Global Coupling Ratios & Outliers")
+                st.markdown("**INTERPRETATION**: This metric provides an understanding of how well the legacy system's logic is encapsulated. A system with predominantly high-coupling domains typically represents a 'Big Ball of Mud' architecture, whereas lower coupling ratios suggest that the original developers successfully implemented separation of concerns.")
+                
+                highly_coupled = [f"`{c['name']}` ({c['coupling_ratio']})" for c in high_coupling[:3] if c["coupling_ratio"] >= 1.0]
+                ev1 = f"Domains with high inter-dependencies: {', '.join(highly_coupled)}." if highly_coupled else "No domains exceed a 1.0 coupling ratio."
+                ev2 = f"There are {len([c for c in contexts if c['coupling_ratio'] < 0.5])} domains with strong internal cohesion (< 0.5 ratio)."
+                st.markdown(f"**EVIDENCE**: \n1. {ev1}\n2. {ev2}")
+                st.markdown("**RECOMMENDATION**: Use these cohesion insights to map out which areas of the codebase share state. High-coupling areas indicate cross-cutting concerns that should be mapped carefully during the architectural discovery phase.")
+
+            with col2:
+                st.success("#### 🏗️ State & Boundary Distribution")
+                st.markdown("**METRIC**: Transactional (DB) and Authentication (Auth) Sinks")
+                st.markdown("**INTERPRETATION**: Identifying which domains independently touch database layers or session management reveals the functional layout of the system. Domains that manage their own state are naturally closer to operating as independent bounded contexts, whereas centralized state points to a highly monolithic data tier.")
+                
+                db_domains = [f"`{c['name']}`" for c in contexts if c.get("db_access")]
+                auth_domains = [f"`{c['name']}`" for c in contexts if c.get("auth_access")]
+                ev1_db = ", ".join(db_domains[:4]) + ("..." if len(db_domains) > 4 else "") if db_domains else "No direct DB access sinks detected."
+                ev2_auth = ", ".join(auth_domains[:4]) + ("..." if len(auth_domains) > 4 else "") if auth_domains else "No isolated Auth sinks detected."
+                
+                st.markdown(f"**EVIDENCE**: \n1. Domains bypassing abstractions to hit DB sinks: {ev1_db}\n2. Domains interacting directly with auth/session state: {ev2_auth}")
+                st.markdown("**RECOMMENDATION**: Observe whether data persistence is heavily centralized in a single 'Core' domain or distributed across multiple feature domains. This insight will guide your future data-tier modernization strategies.")
+                    
         else:
             st.info("Insufficient signals to infer contexts.")
 

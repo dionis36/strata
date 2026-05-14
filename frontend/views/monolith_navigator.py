@@ -102,6 +102,36 @@ def show_monolith_navigator():
         display_df.columns = ["Name", "Namespace", "Parent Class", "Method Count", "Structural Complexity", "System Interactions"]
         
         st.dataframe(display_df, use_container_width=True, hide_index=True)
+        
+        st.markdown("---")
+        st.markdown("### 🧠 Component Density Intelligence")
+        
+        total_entities = len(df_oop)
+        high_complexity = len(df_oop[df_oop["Complexity"] == "High"])
+        gravity_well = df_oop.sort_values(by="methods_count", ascending=False).iloc[0] if total_entities > 0 else None
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.info("#### 🏛️ Object Encapsulation Insight")
+            st.markdown("**METRIC**: High-Complexity Object Concentration")
+            st.markdown("**INTERPRETATION**: This metric assesses whether logic is evenly distributed across many single-responsibility classes or concentrated in a few bloated objects. A high number of complex classes indicates a heavy, tightly-coupled OOP architecture.")
+            st.markdown(f"**EVIDENCE**: \n1. Total recognized entities: {total_entities}.\n2. Entities flagged with 'High' complexity (> 20 methods): {high_complexity}.")
+            st.markdown("**RECOMMENDATION**: Focus refactoring efforts on the 'High' complexity entities. If the system is mostly procedural (few entities), proceed to look at standalone scripts instead of classes.")
+
+        with col2:
+            st.success("#### 🪐 Gravity Wells (God Objects)")
+            st.markdown("**METRIC**: Method Weight & Interaction Gravity")
+            st.markdown("**INTERPRETATION**: 'Gravity Wells' are massive God Objects that contain so much logic they attract dependencies from across the entire system. Breaking these apart is mandatory before attempting to split the system into microservices.")
+            
+            if gravity_well is not None and gravity_well["methods_count"] > 10:
+                ev1_gw = f"The heaviest entity is `{gravity_well['name']}` with {gravity_well['methods_count']} methods."
+                ev2_gw = f"Detected side-effects: {gravity_well['Interactions'] if gravity_well['Interactions'] else 'None mapped'}."
+            else:
+                ev1_gw = "No massive God Objects detected."
+                ev2_gw = "Logic weight appears evenly distributed."
+                
+            st.markdown(f"**EVIDENCE**: \n1. {ev1_gw}\n2. {ev2_gw}")
+            st.markdown("**RECOMMENDATION**: Treat 'Gravity Wells' as your primary anti-corruption targets. Begin by extracting small, self-contained traits or helper classes from the heaviest entity.")
     else:
         st.info("No deep symbols identified in this run.")
 
