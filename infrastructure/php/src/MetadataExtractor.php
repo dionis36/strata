@@ -221,28 +221,54 @@ class MetadataExtractor extends NodeVisitorAbstract
             }
             if ($node->var instanceof Node\Expr\ArrayDimFetch && $node->var->var instanceof Node\Expr\Variable) {
                 if (in_array((string)$node->var->var->name, $superglobals)) {
+                    // Extract the string key if it is a literal (e.g. $_SESSION['user'])
+                    $accessKey = null;
+                    if ($node->var->dim instanceof Node\Scalar\String_) {
+                        $accessKey = $node->var->dim->value;
+                    }
                     $this->metadata['globals'][] = [
-                        'name' => (string)$node->var->var->name,
-                        'type' => 'mutation',
-                        'line' => $node->getLine(),
-                        'sourceClass' => $this->currentClass,
-                        'sourceMethod' => $this->currentMethod,
+                        'name'           => (string)$node->var->var->name,
+                        'type'           => 'mutation',
+                        'key'            => $accessKey,
+                        'line'           => $node->getLine(),
+                        'sourceClass'    => $this->currentClass,
+                        'sourceMethod'   => $this->currentMethod,
                         'sourceFunction' => $this->currentFunction
                     ];
                 }
             }
         }
 
-        // Detect Usage
+        // Detect Usage (plain variable: $_SESSION, $_POST, etc.)
         if ($node instanceof Node\Expr\Variable && in_array((string)$node->name, $superglobals)) {
             $this->metadata['globals'][] = [
-                'name' => (string)$node->name,
-                'type' => 'usage',
-                'line' => $node->getLine(),
-                'sourceClass' => $this->currentClass,
-                'sourceMethod' => $this->currentMethod,
+                'name'           => (string)$node->name,
+                'type'           => 'usage',
+                'key'            => null,
+                'line'           => $node->getLine(),
+                'sourceClass'    => $this->currentClass,
+                'sourceMethod'   => $this->currentMethod,
                 'sourceFunction' => $this->currentFunction
             ];
+        }
+
+        // Detect Array Key Access Usage (e.g. $_SESSION['user'], $_POST['email'])
+        if ($node instanceof Node\Expr\ArrayDimFetch && $node->var instanceof Node\Expr\Variable) {
+            if (in_array((string)$node->var->name, $superglobals)) {
+                $accessKey = null;
+                if ($node->dim instanceof Node\Scalar\String_) {
+                    $accessKey = $node->dim->value;
+                }
+                $this->metadata['globals'][] = [
+                    'name'           => (string)$node->var->name,
+                    'type'           => 'key_access',
+                    'key'            => $accessKey,
+                    'line'           => $node->getLine(),
+                    'sourceClass'    => $this->currentClass,
+                    'sourceMethod'   => $this->currentMethod,
+                    'sourceFunction' => $this->currentFunction
+                ];
+            }
         }
 
         // --- Variable Variables (Requirement 6) ---

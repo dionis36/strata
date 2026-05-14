@@ -42,6 +42,7 @@ def show_global_state_intelligence():
     mutations   = data.get("superglobal_mutations", [])
     sess_write  = data.get("session_writers", [])
     sess_read   = data.get("session_readers", [])
+    sess_keys   = data.get("session_key_flow", [])
     explicit_g  = data.get("explicit_globals", [])
     se_totals   = data.get("side_effect_totals", {})
     se_files    = data.get("top_side_effect_files", [])
@@ -141,6 +142,35 @@ def show_global_state_intelligence():
                 st.dataframe(pd.DataFrame(sess_read), hide_index=True, use_container_width=True)
             else:
                 st.info("No session-consuming files detected.")
+
+        # ── Session Key Flow Table ─────────────────────────────────────────
+        st.markdown("---")
+        st.markdown("#### 🔑 Session Key Flow (Write → Read Tracing)")
+        st.caption(
+            "Key-level tracing: shows exactly which key inside `$_SESSION`, `$_POST`, etc. "
+            "is written by which file and read by which file. Requires a re-scan to populate."
+        )
+        if sess_keys:
+            df_keys = pd.DataFrame(sess_keys)
+            st.dataframe(
+                df_keys,
+                hide_index=True,
+                use_container_width=True,
+                column_config={
+                    "direction": st.column_config.TextColumn("Direction"),
+                    "variable":  st.column_config.TextColumn("Variable[Key]"),
+                    "key":       st.column_config.TextColumn("Key Name"),
+                    "file":      st.column_config.TextColumn("File"),
+                    "line":      st.column_config.NumberColumn("Line"),
+                }
+            )
+        else:
+            st.info(
+                "No key-level session accesses detected yet. "
+                "This table populates after a re-scan with the updated parser — "
+                "it will show entries like `$_SESSION['user']` WRITE in `login.php`, "
+                "READ in `dashboard.php`."
+            )
 
         # ── Insight ──────────────────────────────────────────────────────
         st.markdown("---")

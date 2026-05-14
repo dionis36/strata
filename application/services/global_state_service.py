@@ -31,6 +31,9 @@ class GlobalStateService:
 
         SUPERGLOBALS = ["_SESSION", "_POST", "_GET", "_COOKIE", "_FILES", "_SERVER", "_REQUEST", "_ENV", "GLOBALS"]
 
+        # Key-level tracking: {var_name: {key: {"writers": [...], "readers": [...]}}}
+        session_key_flow: dict = defaultdict(lambda: defaultdict(lambda: {"writers": [], "readers": []}))
+
         for n in nodes:
             fqn = n.get("fqn", n.get("file_path", ""))
             src_name = os.path.basename(fqn) if fqn else n.get("name", "unknown")
@@ -38,34 +41,86 @@ class GlobalStateService:
 
             for g in metadata.get("globals", []):
                 var_name = g.get("name", "")
-                gtype = g.get("type", "usage")
-                if var_name in SUPERGLOBALS:
-                    superglobal_usage[src_name][var_name] += 1
-                    superglobal_totals[var_name] += 1
-                    if gtype == "mutation":
-                        superglobal_mutations.append({
-                            "file": fqn,
-                            "variable": f"${var_name}",
+                gtype    = g.get("type", "usage")
+                key      = g.get("key")  # None for plain $var access, string for $var['key']
+
+                if var_name not in SUPERGLOBALS:
+                    continue
+
+                superglobal_usage[src_name][var_name] += 1
+                superglobal_totals[var_name] += 1
+
+                if gtype == "mutation":
+                    superglobal_mutations.append({
+                        "file":     fqn,
+                        "variable": f"${var_name}" + (f"['{key}']" if key else ""),
+                        "key":      key,
+                        "line":     g.get("line"),
+                        "class":    g.get("sourceClass"),
+                        "method":   g.get("sourceMethod"),
+                    })
+                    # Track key-level writer
+                    if key:
+                        session_key_flow[var_name][key]["writers"].append({
+                            "file": src_name, "fqn": fqn,
+                            "line": g.get("line"),
+                            "class": g.get("sourceClass"),
+                            "method": g.get("sourceMethod"),
+                        })
+
+                elif gtype == "key_access":
+                    # Track key-level reader
+                    if key:
+                        session_key_flow[var_name][key]["readers"].append({
+                            "file": src_name, "fqn": fqn,
                             "line": g.get("line"),
                             "class": g.get("sourceClass"),
                             "method": g.get("sourceMethod"),
                         })
 
         # ---------------------------------------------------------------
-        # 2. Session Flow Analysis
+        # 2. Session Flow Analysis (key-level)
         # ---------------------------------------------------------------
-        # Files that write to $_SESSION vs. those that only read
         session_writers: list = []
         session_readers: list = []
 
         for src_name, var_map in superglobal_usage.items():
             if "_SESSION" in var_map:
-                # Heuristic: if there is also a mutation record for this file, it's a writer
-                file_mutations = [m for m in superglobal_mutations if os.path.basename(m["file"]) == src_name and m["variable"] == "$_SESSION"]
+                file_mutations = [
+                    m for m in superglobal_mutations
+                    if os.path.basename(m["file"]) == src_name
+                    and m["variable"].startswith("$_SESSION")
+                ]
                 if file_mutations:
-                    session_writers.append({"file": src_name, "count": var_map["_SESSION"]})
+                    session_writers.append({"file": src_name, "session_accesses": var_map["_SESSION"]})
                 else:
-                    session_readers.append({"file": src_name, "count": var_map["_SESSION"]})
+                    session_readers.append({"file": src_name, "session_accesses": var_map["_SESSION"]})
+
+        # Build flattened session key flow rows for UI
+        session_key_flow_rows: list = []
+        for var_name, keys in session_key_flow.items():
+            for key, flow in keys.items():
+                for w in flow["writers"]:
+                    session_key_flow_rows.append({
+                        "variable":  f"${var_name}['{key}']",
+                        "key":       key,
+                        "direction": "WRITE (produces)",
+                        "file":      w["file"],
+                        "line":      w["line"],
+                        "class":     w.get("class"),
+                        "method":    w.get("method"),
+                    })
+                for r in flow["readers"]:
+                    session_key_flow_rows.append({
+                        "variable":  f"${var_name}['{key}']",
+                        "key":       key,
+                        "direction": "READ (consumes)",
+                        "file":      r["file"],
+                        "line":      r["line"],
+                        "class":     r.get("class"),
+                        "method":    r.get("method"),
+                    })
+        session_key_flow_rows.sort(key=lambda x: (x["key"] or "", x["direction"]))
 
         # ---------------------------------------------------------------
         # 3. Side Effects Classification
@@ -156,14 +211,15 @@ class GlobalStateService:
         )[:20]
 
         return {
-            "superglobal_totals": dict(superglobal_totals),
+            "superglobal_totals":   dict(superglobal_totals),
             "superglobal_mutations": superglobal_mutations[:50],
             "superglobal_file_map": {f: dict(v) for f, v in superglobal_usage.items() if sum(v.values()) > 0},
-            "session_writers": session_writers,
-            "session_readers": session_readers,
-            "explicit_globals": explicit_globals[:50],
-            "side_effect_totals": total_side_effects,
+            "session_writers":      session_writers,
+            "session_readers":      session_readers,
+            "session_key_flow":     session_key_flow_rows[:100],
+            "explicit_globals":     explicit_globals[:50],
+            "side_effect_totals":   total_side_effects,
             "top_side_effect_files": top_side_effect_files,
-            "danger_sinks": danger_files[:30],
-            "legacy_hash_usages": legacy_hash_files[:30],
+            "danger_sinks":         danger_files[:30],
+            "legacy_hash_usages":   legacy_hash_files[:30],
         }
