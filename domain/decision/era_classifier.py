@@ -29,4 +29,4 @@ class EraClassifier:
         if has_namespaces and has_composer:
             return "Era D — Modern PHP (PSR-4/Composer)"
         
-        return "Unknown Legacy Era"
+        return "Bespoke / Custom Era"

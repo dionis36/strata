@@ -271,6 +271,15 @@ class MetadataExtractor extends NodeVisitorAbstract
             }
         }
 
+        // --- Inline HTML/PHP Mixing (Requirement G) ---
+        if ($node instanceof Node\Stmt\InlineHTML) {
+            $this->metadata['requirements'][] = [
+                'type'  => 'INLINE_HTML',
+                'line'  => $node->getLine(),
+                'bytes' => strlen($node->value),
+            ];
+        }
+
         // --- Variable Variables (Requirement 6) ---
         if ($node instanceof Node\Expr\Variable) {
             if ($node->name instanceof Node\Expr) {
@@ -296,6 +305,41 @@ class MetadataExtractor extends NodeVisitorAbstract
             if ($funcNameLower === 'mysqli_connect' || $funcNameLower === 'mysql_connect') {
                 if (count($node->args) > 0 && $node->args[0]->value instanceof Node\Scalar\String_) {
                     $this->metadata['requirements'][] = ['type' => 'HARDCODED_DB_CREDENTIALS', 'line' => $node->getLine()];
+                }
+            }
+
+            // mysql_* family (Requirement G: mysql_* detection)
+            $mysqlLegacyFuncs = [
+                'mysql_query', 'mysql_fetch_array', 'mysql_fetch_assoc', 'mysql_fetch_row',
+                'mysql_fetch_object', 'mysql_num_rows', 'mysql_insert_id', 'mysql_affected_rows',
+                'mysql_result', 'mysql_select_db', 'mysql_free_result', 'mysql_real_escape_string',
+                'mysql_error', 'mysql_errno', 'mysql_close', 'mysql_connect', 'mysql_pconnect',
+            ];
+            if (in_array($funcNameLower, $mysqlLegacyFuncs)) {
+                $this->metadata['requirements'][] = [
+                    'type'     => 'MYSQL_LEGACY',
+                    'function' => $funcName,
+                    'line'     => $node->getLine(),
+                ];
+            }
+
+            // register_globals assumption (Requirement G)
+            if (in_array($funcNameLower, ['extract', 'import_request_variables'])) {
+                $this->metadata['requirements'][] = [
+                    'type' => 'REGISTER_GLOBALS_ASSUMPTION',
+                    'function' => $funcName,
+                    'line' => $node->getLine(),
+                ];
+            }
+
+            // include-based routing (Requirement G)
+            if (in_array($funcNameLower, ['include', 'require', 'include_once', 'require_once'])) {
+                // Flag if the included path is dynamic (variable, not a fixed string)
+                if (count($node->args) > 0 && !($node->args[0]->value instanceof Node\Scalar\String_)) {
+                    $this->metadata['requirements'][] = [
+                        'type' => 'INCLUDE_ROUTING',
+                        'line' => $node->getLine(),
+                    ];
                 }
             }
 

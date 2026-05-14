@@ -65,17 +65,46 @@ class LegacyAnalysisService:
         total_classes = len(class_nodes)
         namespaced_classes = sum(1 for n in class_nodes if n.get('namespace'))
         
-        # Check for legacy DB sinks (Requirement 1 & 11)
-        db_sinks = [e for e in edges if 'sink::DB' in (e.get('target_fqn') or '')]
-        legacy_db_ratio = 1.0 if db_sinks else 0.0 
+        # Check for legacy DB sinks and Dangerous patterns from metadata
+        legacy_db_ratio = 0.0
+        danger_count = 0
+        hosting_sink_count = 0
         
-        # Check for Dangerous patterns (Requirement 6)
-        danger_count = sum(1 for e in edges if 'sink::DANGER' in (e.get('target_fqn') or ''))
+        # Recursive helper to find all values of a specific key
+        def find_keys(obj, key):
+            if isinstance(obj, dict):
+                if key in obj:
+                    yield obj[key]
+                for k, v in obj.items():
+                    yield from find_keys(v, key)
+            elif isinstance(obj, list):
+                for item in obj:
+                    yield from find_keys(item, key)
+
+        for n in nodes:
+            meta = n.get('metadata', {})
+            
+            for t in find_keys(meta, 'type'):
+                if t == 'MYSQL_LEGACY':
+                    legacy_db_ratio = 1.0
+                elif t == 'DB' and legacy_db_ratio == 0.0:
+                    legacy_db_ratio = 0.5
+                elif t == 'DANGER':
+                    danger_count += 1
+                elif t == 'HOSTING':
+                    hosting_sink_count += 1
+                    
+            for se_list in find_keys(meta, 'side_effects'):
+                if isinstance(se_list, list):
+                    for st in se_list:
+                        if st == 'DB' and legacy_db_ratio == 0.0:
+                            legacy_db_ratio = 0.5
+                        elif st == 'DANGER':
+                            danger_count += 1
+                        elif st == 'HOSTING':
+                            hosting_sink_count += 1
         
-        # Check for Hosting assumptions (Requirement 15)
-        hosting_sink_count = sum(1 for e in edges if 'sink::HOSTING' in (e.get('target_fqn') or ''))
         has_htaccess = any(n.get('name') == '.htaccess' for n in nodes if n.get('node_type') == 'file')
-        
         has_composer = any(n.get('name') == 'composer.json' for n in nodes if n.get('node_type') == 'file')
         
         # Procedural ratio: non-class files vs total files

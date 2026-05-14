@@ -9,31 +9,77 @@ class TechStackProfiler:
     @staticmethod
     def profile(nodes: List[Dict], edges: List[Dict]) -> dict:
         """
-        Profiles the DB, Auth, Template, and Autoloading layers.
+        Profiles the DB, Auth, Template, and Autoloading layers based on actual AST metadata.
         """
-        # Collect 'virtual sink' edges
-        sinks = {(e.get('target_fqn') or '') for e in edges if 'sink::' in (e.get('target_fqn') or '')}
-        
-        # Collect requirements-specific metadata (e.g., RAW_SQL, LEGACY_AUTOLOAD)
-        # Note: These are often attached to Nodes as 'requirements' list
-        # For simplicity, we'll check if any node has these markers.
-        
-        db_layer = "Modern (ORM/PDO)"
-        if any('sink::DB' in s for s in sinks):
-            db_layer = "Mixed (Raw SQL & Abstraction)"
+        db_layer = "Bespoke / Custom"
+        auth_layer = "Bespoke / Custom"
+        template_layer = "Bespoke / Custom"
+        autoloading = "Bespoke / Custom"
+
+        has_mysql_legacy = False
+        has_db_sink = False
+        has_auth_sink = False
+        has_template_sink = False
+        has_legacy_autoload = False
+        has_composer = any(n.get('name') == 'composer.json' for n in nodes if n.get('node_type') == 'file')
+
+        for n in nodes:
+            meta = n.get('metadata', {})
             
-        auth_layer = "Modern / Middleware"
-        if any('sink::AUTH' in s for s in sinks) or any('sink::LEGACY_HASH' in s for s in sinks):
-            auth_layer = "Legacy (Session-based / Homemade)"
+            # Recursive helper to find all values of a specific key
+            def find_keys(obj, key):
+                if isinstance(obj, dict):
+                    if key in obj:
+                        yield obj[key]
+                    for k, v in obj.items():
+                        yield from find_keys(v, key)
+                elif isinstance(obj, list):
+                    for item in obj:
+                        yield from find_keys(item, key)
+
+            for req_type in find_keys(meta, 'type'):
+                if req_type == "MYSQL_LEGACY":
+                    has_mysql_legacy = True
+                elif req_type == "LEGACY_AUTOLOAD":
+                    has_legacy_autoload = True
+                elif req_type == "INLINE_HTML":
+                    has_template_sink = True
+                    
+                # Side effects often use the same 'type' key
+                if req_type == "DB":
+                    has_db_sink = True
+                elif req_type in ["AUTH", "LEGACY_HASH"]:
+                    has_auth_sink = True
+                elif req_type == "TEMPLATE":
+                    has_template_sink = True
+
+            # Also check side_effects lists which are strings
+            for se_list in find_keys(meta, 'side_effects'):
+                if isinstance(se_list, list):
+                    for st in se_list:
+                        if st == "DB":
+                            has_db_sink = True
+                        elif st in ["AUTH", "LEGACY_HASH"]:
+                            has_auth_sink = True
+                        elif st == "TEMPLATE":
+                            has_template_sink = True
+
+        if has_mysql_legacy:
+            db_layer = "mysql_* Family (Legacy)"
+        elif has_db_sink:
+            db_layer = "Raw SQL (PDO / mysqli)"
             
-        template_layer = "Native PHP / Unknown"
-        if any('sink::TEMPLATE' in s for s in sinks):
-            template_layer = "Custom / Smarty-like Engine"
+        if has_auth_sink:
+            auth_layer = "Custom / Procedural Hooks"
             
-        autoloading = "Standard (Composer/PSR-4)"
-        # This signal comes from the 'requirements' metadata in nodes
-        # We'll use a placeholder for now or assume if No Namespaces -> Legacy
-        
+        if has_template_sink:
+            template_layer = "Inline HTML / include()"
+            
+        if has_legacy_autoload:
+            autoloading = "__autoload() (Deprecated)"
+        elif has_composer:
+            autoloading = "Composer (PSR-4)"
+
         return {
             "db_layer": db_layer,
             "auth_layer": auth_layer,
