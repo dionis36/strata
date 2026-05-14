@@ -33,13 +33,27 @@ class DatabaseIntelligenceService:
         # 1. Taxonomy: walk every edge; if target is a sink:: node, count it
         # ---------------------------------------------------------------
         taxonomy = defaultdict(lambda: {
-            "raw_sql": 0, "stored_procs": 0, "orm": 0,
-            "transactions": 0, "credentials": 0
+            "reads": 0, "writes": 0, "orm": 0,
+            "transactions": 0, "credentials": 0, "stored_procs": 0
         })
         files_with_sql = set()
         files_with_tx  = set()
         credential_risks = []
         stored_procs_list = []
+
+        def get_context(node):
+            fqn = node.get("fqn", "")
+            parts = fqn.strip("/").split("/")
+            return parts[-2] if len(parts) >= 2 else "Root"
+
+        node_to_context = {}
+        for n in nodes:
+            if n.get("type") in ("file", "class") and "vendor" not in n.get("fqn", ""):
+                node_to_context[n["id"]] = get_context(n)
+
+        table_ownership: dict = defaultdict(lambda: {"contexts": defaultdict(int), "total_writes": 0})
+        file_to_tables: dict  = defaultdict(set)
+
 
         for e in edges:
             src_id  = e.get("source", e.get("source_id", ""))
@@ -53,17 +67,24 @@ class DatabaseIntelligenceService:
             src_fqn  = src_node.get("fqn", src_node.get("file_path", ""))
             src_name = os.path.basename(src_fqn) if src_fqn else src_node.get("name", "unknown")
 
-            if not tgt_name.startswith("sink::") and etype != "writes_to":
+            if etype == "writes_to":
+                taxonomy[src_name]["writes"] += 1
+                files_with_sql.add(src_fqn)
+                continue
+                
+            if etype == "reads_from":
+                taxonomy[src_name]["reads"] += 1
+                files_with_sql.add(src_fqn)
                 continue
 
-            if etype == "writes_to":
-                taxonomy[src_name]["orm"] += 1
+            if not tgt_name.startswith("sink::"):
                 continue
 
             sink_type = tgt_name.replace("sink::", "")
 
             if sink_type == "RAW_SQL":
-                taxonomy[src_name]["raw_sql"] += 1
+                # Fallback: if we just see RAW_SQL sink but no specific edge type, log as generic read
+                taxonomy[src_name]["reads"] += 1
                 files_with_sql.add(src_fqn)
             elif sink_type == "STORED_PROCEDURE":
                 taxonomy[src_name]["stored_procs"] += 1
@@ -75,34 +96,66 @@ class DatabaseIntelligenceService:
                 taxonomy[src_name]["credentials"] += 1
                 credential_risks.append({"file": src_fqn, "line": None})
 
-        # Unhandled transactions: files with raw SQL but no transaction wrapping
-        unhandled_tx_files = []
-        for fqn in files_with_sql:
-            if fqn not in files_with_tx:
-                fname = os.path.basename(fqn)
-                unhandled_tx_files.append({
-                    "file": fqn,
-                    "query_count": taxonomy[fname]["raw_sql"]
-                })
-        unhandled_tx_files.sort(key=lambda x: x["query_count"], reverse=True)
 
         # ---------------------------------------------------------------
-        # 2. Duplicate query detection from graph JSON metadata (new runs only)
+        # 2. Extract metrics & Duplicate query detection from graph JSON metadata
         # ---------------------------------------------------------------
         duplicate_queries = []
         all_queries: dict = defaultdict(list)
         for n in nodes:
-            if n.get("type") != "file":
+            # We look at file nodes (or classes if that's where requirements are stored)
+            if n.get("type") not in ("file", "class"):
                 continue
-            fqn = n.get("fqn", "")
+            fqn = n.get("fqn", n.get("file_path", ""))
+            src_name = os.path.basename(fqn) if fqn else n.get("name", "unknown")
+            
             for req in n.get("metadata", {}).get("requirements", []):
-                if req.get("type") in ("RAW_SQL", "STORED_PROCEDURE"):
+                req_type = req.get("type")
+                
+                if req_type == "RAW_SQL":
+                    # Assume generic read if we can't tell writes vs reads from AST regex
+                    val = str(req.get("full_query", req.get("snippet", ""))).lower().strip()
+                    
+                    table_name = None
+                    if val.startswith("insert into "):
+                        parts = val.replace("insert into ", "").strip().split(" ")
+                        if parts: table_name = parts[0].split("(")[0].strip("`'")
+                    elif val.startswith("update "):
+                        parts = val.replace("update ", "").strip().split(" ")
+                        if parts: table_name = parts[0].strip("`'")
+                    elif val.startswith("delete from "):
+                        parts = val.replace("delete from ", "").strip().split(" ")
+                        if parts: table_name = parts[0].strip("`'")
+                        
+                    if table_name:
+                        taxonomy[src_name]["writes"] += 1
+                        ctx = node_to_context.get(n.get("id"), get_context(n))
+                        table_ownership[table_name]["contexts"][ctx] += 1
+                        table_ownership[table_name]["total_writes"] += 1
+                        file_to_tables[ctx].add(table_name)
+                    else:
+                        taxonomy[src_name]["reads"] += 1
+                        
+                    files_with_sql.add(fqn)
+                    
                     raw_q = req.get("full_query", req.get("snippet", ""))
                     normalized = re.sub(r"'[^']*'", "?", raw_q)
                     normalized = re.sub(r"\b\d+\b", "?", normalized)
                     normalized = re.sub(r"\s+", " ", normalized).strip()
                     if normalized:
                         all_queries[normalized].append(fqn)
+                        
+                elif req_type == "STORED_PROCEDURE":
+                    taxonomy[src_name]["stored_procs"] += 1
+                    stored_procs_list.append({"file": fqn, "line": req.get("line"), "snippet": req.get("snippet", "stored procedure call")})
+                    
+                elif req_type == "DB_TRANSACTION":
+                    taxonomy[src_name]["transactions"] += 1
+                    files_with_tx.add(fqn)
+                    
+                elif req_type == "HARDCODED_DB_CREDENTIALS":
+                    taxonomy[src_name]["credentials"] += 1
+                    credential_risks.append({"file": fqn, "line": req.get("line")})
 
         for q, files in all_queries.items():
             unique = list(set(files))
@@ -110,21 +163,21 @@ class DatabaseIntelligenceService:
                 duplicate_queries.append({"query": q[:80], "files": unique, "count": len(unique)})
         duplicate_queries.sort(key=lambda x: x["count"], reverse=True)
 
-        # ---------------------------------------------------------------
-        # 3. Table Ownership & ERD from WRITES_TO edges
-        # ---------------------------------------------------------------
-        def get_context(node):
-            fqn = node.get("fqn", "")
-            parts = fqn.strip("/").split("/")
-            return parts[-2] if len(parts) >= 2 else "Root"
+        # Unhandled transactions: files with raw SQL but no transaction wrapping
+        unhandled_tx_files = []
+        for fqn in files_with_sql:
+            if fqn not in files_with_tx:
+                fname = os.path.basename(fqn)
+                # taxonomy relies on fname
+                unhandled_tx_files.append({
+                    "file": fqn,
+                    "query_count": taxonomy[fname]["reads"] + taxonomy[fname]["writes"]
+                })
+        unhandled_tx_files.sort(key=lambda x: x["query_count"], reverse=True)
 
-        node_to_context = {}
-        for n in nodes:
-            if n.get("type") in ("file", "class") and "vendor" not in n.get("fqn", ""):
-                node_to_context[n["id"]] = get_context(n)
-
-        table_ownership: dict = defaultdict(lambda: {"contexts": defaultdict(int), "total_writes": 0})
-        file_to_tables: dict  = defaultdict(set)
+        # ---------------------------------------------------------------
+        # 3. Table Ownership & ERD from WRITES_TO edges (plus RAW_SQL)
+        # ---------------------------------------------------------------
 
         for e in edges:
             etype   = e.get("type", e.get("edge_type", ""))

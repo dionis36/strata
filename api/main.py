@@ -228,6 +228,29 @@ def get_db_intelligence(run_id: int, db: Session = Depends(get_db)):
         logger.error(f"Failed to generate DB intelligence: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+from application.services.global_state_service import GlobalStateService
+@app.get("/global-state/{run_id}")
+def get_global_state(run_id: int, db: Session = Depends(get_db)):
+    """Module F: Runtime & Global State Intelligence"""
+    try:
+        service = GlobalStateService(db)
+        return service.get_global_state_intelligence(run_id)
+    except Exception as e:
+        logger.error(f"Failed to generate global state intelligence: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+from application.services.legacy_intelligence_service import LegacyIntelligenceService
+@app.get("/legacy-intelligence/{run_id}")
+def get_legacy_intelligence(run_id: int, db: Session = Depends(get_db)):
+    """Module G: Legacy PHP Intelligence"""
+    try:
+        service = LegacyIntelligenceService(db)
+        return service.get_legacy_intelligence(run_id)
+    except Exception as e:
+        logger.error(f"Failed to generate legacy intelligence: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # --- Phase 5: Enterprise Reporting ---
 from application.services.report_service import ReportService
 

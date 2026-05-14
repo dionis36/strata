@@ -49,6 +49,8 @@ from views.executive_roadmap import show_executive_roadmap
 from views.monolith_navigator import show_monolith_navigator
 from views.layered_architecture import show_layered_architecture, show_system_topology, show_bounded_contexts
 from views.database_intelligence import show_database_intelligence
+from views.global_state_intelligence import show_global_state_intelligence
+from views.legacy_intelligence import show_legacy_intelligence
 from views.risk_audit import show_risk_audit
 from views.extraction_simulator import show_extraction_simulator
 from views.legacy_bootstrapper import show_legacy_bootstrapper
@@ -66,6 +68,8 @@ pages = {
     ],
     "C. Intelligence Reports": [
         st.Page(show_database_intelligence, title="Database Intelligence", icon=":material/storage:"),
+        st.Page(show_global_state_intelligence, title="Runtime & Global State", icon=":material/memory:"),
+        st.Page(show_legacy_intelligence, title="Legacy PHP Intelligence", icon=":material/history:"),
         st.Page(show_risk_audit, title="Modernization Risk", icon=":material/gpp_maybe:"),
     ],
     "D. Strategic Advisory": [
