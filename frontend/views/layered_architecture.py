@@ -189,8 +189,7 @@ def show_system_topology():
             sorted_nodes = sorted(filtered_nodes, key=lambda n: node_degree.get(n["id"], 0), reverse=True)
             top_nodes = sorted_nodes[:max_nodes]
             top_node_ids = {n["id"] for n in top_nodes}
-            
-            net = Network(height="750px", width="100%", bgcolor="#0b0e14", font_color="#e0e0e0", directed=True)
+            net = Network(height="750px", width="100%", bgcolor="#0e1117", font_color="#e0e0e0", directed=True)
             
             # Use a robust configuration
             net.toggle_physics(True)
@@ -235,7 +234,23 @@ def show_system_topology():
             net.save_graph("/tmp/topology_graph.html")
             with open("/tmp/topology_graph.html", "r", encoding="utf-8") as f:
                 html = f.read()
-            components.html(html, height=760)
+                
+            # Inject custom CSS to remove PyVis default white borders and margins
+            custom_css = """
+            <style>
+                body { margin: 0 !important; padding: 0 !important; background-color: #0e1117 !important; }
+                #mynetwork { 
+                    border: 1px solid #1e2430 !important; 
+                    border-radius: 12px !important; 
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
+                    background-color: #0e1117 !important;
+                }
+            </style>
+            """
+            html = html.replace("</head>", custom_css + "</head>")
+            html = html.replace('border: 1px solid lightgray;', 'border: none;')
+            
+            components.html(html, height=770)
             
             st.markdown("---")
             st.markdown("### 🧠 System Topology Intelligence")
@@ -254,7 +269,21 @@ def show_system_topology():
             total_visible = len(top_nodes)
             density = total_edges / (total_visible * max(1, total_visible - 1)) if total_visible > 1 else 0
             
-            col1, col2 = st.columns(2)
+            # Fast Circular Dependency Detection (Mutual Edges)
+            edge_set = set()
+            mutual_edges = set()
+            for l in links:
+                if l["source"] in top_node_ids and l["target"] in top_node_ids:
+                    edge = (l["source"], l["target"])
+                    reverse_edge = (l["target"], l["source"])
+                    if reverse_edge in edge_set:
+                        mutual_edges.add(edge)
+                        mutual_edges.add(reverse_edge)
+                    edge_set.add(edge)
+            
+            circular_count = len(mutual_edges) // 2
+            
+            col1, col2, col3 = st.columns(3)
             with col1:
                 st.info("#### 🕸️ Network Density & Coupling")
                 st.markdown("**METRIC**: Graph Edge Density")
@@ -279,6 +308,20 @@ def show_system_topology():
                     
                 st.markdown(f"**EVIDENCE**: \n1. {ev1_bn}\n2. {ev2_bn}")
                 st.markdown("**RECOMMENDATION**: Examine this bottleneck. If it is a generic utility (e.g., a logger), it can be extracted to a shared library. If it is business logic, it must be untangled before any dependent services can be isolated.")
+
+            with col3:
+                st.warning("#### 🔄 Circular Dependencies")
+                st.markdown("**METRIC**: Mutual Back-Edges")
+                st.markdown("**INTERPRETATION**: Circular dependencies (A calls B, and B calls A) create tightly coupled loops that are impossible to extract independently. They are the most severe blockers for microservice modernization.")
+                
+                ev1_circ = f"Detected {circular_count} direct circular loop(s) within the visible topology."
+                ev2_circ = "The graph contains mutual dependencies." if circular_count > 0 else "No direct mutual loops found in this view."
+                st.markdown(f"**EVIDENCE**: \n1. {ev1_circ}\n2. {ev2_circ}")
+                
+                if circular_count > 0:
+                    st.markdown("**RECOMMENDATION**: Immediate action required. You must break these loops by introducing an interface or moving the shared logic into a third, independent component before attempting any extraction.")
+                else:
+                    st.markdown("**RECOMMENDATION**: Excellent. The lack of direct circular dependencies indicates a healthy, unidirectional flow of logic in this architectural slice.")
     except Exception as e:
         st.error(f"Could not render topology: {e}")
 
