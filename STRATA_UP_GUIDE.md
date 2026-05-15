@@ -58,7 +58,11 @@ docker compose up --build -d
     *   `/data/test_benchmark/system` (CodeIgniter benchmark)
     *   `/data/OWASPWebGoatPHP-master` (Complex monolith)
 3.  Click **Run Minimal Analysis**.
-4.  Navigate to **Metrics Inspection** in the sidebar to explore the structural chokepoints.
+4.  Navigate through the four intelligence pillars in the sidebar:
+    *   **A. Command Center**: Project Dashboard.
+    *   **B. Architectural Discovery**: Monolith Navigator & Layered Structure.
+    *   **C. Intelligence Reports**: Database, Global State, and Legacy PHP audits.
+    *   **D. Strategic Advisory**: Decision Engine and Extraction Simulator.
 
 ---
 

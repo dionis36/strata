@@ -40,16 +40,192 @@ async def lifespan(app: FastAPI):
     # On shutdown
     logger.info("API shutdown")
 
-app = FastAPI(title="Strata API", version="0.1", lifespan=lifespan)
+from pydantic import BaseModel, Field
+from typing import List, Optional, Dict, Any
 
-@app.get("/health")
+# --- App Description ---
+DESCRIPTION = """
+**Strata** is an enterprise-grade Modernization Intelligence Platform designed to de-risk the transformation of legacy PHP monoliths into modern, distributed architectures.
+
+### 🔬 The Strata Methodology
+Unlike traditional static analysis, Strata converts raw source code into a **Structural Intelligence Graph**. By parsing Abstract Syntax Trees (AST) and projecting them into a NetworkX-backed mathematical model, we identify the hidden "gravity" of your codebase—the components that hold the monolith together and the chokepoints that prevent agility.
+
+### 🧠 The Intelligence Stack
+The system is organized into four strategic pillars, mirrored in the API and UI:
+
+**1. Architectural Discovery**
+- **Monolith Navigator**: Recursive structural exploration and file classification.
+- **Layered Structure**: Inference of semantic layers (UI, Service, Data, Infrastructure).
+- **System Topology**: High-level relationship mapping and Bounded Context clustering.
+
+**2. Intelligence Reports**
+- **Database Intelligence**: Detection of SQL operations and table ownership mapping.
+- **Runtime & Global State**: Audit of superglobals (`$_SESSION`, `$_POST`) and shared mutable state.
+- **Legacy PHP Intelligence**: Expert detection of PHP 4/5 era anti-patterns (e.g., `mysql_*`).
+- **Modernization Risk**: Multi-dimensional risk scoring (Structural, Behavioral, Complexity).
+- **Boundary Intelligence**: Detection of MVC entrypoints and external API/Vendor interfaces.
+
+**3. Strategic Advisory**
+- **Modernization Decision Engine**: Rule-based strategy selection (Refactor, Rewrite, Strangler Fig).
+- **Extraction Simulator**: Predictive impact analysis and component blast radius.
+- **Strategic Roadmap**: Prioritized modernization timeline and effort estimation.
+- **Legacy Bootstrapper**: Automated generation of Composer and PSR-4 namespace mappings.
+
+**4. Enterprise Reporting**
+- Generating Graphviz/DOT visualizations, Neo4j Cypher imports, and AI-ready knowledge chunks.
+
+---
+*Developed by the Strata Engineering Team for Advanced Modernization Advisory.*
+"""
+
+app = FastAPI(
+    title="Strata: Modernization Advisory API",
+    description=DESCRIPTION,
+    version="0.2.0",
+    lifespan=lifespan,
+    docs_url=None,  # Disable default docs to use custom one with theme toggle
+    redoc_url=None,
+    contact={
+        "name": "Strata Support",
+        "url": "https://github.com/dionis36/strata",
+    }
+)
+
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.responses import HTMLResponse
+
+@app.get("/docs", include_in_schema=False)
+async def scalar_html():
+    """Native, premium API documentation using Scalar."""
+    return HTMLResponse(
+        content=f"""
+        <!doctype html>
+        <html>
+          <head>
+            <title>{app.title}</title>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <style>
+              body {{ margin: 0; }}
+            </style>
+          </head>
+          <body>
+            <script
+              id="api-reference"
+              data-url="{app.openapi_url}"></script>
+            <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+          </body>
+        </html>
+        """
+    )
+
+# --- Schemas (Pydantic Models) ---
+
+class Message(BaseModel):
+    detail: str
+
+class HealthResponse(BaseModel):
+    status: str = Field(..., example="ok")
+    version: str = Field(..., example="0.2.0")
+    database: str = Field(..., example="connected")
+    timestamp: str
+
+class AnalyzeRequest(BaseModel):
+    project_path: str = Field(..., description="Absolute path inside the container to the legacy source code.", example="/data/test_project")
+    project_name: str = Field("default_project", description="Human-readable name for the project.")
+
+class AnalyzeResponse(BaseModel):
+    run_id: int = Field(..., example=1)
+    files: int = Field(..., example=100)
+    classes: int = Field(..., example=85)
+    edges: int = Field(..., example=120)
+
+class ComponentMetricSchema(BaseModel):
+    name: str = Field(..., example="UserController")
+    type: str = Field(..., example="class")
+    in_degree: int = Field(..., example=5)
+    out_degree: int = Field(..., example=2)
+    betweenness: float = Field(..., example=0.15)
+    scc_size: int = Field(..., example=1)
+    blast_radius: int = Field(..., example=3)
+
+class MetricsResponse(BaseModel):
+    run_id: int
+    components: List[ComponentMetricSchema]
+
+class RiskSchema(BaseModel):
+    name: str
+    type: str
+    risk_score: float = Field(..., example=0.85)
+    risk_level: str = Field(..., example="Critical")
+    behavioral_factor: float
+    final_risk: float
+    criticality_index: float
+    instability: float
+    cycle_flag: bool
+    coupling_pressure: float
+
+class RiskResponse(BaseModel):
+    run_id: int
+    components: List[RiskSchema]
+
+class RuleFiring(BaseModel):
+    category: str
+    severity: str
+    message: str
+
+class ExplanationSchema(BaseModel):
+    name: str
+    rules: List[RuleFiring]
+    evidence: Dict[str, Any]
+
+class ExplanationResponse(BaseModel):
+    run_id: int
+    components: List[ExplanationSchema]
+
+class ExtractionCandidate(BaseModel):
+    name: str
+    cohesion: float
+    coupling: float
+    independence_score: float
+
+class ExtractionResponse(BaseModel):
+    run_id: int
+    candidates: List[ExtractionCandidate]
+
+class AnalysisRunSchema(BaseModel):
+    id: int
+    project_id: int
+    status: str
+    started_at: str
+    completed_at: Optional[str]
+    total_files: int
+    total_loc: int
+    avg_complexity: float
+    avg_maintainability: float
+    total_classes: int
+    total_edges: int
+
+class GraphvizResponse(BaseModel):
+    dot: str
+
+class DashboardResponse(BaseModel):
+    project: Dict[str, Any]
+    latest_run: Optional[Dict[str, Any]]
+
+# --- API Endpoints ---
+
+@app.get("/health", 
+         response_model=HealthResponse, 
+         tags=["System"],
+         summary="Check API and Database health")
 def health_check(db: Session = Depends(get_db)):
+    """Verifies that the API is running and the SQLite database is reachable."""
     try:
-        # Verify db connectivity
         db.execute(text("SELECT 1"))
         return {
             "status": "ok",
-            "version": "0.1",
+            "version": "0.2.0",
             "database": "connected",
             "timestamp": datetime.datetime.utcnow().isoformat()
         }
@@ -57,13 +233,19 @@ def health_check(db: Session = Depends(get_db)):
         logger.error(f"Database connection failed during health check: {e}")
         raise HTTPException(status_code=500, detail="Database connection failed")
 
-class AnalyzeRequest(BaseModel):
-    project_path: str
-    project_name: str = "default_project"
 
-
-@app.post("/analyze")
+@app.post("/analyze", 
+          response_model=AnalyzeResponse, 
+          tags=["Core Analysis"],
+          summary="Trigger deep structural analysis")
 def analyze_project(req: AnalyzeRequest, db: Session = Depends(get_db)):
+    """
+    Initiates a new analysis run for a given project directory.
+    - Scans all PHP files.
+    - Builds the dependency graph.
+    - Projects structural metrics.
+    - Persists results to SQLite.
+    """
     try:
         project_repo = ProjectRepository(db)
         project = project_repo.get_or_create(req.project_name)
@@ -75,8 +257,13 @@ def analyze_project(req: AnalyzeRequest, db: Session = Depends(get_db)):
         logger.error(f"Analysis failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/metrics/{run_id}")
+
+@app.get("/metrics/{run_id}", 
+         response_model=MetricsResponse, 
+         tags=["Core Analysis"],
+         summary="Fetch raw structural metrics")
 def get_metrics(run_id: int, db: Session = Depends(get_db)):
+    """Returns the NetworkX-derived structural metrics for every component found in the run."""
     try:
         metrics = db.query(ComponentMetric).filter(ComponentMetric.run_id == run_id).all()
         components = []
@@ -99,9 +286,12 @@ def get_metrics(run_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/risk/{run_id}")
+@app.get("/risk/{run_id}", 
+         response_model=RiskResponse, 
+         tags=["Modernization Advisory"],
+         summary="Audit structural risk scores")
 def get_risk(run_id: int, db: Session = Depends(get_db)):
-    """Returns Phase 3 structural risk scores for a run, sorted by risk_score desc."""
+    """Returns Phase 3 structural risk scores, identifying high-instability and high-coupling areas."""
     try:
         repo = RiskRepository(db)
         rows = repo.get_risk_by_run(run_id)
@@ -133,16 +323,16 @@ def get_risk(run_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/explain/{run_id}")
+@app.get("/explain/{run_id}", 
+         response_model=ExplanationResponse, 
+         tags=["Modernization Advisory"],
+         summary="Get rule-based risk explanations")
 def get_explanation(run_id: int, db: Session = Depends(get_db)):
-    """Phase 4.5: Returns deterministic, rule-based explanations for all components in a run.
-
-    Each component explanation includes:
-      - Which rules fired (category, severity, message)
-      - Evidence: dependent components, SCC members, source file path
+    """
+    Phase 4.5: Returns deterministic, rule-based explanations for all components.
+    Includes firing rules, severity levels, and specific structural evidence.
     """
     try:
-        # Verify risk data exists first (ExplanationService depends on it)
         repo = RiskRepository(db)
         if not repo.get_risk_by_run(run_id):
             raise HTTPException(
@@ -153,7 +343,6 @@ def get_explanation(run_id: int, db: Session = Depends(get_db)):
         service = ExplanationService(db)
         explanations = service.explain_run(run_id)
         return {"run_id": run_id, "components": explanations}
-
     except HTTPException:
         raise
     except Exception as e:
@@ -161,9 +350,12 @@ def get_explanation(run_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/extraction/{run_id}")
+@app.get("/extraction/{run_id}", 
+         response_model=ExtractionResponse, 
+         tags=["Modernization Advisory"],
+         summary="Identify extraction candidates")
 def get_extraction(run_id: int, db: Session = Depends(get_db)):
-    """Phase 5: Returns simulated architecture extraction candidates and impact metrics."""
+    """Phase 5: Returns candidates for microservice or module extraction based on independence metrics."""
     try:
         repo = RiskRepository(db)
         if not repo.get_risk_by_run(run_id):
@@ -175,16 +367,19 @@ def get_extraction(run_id: int, db: Session = Depends(get_db)):
         service = ExtractionService(db)
         candidates = service.analyze_extraction(run_id)
         return {"run_id": run_id, "candidates": candidates}
-
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to generate extraction candidates for run {run_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/runs")
+
+@app.get("/runs", 
+         response_model=List[AnalysisRunSchema], 
+         tags=["Core Analysis"],
+         summary="List all analysis runs")
 def list_runs(db: Session = Depends(get_db)):
-    """Returns a list of all completed analysis runs with metadata."""
+    """Returns a history of all analysis attempts with high-level file and class counts."""
     from infrastructure.persistence.models import AnalysisRun
     try:
         runs = db.query(AnalysisRun).order_by(AnalysisRun.id.desc()).all()
@@ -208,9 +403,10 @@ def list_runs(db: Session = Depends(get_db)):
         logger.error(f"Failed to list runs: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-from application.services.tree_service import TreeService
-@app.get("/graph/{run_id}/includes")
+
+@app.get("/graph/{run_id}/includes", tags=["Intelligence Modules"], summary="Bootstrap include tree")
 def get_includes(run_id: int, db: Session = Depends(get_db)):
+    """Analyzes the PHP `include/require` structure to find entrypoint bottlenecks."""
     try:
         service = TreeService(db)
         return service.get_bootstrap_analysis(run_id)
@@ -218,9 +414,10 @@ def get_includes(run_id: int, db: Session = Depends(get_db)):
         logger.error(f"Failed to generate include tree: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-from application.services.layer_service import LayerService
-@app.get("/layer-analysis/{run_id}")
+
+@app.get("/layer-analysis/{run_id}", tags=["Intelligence Modules"], summary="Layered architectural analysis")
 def get_layer_analysis(run_id: int, db: Session = Depends(get_db)):
+    """Maps components into theoretical layers (UI, Service, Data) based on dependency direction."""
     try:
         service = LayerService(db)
         return service.get_layered_analysis(run_id)
@@ -228,9 +425,10 @@ def get_layer_analysis(run_id: int, db: Session = Depends(get_db)):
         logger.error(f"Failed to generate layer analysis: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-from application.services.database_intelligence_service import DatabaseIntelligenceService
-@app.get("/db-intelligence/{run_id}")
+
+@app.get("/db-intelligence/{run_id}", tags=["Intelligence Modules"], summary="Database interaction audit")
 def get_db_intelligence(run_id: int, db: Session = Depends(get_db)):
+    """Identifies which components perform direct SQL or ORM operations."""
     try:
         service = DatabaseIntelligenceService(db)
         return service.get_db_intelligence(run_id)
@@ -238,10 +436,10 @@ def get_db_intelligence(run_id: int, db: Session = Depends(get_db)):
         logger.error(f"Failed to generate DB intelligence: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-from application.services.global_state_service import GlobalStateService
-@app.get("/global-state/{run_id}")
+
+@app.get("/global-state/{run_id}", tags=["Intelligence Modules"], summary="Global state usage report")
 def get_global_state(run_id: int, db: Session = Depends(get_db)):
-    """Module F: Runtime & Global State Intelligence"""
+    """Module F: Tracks usage of globals, superglobals ($GLOBALS, $_SESSION), and static patterns."""
     try:
         service = GlobalStateService(db)
         return service.get_global_state_intelligence(run_id)
@@ -249,9 +447,10 @@ def get_global_state(run_id: int, db: Session = Depends(get_db)):
         logger.error(f"Failed to generate global state intelligence: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/legacy-intelligence/{run_id}")
+
+@app.get("/legacy-intelligence/{run_id}", tags=["Intelligence Modules"], summary="Legacy PHP pattern detection")
 def get_legacy_intelligence(run_id: int, db: Session = Depends(get_db)):
-    """Module G: Legacy PHP Intelligence"""
+    """Module G: Detects anti-patterns common in PHP 5.x/4.x era codebases."""
     try:
         service = LegacyIntelligenceService(db)
         return service.get_legacy_intelligence(run_id)
@@ -259,9 +458,10 @@ def get_legacy_intelligence(run_id: int, db: Session = Depends(get_db)):
         logger.error(f"Failed to generate legacy intelligence: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/boundary-intelligence/{run_id}")
+
+@app.get("/boundary-intelligence/{run_id}", tags=["Intelligence Modules"], summary="Boundary & Interface audit")
 def get_boundary_intelligence(run_id: int, db: Session = Depends(get_db)):
-    """Module C+: Boundary Intelligence (MVC, API, Vendor)"""
+    """Module C+: Identifies API entrypoints and external vendor touchpoints."""
     try:
         service = BoundaryIntelligenceService(db)
         return service.get_boundary_intelligence(run_id)
@@ -269,9 +469,10 @@ def get_boundary_intelligence(run_id: int, db: Session = Depends(get_db)):
         logger.error(f"Failed to generate boundary intelligence: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/strategic-roadmap/{run_id}")
+
+@app.get("/strategic-roadmap/{run_id}", tags=["Modernization Advisory"], summary="Get prioritized modernization steps")
 def get_strategic_roadmap(run_id: int):
-    """Module D: Strategic Decision Hub"""
+    """Module D: Returns a step-by-step strategic modernization plan."""
     try:
         service = AdvisoryService()
         return service.get_strategic_roadmap(run_id)
@@ -279,9 +480,10 @@ def get_strategic_roadmap(run_id: int):
         logger.error(f"Failed to generate strategic roadmap: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/simulation/impact/{run_id}")
+
+@app.get("/simulation/impact/{run_id}", tags=["Modernization Advisory"], summary="Simulate extraction impact")
 def get_simulation_impact(run_id: int, fqn: str):
-    """Module D: Extraction & Impact Simulator"""
+    """Module D: Predicts what will break if a specific component is extracted into a service."""
     try:
         service = SimulationService()
         return service.get_extraction_impact(run_id, fqn)
@@ -289,9 +491,10 @@ def get_simulation_impact(run_id: int, fqn: str):
         logger.error(f"Failed to run simulation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/security-risk/{run_id}")
+
+@app.get("/security-risk/{run_id}", tags=["Intelligence Modules"], summary="Security & Vulnerability audit")
 def get_security_risk(run_id: int, db: Session = Depends(get_db)):
-    """Module H: Security & Risk Audit"""
+    """Module H: Cross-references structural risk with security anti-patterns."""
     try:
         service = SecurityRiskService(db)
         return service.get_security_risk_audit(run_id)
@@ -300,11 +503,11 @@ def get_security_risk(run_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
 # --- Phase 5: Enterprise Reporting ---
 
-@app.get("/report/roadmap/{run_id}")
+@app.get("/report/roadmap/{run_id}", tags=["Reporting & Visuals"], summary="Generate PDF/Markdown roadmap")
 def get_roadmap(run_id: int, db: Session = Depends(get_db)):
+    """Returns a structured roadmap ready for document generation."""
     try:
         service = ReportService(db)
         return service.generate_roadmap(run_id)
@@ -312,9 +515,10 @@ def get_roadmap(run_id: int, db: Session = Depends(get_db)):
         logger.error(f"Failed to generate roadmap: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/report/summary-graphviz/{run_id}")
+
+@app.get("/report/summary-graphviz/{run_id}", response_model=GraphvizResponse, tags=["Reporting & Visuals"], summary="Get high-level DOT graph")
 def get_summary_graph(run_id: int, db: Session = Depends(get_db)):
-    """Executive Summary Graph (Directory level)"""
+    """Returns a simplified DOT string representing directory-level coupling."""
     try:
         service = ReportService(db)
         return {"dot": service.generate_summary_graphviz(run_id)}
@@ -322,32 +526,40 @@ def get_summary_graph(run_id: int, db: Session = Depends(get_db)):
         logger.error(f"Failed to generate summary graph: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/report/graphviz/{run_id}")
+
+@app.get("/report/graphviz/{run_id}", response_model=GraphvizResponse, tags=["Reporting & Visuals"], summary="Get full DOT graph")
 def get_graphviz(run_id: int, db: Session = Depends(get_db)):
+    """Returns the complete component-level DOT string for visualization tools."""
     try:
         service = ReportService(db)
         return {"dot": service.generate_graphviz(run_id)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/report/neo4j/{run_id}")
+
+@app.get("/report/neo4j/{run_id}", tags=["Reporting & Visuals"], summary="Get Neo4j Cypher script")
 def get_neo4j(run_id: int, db: Session = Depends(get_db)):
+    """Returns a list of Cypher commands to import the graph into Neo4j."""
     try:
         service = ReportService(db)
         return {"cypher": service.generate_neo4j_cypher(run_id)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/report/ai-chunks/{run_id}")
+
+@app.get("/report/ai-chunks/{run_id}", tags=["Reporting & Visuals"], summary="Get AI-ready knowledge chunks")
 def get_ai_chunks(run_id: int, db: Session = Depends(get_db)):
+    """Splits the analysis into optimal chunks for LLM context windows."""
     try:
         service = ReportService(db)
         return {"chunks": service.generate_ai_chunks(run_id)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-@app.get("/dashboard/{project_id}")
+
+
+@app.get("/dashboard/{project_id}", response_model=DashboardResponse, tags=["Reporting & Visuals"], summary="Executive Dashboard data")
 def get_dashboard(project_id: int, db: Session = Depends(get_db)):
-    """Requirement 4.A: Returns the executive dashboard summary for a project."""
+    """Requirement 4.A: Returns consolidated metrics and risk scores for the Project Dashboard."""
     from infrastructure.persistence.models import Project, AnalysisRun, LegacyMetrics
     try:
         project = db.query(Project).filter(Project.id == project_id).first()
