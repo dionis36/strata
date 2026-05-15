@@ -75,7 +75,7 @@ The system is organized into four strategic pillars, mirrored in the API and UI:
 - Generating Graphviz/DOT visualizations, Neo4j Cypher imports, and AI-ready knowledge chunks.
 
 ---
-*Developed by the Strata Engineering Team for Advanced Modernization Advisory.*
+*Developed by the Strata Team.*
 """
 
 app = FastAPI(
