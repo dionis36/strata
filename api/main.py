@@ -12,6 +12,16 @@ from application.services.extraction_service import ExtractionService
 
 from infrastructure.persistence.models import ComponentMetric, ComponentRisk
 from application.services.analysis_service import AnalysisService
+from application.services.tree_service import TreeService
+from application.services.layer_service import LayerService
+from application.services.database_intelligence_service import DatabaseIntelligenceService
+from application.services.global_state_service import GlobalStateService
+from application.services.legacy_intelligence_service import LegacyIntelligenceService
+from application.services.boundary_intelligence_service import BoundaryIntelligenceService
+from application.services.security_risk_service import SecurityRiskService
+from application.services.advisory_service import AdvisoryService
+from application.services.simulation_service import SimulationService
+from application.services.report_service import ReportService
 
 # Configure structured logging
 logging.basicConfig(
@@ -239,7 +249,6 @@ def get_global_state(run_id: int, db: Session = Depends(get_db)):
         logger.error(f"Failed to generate global state intelligence: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-from application.services.legacy_intelligence_service import LegacyIntelligenceService
 @app.get("/legacy-intelligence/{run_id}")
 def get_legacy_intelligence(run_id: int, db: Session = Depends(get_db)):
     """Module G: Legacy PHP Intelligence"""
@@ -250,7 +259,6 @@ def get_legacy_intelligence(run_id: int, db: Session = Depends(get_db)):
         logger.error(f"Failed to generate legacy intelligence: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-from application.services.boundary_intelligence_service import BoundaryIntelligenceService
 @app.get("/boundary-intelligence/{run_id}")
 def get_boundary_intelligence(run_id: int, db: Session = Depends(get_db)):
     """Module C+: Boundary Intelligence (MVC, API, Vendor)"""
@@ -261,7 +269,26 @@ def get_boundary_intelligence(run_id: int, db: Session = Depends(get_db)):
         logger.error(f"Failed to generate boundary intelligence: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-from application.services.security_risk_service import SecurityRiskService
+@app.get("/strategic-roadmap/{run_id}")
+def get_strategic_roadmap(run_id: int):
+    """Module D: Strategic Decision Hub"""
+    try:
+        service = AdvisoryService()
+        return service.get_strategic_roadmap(run_id)
+    except Exception as e:
+        logger.error(f"Failed to generate strategic roadmap: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/simulation/impact/{run_id}")
+def get_simulation_impact(run_id: int, fqn: str):
+    """Module D: Extraction & Impact Simulator"""
+    try:
+        service = SimulationService()
+        return service.get_extraction_impact(run_id, fqn)
+    except Exception as e:
+        logger.error(f"Failed to run simulation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/security-risk/{run_id}")
 def get_security_risk(run_id: int, db: Session = Depends(get_db)):
     """Module H: Security & Risk Audit"""
@@ -275,7 +302,6 @@ def get_security_risk(run_id: int, db: Session = Depends(get_db)):
 
 
 # --- Phase 5: Enterprise Reporting ---
-from application.services.report_service import ReportService
 
 @app.get("/report/roadmap/{run_id}")
 def get_roadmap(run_id: int, db: Session = Depends(get_db)):
@@ -284,6 +310,16 @@ def get_roadmap(run_id: int, db: Session = Depends(get_db)):
         return service.generate_roadmap(run_id)
     except Exception as e:
         logger.error(f"Failed to generate roadmap: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/report/summary-graphviz/{run_id}")
+def get_summary_graph(run_id: int, db: Session = Depends(get_db)):
+    """Executive Summary Graph (Directory level)"""
+    try:
+        service = ReportService(db)
+        return {"dot": service.generate_summary_graphviz(run_id)}
+    except Exception as e:
+        logger.error(f"Failed to generate summary graph: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/report/graphviz/{run_id}")

@@ -18,12 +18,15 @@ class BoundaryIntelligenceService:
             data = json.load(f)
             
         nodes = data.get("nodes", [])
+        unique_files = sorted(list(set(
+            n.get("file_path") or n.get("fqn") or n.get("name") 
+            for n in nodes 
+            if (n.get("file_path") or n.get("fqn") or n.get("name")) and "data/OWASPWebGoatPHP-master" in (n.get("file_path") or n.get("fqn") or n.get("name", ""))
+        )))
         
         presentation_coupling = []
         api_surface = []
         vendor_intelligence = []
-        vendor_graph = {"nodes": [], "edges": []}
-        
         vendor_files = set() # To track which files are vendor for edge filtering
         file_to_node = {} # For quick node lookup
         
@@ -159,7 +162,9 @@ class BoundaryIntelligenceService:
             "presentation_coupling": sorted(presentation_coupling, key=lambda x: 0 if "CRITICAL" in x["Severity"] else 1),
             "api_surface": api_surface,
             "vendor_intelligence": sorted(vendor_intelligence, key=lambda x: 0 if "ORPHANED RISK" in x["Status"] else 1),
-            "vendor_graph": self._build_vendor_graph(data.get("edges", []), vendor_files, file_to_node)
+            "vendor_graph": self._build_vendor_graph(data.get("edges", []), vendor_files, file_to_node),
+            "unique_files": unique_files,
+            "nodes": nodes
         }
 
     def _build_vendor_graph(self, edges, vendor_files, file_to_node):

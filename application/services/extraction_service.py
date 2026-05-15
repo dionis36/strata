@@ -36,7 +36,7 @@ class ExtractionService:
         # 2. Fetch the graph JSON directly to avoid EvidenceBuilder stripping links
         import os
         import json
-        graph_path = f"/data/graph_{run_id}.json"
+        graph_path = f"data/graph_{run_id}.json"
         
         # Test paths mapping
         if not os.path.exists(graph_path):

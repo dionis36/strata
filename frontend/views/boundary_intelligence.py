@@ -2,7 +2,8 @@ import streamlit as st
 import os
 import requests
 import pandas as pd
-from streamlit_agraph import agraph, Node, Edge, Config
+import streamlit.components.v1 as components
+from pyvis.network import Network
 
 FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
 
@@ -142,11 +143,19 @@ def show_boundary_intelligence():
         vendor_graph = data.get("vendor_graph", {"nodes": [], "edges": []})
         if vendor_graph["nodes"]:
             st.markdown("##### 🕸️ Shadow IT Dependency Map")
-            nodes = [Node(id=n["id"], label=n["label"], color=n["color"], size=n["size"]) for n in vendor_graph["nodes"]]
-            edges = [Edge(source=e["source"], target=e["target"]) for e in vendor_graph["edges"]]
             
-            config = Config(width="100%", height=400, directed=True, physics=True, hierarchical=False)
-            agraph(nodes=nodes, edges=edges, config=config)
+            # Use PyVis for graph rendering
+            net = Network(height="400px", width="100%", bgcolor="#0e1117", font_color="#e0e0e0")
+            for n in vendor_graph["nodes"]:
+                net.add_node(n["id"], label=n["label"], color=n["color"], size=n.get("size", 10))
+            for e in vendor_graph["edges"]:
+                net.add_edge(e["source"], e["target"], color="rgba(150, 150, 150, 0.4)")
+                
+            net.save_graph("/tmp/vendor_graph.html")
+            with open("/tmp/vendor_graph.html", "r", encoding="utf-8") as f:
+                html = f.read()
+            
+            components.html(html, height=450)
             st.markdown("---")
 
         st.markdown("##### 📋 Vendor Registry")

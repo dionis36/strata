@@ -13,7 +13,7 @@ class GlobalStateService:
         self.db = db
 
     def get_global_state_intelligence(self, run_id: int) -> dict:
-        graph_path = f"/data/graph_{run_id}.json"
+        graph_path = f"data/graph_{run_id}.json"
         if not os.path.exists(graph_path):
             raise FileNotFoundError(f"Graph file not found: {graph_path}")
 

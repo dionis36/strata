@@ -8,7 +8,7 @@ class LayerService:
         self.db = db
 
     def get_layered_analysis(self, run_id: int) -> dict:
-        graph_path = f"/data/graph_{run_id}.json"
+        graph_path = f"data/graph_{run_id}.json"
         if not os.path.exists(graph_path):
             raise FileNotFoundError(f"Graph file not found: {graph_path}")
             

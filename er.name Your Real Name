@@ -1,0 +1,103 @@
+[33mdce1126[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m feat: Add Boundary Intelligence service and API endpoint
+[33m9952777[m feat: add structural complexity metrics and extraction feasibility heuristics to metadata analysis and UI
+[33mc218c99[m feat: add SecurityRiskService to perform AST-based vulnerability and architectural debt analysis with associated API and UI components
+[33mf198960[m refactor: overhaul tech stack profiling with AST metadata and enhance legacy intelligence visualization dashboard
+[33m22ca8cc[m feat: implement granular superglobal key-level access and mutation tracking for session flow analysis
+[33m473c043[m feat: update superglobal tracking to include _FILES and add explicit eval() detection with side-effect reporting
+[33m10aed0c[m feat: implement global state and legacy PHP intelligence services with expanded database metrics analysis
+[33m88bc6db[m feat: update graph visualization styles and add circular dependency detection metrics
+[33m2af6d79[m feat: add analytical insights and architectural recommendations to frontend views for codebase assessment
+[33med95a1b[m refactor: update edge schema and improve bounded context inference logic with new debugging utility.
+[33m1df8a1e[m feat: implement inheritance tracking, case-insensitive symbol resolution, and improved call linking in parser bridge while updating navigator view metrics.
+[33mc1cc5db[m refactor: implement global symbol linker in parser bridge to resolve cross-file dependencies and hierarchical node relationships
+[33m4309415[m refactor: update Streamlit CSS branding visibility and modernize process flow guide labels
+[33m554744d[m feat: add project root path tracking, file metrics collection, and executive dashboard API endpoint
+[33ma4f56b9[m refactor: replace PHP transformer with backend audit documentation and update project services and domain models
+[33m5d0425d[m refactor: migrate Streamlit pages to a modular view-based architecture
+[33m64ccc99[m feat: introduce layer and database intelligence services with new dashboard pages and API endpoints.
+[33m65fb035[m feat: add legacy bootstrapping analysis service and migrate enterprise artifact reporting to dedicated pages
+[33m3550073[m feat: implement TechStackProfiler and ReportService to generate architectural roadmaps and deep technical metadata.
+[33m1ed3704[m feat: implement legacy system analysis engine including era classification, framework fingerprinting, modernization scoring, and enhanced code dependency mapping.
+[33m40602f3[m feat: enhance Monolith Navigator visualization with improved dark styling, refined risk thresholds, and improved FQN lookups
+[33mfa26bf7[m feat: add Vis.js network dependencies and integrate into graph domain logic
+[33mf7ad5ab[m feat: include fqn attribute in graph nodes and use it for component identification in behavioral metrics
+[33maa0d9ef[m refactor: update PHP parser version, improve metadata extraction, sync field naming to 'started_at', and optimize database persistence logic
+[33m49ff548[m fix: normalize status check to uppercase for run filtering across frontend pages
+[33m1d4e014[m feat: implement dynamic run selection and architect guidance sidebars across frontend pages with supporting API endpoint
+[33mc789148[m feat: implement auto-discovery for /data projects and enhance system status UI descriptions
+[33m81f8a29[m feat: implement parallel PHP AST parsing, introduce accuracy benchmarking, and add modernization workflow tooling.
+[33me662c4f[m feat: implement PHP AST extraction bridge and hierarchy resolution services for impact analysis
+[33m0b96a50[m docs: add strategic product completion and AST-to-truth technical roadmaps
+[33m0fbc896[m feat: enhance Dockerfile and extraction service for improved dependency management and scoring flexibility
+[33m1a0595a[m docs(phase6): add phase 6 testing playbook
+[33m37e050c[m docs(phase6): publish formal exit report and commit tracking strategy
+[33m91a2199[m[33m ([m[1;33mtag: [m[1;33mv0.8.0-evaluation-framework[m[33m)[m feat(eval): build isolated research-grade evaluation framework (Phase 6)
+[33me8aba1e[m[33m ([m[1;33mtag: [m[1;33mv0.7.4-algorithmic-logic[m[33m)[m fix(phase5): rename AI Verdict to Algorithmic Verdict and bind missing Refactor First metric card
+[33m9c20902[m[33m ([m[1;33mtag: [m[1;33mv0.7.3-ux-affordance[m[33m)[m feat(phase5): upgrade UX affordances and add AI architectural verdicts
+[33m5677442[m[33m ([m[1;33mtag: [m[1;33mv0.7.2-graph-links-patch[m[33m)[m fix(phase5): bypass EvidenceBuilder graph parse to natively bind legacy caller/callee links
+[33md1f73c0[m[33m ([m[1;33mtag: [m[1;33mv0.7.1-universal-clustering[m[33m)[m fix(phase5): expand extractable nodes to natively process procedural legacy bindings
+[33m2b94a2f[m fix(phase5): tune clustering density, case sensitivity and risk node seeds
+[33mf0f7bb7[m feat: Add Phase 5 documentation outlining the modernization decision engine, covering architectural change simulation, extraction scoring, and cluster extraction.
+[33m257b25b[m[33m ([m[1;33mtag: [m[1;33mv0.7-extraction-engine[m[33m)[m docs(phase5-J): write exit report and testing guide
+[33m6639db6[m feat(phase5-H): build extraction and simulation dashboard
+[33m1ca1439[m feat(phase5-G): add GET /extraction/{run_id} endpoint
+[33m2af03bc[m feat(phase5-F): wire CandidateRanker and ExtractionService
+[33m1ddbf76[m feat(phase5-E): calculate multi-dimensional extraction impact
+[33m5439dc2[m feat(phase5-D): implement graph mutation and service proxy simulation
+[33me46c316[m feat(phase5-C): implement cluster scoring and conflict resolution
+[33m364f6d2[m feat(phase5-B): implement hybrid cluster candidate builder
+[33mcd32aad[m feat(phase5-A): define extraction and impact Pydantic domains
+[33m1592f95[m docs(roadmap): insert Phase 4.5 under Phase 4
+[33m8380f67[m docs(phase4.5): update testing guide and exit report to reflect final table layout and explain selector UI
+[33m7ff899b[m fix(ui): adjust component column width and use session state to persist table data on modal trigger
+[33maba2b3c[m fix(ui): restore full risk stats dataframe and add selectbox explain trigger
+[33mf915e56[m fix: correct FASTAPI_URL to base URL (not /health path)
+[33m3d38ac0[m fix(phase4.5): use st.experimental_dialog for Streamlit 1.35.0 and fix O(n²) graph lookup
+[33m5c2e344[m[33m ([m[1;33mtag: [m[1;33mv0.6-explainability[m[33m)[m Release v0.6: Risk Explainability Engine
+[33m86896a4[m[33m ([m[1;32mdevelop[m[33m)[m Merge feature/phase4.5-explainability into develop
+[33m762dff7[m[33m ([m[1;32mfeature/phase4.5-explainability[m[33m)[m docs(phase4.5): add exit report and testing guide
+[33m3b92d1d[m feat(phase4.5-G): add explanation engine unit tests covering determinism and rule bounds
+[33mc1eb2f6[m feat(phase4.5-F): implement st.dialog explanation modal with 3-tab progressive disclosure
+[33m15efcbd[m feat(phase4.5-E): add GET /explain/{run_id} endpoint with structured explanation payload
+[33m2bcdec2[m feat(phase4.5-D): wire ExplanationService orchestrating reasoner and evidence builder
+[33m17fd2e3[m feat(phase4.5-C): implement EvidenceBuilder with graph and file reference extraction
+[33mfe33eed[m feat(phase4.5-B): implement RiskReasoner with weighted, configurable rule evaluation
+[33mf50f630[m feat(phase4.5-A): add explanation domain models and rule set
+[33md156c83[m feat: Add Phase 4.5 specification for a deterministic, rule-based explanation engine to justify system risks.
+[33m4246630[m Merge feature/phase4-behavior into develop
+[33m082627a[m[33m ([m[1;33mtag: [m[1;33mv0.5-behavioral-intelligence[m[33m)[m Release v0.5: Behavioral Intelligence
+[33m5a4f3f6[m[33m ([m[1;32mfeature/phase4-behavior[m[33m)[m docs(phase4): add exit report and testing guide
+[33mfbe758e[m feat(phase4-F): add behavioral intelligence unit tests
+[33mebc99a8[m feat(phase4-E): expose behavioral risk metrics via API and Streamlit UI
+[33m99e01d6[m feat(phase4-D): wire Behavioral Intelligence into Analysis and Risk services
+[33m5c43c91[m feat(phase4-C): add ComponentBehavior schema and extend ComponentRisk
+[33m5b49d11[m feat(phase4-B): implement tokenized SQL/ORM detectors and table extractor
+[33ma53ff15[m feat(phase4-A): extend Graph model with TABLE node and WRITES edge types
+[33m8013139[m docs: Add Phase 4 plan for behavioral intelligence, detailing data mutation detection, graph model expansion, and risk integration.
+[33m09c1a67[m docs(phase3): add detailed Phase 3 testing guide
+[33m965ba0c[m Merge feature/phase3-domain into develop
+[33mc71581f[m[33m ([m[1;33mtag: [m[1;33mv0.4-risk-framework[m[33m)[m Merge develop into main for Phase 3 Release
+[33m224c0a0[m[33m ([m[1;32mfeature/phase3-domain[m[33m)[m docs(phase3): add exit report and testing guide updates
+[33m428e413[m feat(phase3-F): add risk engine unit tests (6 exit criteria) passing 100%
+[33m722b17f[m feat(phase3-DE): add GET /risk/{run_id} endpoint + Risk Analysis Streamlit page
+[33ma55e357[m feat(phase3-BC): add ComponentRisk table, RiskRepository, RiskService + auto-trigger in AnalysisService
+[33m7e331e4[m feat(phase3-A): add risk domain layer — normalizer, features, model, classifier
+[33m6781eb7[m docs: Add Phase 3 design document detailing structural interpretation and risk formulation.
+[33m14a270c[m docs: add Phase 1 prototype presentation
+[33mec480b2[m feat(scripts): add cross-platform Python equivalents of shell scripts
+[33m54701ba[m chore(compose): remove obsolete 'version' attribute from docker-compose.yml
+[33mcf900b4[m fix(docker): fix FromAsCasing lint warning in Dockerfile
+[33m04be1ed[m docs(phase2): add setup_fixtures.sh reminder to §1 Environment Readiness
+[33m4668a82[m docs(phase1): add setup_fixtures.sh reminder to §1 Initial Setup
+[33mb416688[m chore: add setup_fixtures.sh to bootstrap test_benchmark (CI3) on new machines
+[33meba93fd[m frontend: replace /data text input with folder-only selectbox + path guard
+[33ma543307[m pre-phase3: docs: upgrade benchmark to CodeIgniter3 + full testing guide refresh (8 sections)
+[33m285ad43[m[33m ([m[1;31morigin/develop[m[33m)[m release(pre-phase3): merge structural model hardening — typed edges, namespace IDs, metric projections, perf guards, real-world validation
+[33mbe3a3de[m release(v0.3.1): pre-phase3-stable — structural model hardened for heterogeneous phase
+[33md81315b[m[33m ([m[1;33mtag: [m[1;33mv0.3.1-pre-phase3-stable[m[33m, [m[1;31morigin/pre-phase3-repairs[m[33m, [m[1;32mpre-phase3-repairs[m[33m)[m pre-phase3: F+G: slim framework validation + audit post-remediation status update
+[33mfc5ae27[m pre-phase3: A-E: namespace IDs, typed edges, metric projections, perf guards, component_type schema
+[33m80edcad[m release(phase-2): merge structural intelligence engine + web ui
+[33m3afffa3[m[33m ([m[1;31morigin/phase-2-analytics[m[33m, [m[1;32mphase-2-analytics[m[33m)[m phase-2: docs: update testing guide with web ui validation steps
+[33md15b276[m phase-2: frontend: add structural microscope multi-page validation UI
+[33m86ad132[m phase-2: analytics: document Phase 2 Exit Report and Testing Guide
+[33m21df597[m[33m ([m[1;33mtag: [m[1;33mv0.3-structural-metrics[m[33m)[m phase-2: analytics: implement deterministic core structural metrics engine

@@ -53,6 +53,7 @@ from views.global_state_intelligence import show_global_state_intelligence
 from views.legacy_intelligence import show_legacy_intelligence
 from views.risk_audit import show_risk_audit
 from views.extraction_simulator import show_extraction_simulator
+from views.decision_engine import show_modernization_decision_engine
 from views.legacy_bootstrapper import show_legacy_bootstrapper
 
 from views.boundary_intelligence import show_boundary_intelligence
@@ -76,8 +77,9 @@ pages = {
         st.Page(show_boundary_intelligence, title="Boundary Intelligence", icon=":material/public:"),
     ],
     "D. Strategic Advisory": [
-        st.Page(show_executive_roadmap, title="Strategic Roadmap", icon=":material/insights:"),
+        st.Page(show_modernization_decision_engine, title="Modernization Decision Engine", icon=":material/psychology:"),
         st.Page(show_extraction_simulator, title="Extraction Simulator", icon=":material/biotech:"),
+        st.Page(show_executive_roadmap, title="Strategic Roadmap", icon=":material/insights:"),
         st.Page(show_legacy_bootstrapper, title="Legacy Bootstrapper", icon=":material/build:"),
     ]
 }

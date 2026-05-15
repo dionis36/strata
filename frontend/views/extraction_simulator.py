@@ -1,100 +1,124 @@
 import streamlit as st
+import os
 import requests
 import pandas as pd
-import os
-from datetime import datetime
+import streamlit.components.v1 as components
+from pyvis.network import Network
+
+FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
+
+def fetch_simulation(run_id: int, fqn: str):
+    try:
+        res = requests.get(f"{FASTAPI_URL}/simulation/impact/{run_id}?fqn={fqn}", timeout=10)
+        if res.status_code == 200:
+            return res.json()
+    except Exception as e:
+        st.error(f"Failed to run simulation: {e}")
+    return None
 
 def show_extraction_simulator():
-    st.title("Extraction Simulation")
-    st.markdown("### Surgical Modernization Protocol")
-    st.markdown("---")
+    st.markdown("## 🧪 Extraction & Impact Simulator")
+    st.caption("Simulate the 'Blast Radius' of removing or extracting a specific module from the monolith.")
 
-    FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
     run_id = st.session_state.get("active_run_id")
-    
     if not run_id:
-        st.warning("No active analysis run detected. Please execute a scan from the Dashboard.")
+        st.warning("Please select a valid analysis run in the sidebar.")
         return
 
-    @st.cache_data(ttl=300, show_spinner=False)
-    def fetch_candidates(rid):
-        try:
-            r = requests.get(f"{FASTAPI_URL.rstrip('/')}/extraction/{rid}", timeout=120)
-            r.raise_for_status()
-            return r.json().get("candidates", [])
-        except:
-            return []
+    # Let user select a target for simulation
+    try:
+        res = requests.get(f"{FASTAPI_URL}/boundary-intelligence/{run_id}", timeout=10)
+        if res.status_code == 200:
+            data = res.json()
+            unique_files = data.get("unique_files", [])
+            
+            if not unique_files:
+                st.info("The graph engine is still indexing the system topology. Please check back in a few moments.")
+                return
 
-    candidates = fetch_candidates(run_id)
-
-    if not candidates:
-        st.info("No viable extraction candidates identified for this run.")
-        st.markdown("""
-        **Why am I seeing this?**
-        The extraction engine evaluates components based on **Modular Cohesion** and **Coupling Pressure**. 
-        If a component is too deeply entangled with the rest of the monolith (High Blast Radius), 
-        it is marked as a 'Critical Hotspot' but not a 'Viable Extraction Candidate'.
-        
-        **Recommendations:**
-        1.  Check **Modernization Risk** to identify the most entangled hotspots.
-        2.  Review **Layered Architecture** to see if the directory structure prevents logical grouping.
-        3.  Consider manual decoupling of 'God Objects' identified in the **Monolith Navigator**.
-        """)
+            target_fqn = st.selectbox(
+                "🎯 Select Extraction Target", 
+                unique_files,
+                index=0,
+                format_func=lambda x: f"{os.path.basename(x)} ({os.path.dirname(x).replace('/data/OWASPWebGoatPHP-master', '')})",
+                help="Search and select any file to calculate its blast radius within the monolith."
+            )
+        else:
+            st.error("Failed to load project topology.")
+            return
+    except Exception as e:
+        st.error(f"Discovery failed: {e}")
         return
 
-    # --- Core Metrics ---
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Identified Candidates", len(candidates))
-    m2.metric("Optimal Strategy", candidates[0]["unit"])
-    m3.metric("Peak Quality Score", f"{max(c['score'] for c in candidates):.2f}")
+    if not target_fqn:
+        st.info("Select a file above to begin the impact simulation.")
+        return
 
-    st.markdown("---")
-    
-    selected_idx = st.selectbox(
-        "Target Extraction Strategy",
-        options=range(len(candidates)),
-        format_func=lambda i: f"{candidates[i]['unit']} (Feasibility: {candidates[i]['recommendation']})"
-    )
+    if st.button("🚀 Run Impact Simulation"):
+        with st.spinner(f"Simulating extraction of {os.path.basename(target_fqn)}..."):
+            data = fetch_simulation(run_id, target_fqn)
+            if data:
+                st.session_state["last_sim"] = data
 
-    if selected_idx is not None:
-        strategy = candidates[selected_idx]
-        impact = strategy.get("impact", {})
+    sim = st.session_state.get("last_sim")
+    if sim and sim.get("target") == target_fqn:
+        col1, col2 = st.columns([1, 2])
         
-        # --- ROI Brief ---
-        st.markdown("#### Strategic Impact Analysis")
-        col_roi, col_risk, col_feas = st.columns(3)
-        
-        before_risk = impact.get("before_risk", 0.0)
-        after_risk = impact.get("after_risk", 0.0)
-        roi = ((before_risk - after_risk) / before_risk * 100) if before_risk > 0 else 0
-        
-        col_roi.metric("Complexity Reduction (ROI)", f"{roi:.1f}%")
-        col_risk.metric("Risk Shift", f"{impact.get('risk_change', 0.0):.3f}")
-        col_feas.metric("Feasibility Class", strategy.get("recommendation").replace("_", " "))
+        with col1:
+            st.markdown("### 📊 Simulation Metrics")
+            st.metric("Blast Radius (Downstream)", f"{sim['blast_radius']['count']} files")
+            st.metric("Dependency Payload (Upstream)", f"{sim['dependency_payload']['count']} files")
+            
+            st.markdown("#### ⚡ Isolation Score")
+            st.info(sim["isolation_score"])
+            
+            st.markdown("#### 🔓 State Tear")
+            if sim["state_tear"]["globals"]:
+                st.warning(f"Shared Globals: {len(sim['state_tear']['globals'])}")
+                st.caption(", ".join(sim["state_tear"]["globals"][:5]) + ("..." if len(sim["state_tear"]["globals"]) > 5 else ""))
+            else:
+                st.success("No shared globals detected.")
+            
+            if sim["state_tear"]["db_dependencies"]:
+                st.warning("Database Operations Detected")
+                st.caption("This module has direct DB calls that will need a Data Access Layer or API Proxy.")
+
+        with col2:
+            st.markdown("### 🕸️ Extraction Blast Radius")
+            
+            # Use PyVis for graph rendering
+            net = Network(height="500px", width="100%", bgcolor="#0e1117", font_color="#e0e0e0", directed=True)
+            
+            # Add target node
+            net.add_node(sim["target"], label=os.path.basename(sim["target"]), color="#f85149", size=25, title=f"Target: {sim['target']}")
+            
+            # Add blast radius nodes (Downstream)
+            for f in sim["blast_radius"]["files"]:
+                if f != sim["target"]:
+                    net.add_node(f, label=os.path.basename(f), color="#d29922", size=15, title=f"Downstream: {f}")
+                    net.add_edge(f, sim["target"], title="depends on", color="#d29922")
+            
+            # Add dependency payload (Upstream)
+            for f in sim["dependency_payload"]["files"]:
+                if f != sim["target"]:
+                    # Check if node already added as downstream
+                    try:
+                        net.add_node(f, label=os.path.basename(f), color="#58a6ff", size=10, title=f"Upstream: {f}")
+                    except: pass
+                    net.add_edge(sim["target"], f, title="calls", color="#58a6ff")
+
+            net.save_graph("/tmp/extraction_sim.html")
+            with open("/tmp/extraction_sim.html", "r", encoding="utf-8") as f:
+                html = f.read()
+            
+            components.html(html, height=550)
 
         st.markdown("---")
-
-        c_left, c_right = st.columns(2)
-        with c_left:
-            st.markdown("#### Selection Rationale")
-            for reason in strategy.get("reasoning", []):
-                st.markdown(f"- {reason}")
-
-        with c_right:
-            st.markdown("#### Proposed Service Topology")
-            proxy_name = f"{strategy.get('unit').replace(' ', '')}_Service"
-            dot = f"digraph {{ rankdir=LR; bgcolor='transparent'; node [shape=box, style=filled, fontname='Monospace']; "
-            dot += f"'{proxy_name}' [fillcolor='#1e293b', fontcolor='white']; "
-            dot += f"'Legacy_Monolith' -> '{proxy_name}' [label='API']; }}"
-            st.graphviz_chart(dot)
-
-        st.markdown("---")
-        st.markdown("#### Implementation Protocol")
-        for node in strategy.get("node_details", []):
-            with st.expander(f"Entity Isolation: {node['name']}"):
-                st.markdown(f"**Source FQN**: `{node['fqn']}`")
-                st.markdown(f"**Source Path**: `{node['file_path']}`")
-                st.code(f"// Step: Encapsulate and migrate {node['name']}\n// Target: \\Strata\\Services\\{strategy['unit']}\\{node['name']}", language="php")
+        st.markdown("#### 📝 Simulation Findings")
+        st.markdown(
+            f"Extracting **{os.path.basename(target_fqn)}** will require moving or mocking **{sim['dependency_payload']['count']}** files. "
+            f"Conversely, **{sim['blast_radius']['count']}** files in the monolith depend on this module and will break unless a backward-compatible proxy is provided."
+        )
 
 if __name__ == "__main__":
     show_extraction_simulator()

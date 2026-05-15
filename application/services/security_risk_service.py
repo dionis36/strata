@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 class SecurityRiskService:
     def __init__(self, db=None):
-        self.data_dir = os.environ.get("DATA_DIR", "/data")
+        self.data_dir = os.environ.get("DATA_DIR", "data")
 
     def get_security_risk_audit(self, run_id: int) -> Dict[str, Any]:
         graph_file = os.path.join(self.data_dir, f"graph_{run_id}.json")

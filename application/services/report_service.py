@@ -16,19 +16,20 @@ class ReportService:
     def generate_graphviz(self, run_id: int) -> str:
         """
         Requirement 18: Generate Graphviz (.dot) format for deep reachability analysis.
+        NOTE: Limits output to prevent browser crashes.
         """
-        edges = self.db.query(ComponentDependency).filter(ComponentDependency.run_id == run_id).all()
+        edges = self.db.query(ComponentDependency).filter(ComponentDependency.run_id == run_id).limit(2000).all()
         
         dot_lines = ["digraph Architecture {"]
-        dot_lines.append("  node [shape=box, style=filled, color=\"#1f2937\", fillcolor=\"#374151\", fontcolor=white];")
-        dot_lines.append("  edge [color=\"#9ca3af\"];")
+        dot_lines.append("  rankdir=LR;")
+        dot_lines.append("  node [shape=box, style=filled, color=\"#1f2937\", fillcolor=\"#374151\", fontcolor=white, fontsize=10];")
+        dot_lines.append("  edge [color=\"#9ca3af\", arrowsize=0.5];")
         
         added_edges = set()
         for e in edges:
-            source = e.source_id.split("::")[-1] if "::" in e.source_id else e.source_id.split("/")[-1].split("\\")[-1]
-            target = e.target_id.split("::")[-1] if "::" in e.target_id else e.target_id.split("/")[-1].split("\\")[-1]
+            source = e.source_id.split("/")[-1]
+            target = e.target_id.split("/")[-1]
             
-            # Clean up names for dot syntax
             source = source.replace('"', '').replace('.', '_').replace('-', '_')
             target = target.replace('"', '').replace('.', '_').replace('-', '_')
             
@@ -37,6 +38,32 @@ class ReportService:
                 dot_lines.append(f'  {sig};')
                 added_edges.add(sig)
                 
+        dot_lines.append("}")
+        return "\n".join(dot_lines)
+
+    def generate_summary_graphviz(self, run_id: int) -> str:
+        """
+        Generates a high-level directory-to-directory dependency graph.
+        Perfect for executive overview without UI lag.
+        """
+        edges = self.db.query(ComponentDependency).filter(ComponentDependency.run_id == run_id).all()
+        
+        summary_edges = set()
+        for e in edges:
+            # Extract parent directory as the node
+            s_parts = e.source_id.split("/")
+            t_parts = e.target_id.split("/")
+            
+            if len(s_parts) > 3 and len(t_parts) > 3:
+                s_dir = s_parts[2] # data/Project/DIR
+                t_dir = t_parts[2]
+                if s_dir != t_dir:
+                    summary_edges.add((s_dir, t_dir))
+        
+        dot_lines = ["digraph Summary {"]
+        dot_lines.append("  rankdir=TD; node [shape=component, style=filled, fillcolor=\"#1e293b\", color=\"#38bdf8\", fontcolor=white];")
+        for s, t in summary_edges:
+            dot_lines.append(f'  "{s}" -> "{t}";')
         dot_lines.append("}")
         return "\n".join(dot_lines)
 
