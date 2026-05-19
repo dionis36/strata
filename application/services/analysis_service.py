@@ -182,6 +182,8 @@ class AnalysisService:
             return {
                 "run_id": run.id,
                 "files": total_files,
+                "classes": total_classes,
+                "edges": total_edges,
                 "loc": total_loc,
                 "avg_complexity": round(avg_complexity, 2),
                 "avg_mi": round(avg_mi, 2),

@@ -6,6 +6,7 @@ services:
     volumes:
       - ./data:/data
       - .:/app
+      - /app/infrastructure/php/vendor
     command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
     env_file:
       - .env
@@ -19,6 +20,7 @@ services:
     volumes:
       - ./data:/data
       - .:/app
+      - /app/infrastructure/php/vendor
     command: streamlit run frontend/app.py --server.address=0.0.0.0
     env_file:
       - .env

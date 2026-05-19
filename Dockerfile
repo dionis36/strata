@@ -1,60 +1,63 @@
-FROM python:3.11-slim AS builder
+# Use BuildKit to speed up the build
+# syntax=docker/dockerfile:1
+
+# 1. Base stage: Runtime dependencies for both stages
+FROM python:3.11-slim AS base
 
 WORKDIR /app
 
-
-# Install system deps, PHP, and Composer
-RUN apt-get update && apt-get install -y \
-    build-essential \
+# Install PHP and system runtime libs once
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
     php-cli \
     php-xml \
     php-mbstring \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Composer
+# 2. Builder stage: High-performance dependency installation
+FROM base AS builder
+
+# Install 'uv' (Rust-based pip replacement) for 10x faster downloads
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Install Composer for PHP deps
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy only requirements first for layer caching
+# Create a virtual environment to keep the final image clean
+RUN uv venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install Python dependencies using uv cache
 COPY requirements.txt .
-
-
-# Upgrade pip + install dependencies
-RUN pip install --upgrade pip && \
-    pip install --user -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install -r requirements.txt
 
 # Install PHP dependencies
 COPY infrastructure/php/composer.json infrastructure/php/
-RUN cd infrastructure/php && composer install --no-dev --no-interaction --no-progress
+RUN --mount=type=cache,target=/root/.composer/cache \
+    cd infrastructure/php && composer install --no-dev --no-interaction --no-progress
 
-# =========================
+# 3. Final stage: Minimal runtime image
+FROM base
 
-FROM python:3.11-slim
+# Copy the pre-built Python environment
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Install PHP in the final image
-RUN apt-get update && apt-get install -y \
-    php-cli \
-    php-xml \
-    php-mbstring \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-
-# Copy installed packages from builder
-COPY --from=builder /root/.local /root/.local
+# Copy the pre-built PHP dependencies
 COPY --from=builder /usr/bin/composer /usr/bin/composer
 COPY --from=builder /app/infrastructure/php/vendor /app/infrastructure/php/vendor
 
-# Add local bin to PATH
-ENV PATH=/root/.local/bin:$PATH
-
-# Copy app source
-COPY . .
-
-# Create data dir
+# Create data directory (cached layer)
 RUN mkdir -p /data
+
+# Copy application source code (changes most frequently)
+COPY . .
 
 EXPOSE 8000
 EXPOSE 8501
 
+# Default command
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

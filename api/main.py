@@ -139,6 +139,10 @@ class AnalyzeResponse(BaseModel):
     files: int = Field(..., example=100)
     classes: int = Field(..., example=85)
     edges: int = Field(..., example=120)
+    loc: int = Field(..., example=5000)
+    avg_complexity: float = Field(..., example=3.5)
+    avg_mi: float = Field(..., example=75.0)
+    legacy_insights: Dict[str, Any] = Field(..., example={})
 
 class ComponentMetricSchema(BaseModel):
     name: str = Field(..., example="UserController")

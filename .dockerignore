@@ -8,3 +8,8 @@ node_modules
 .git
 dist
 build
+infrastructure/php/vendor
+data/
+.dockerignore
+Dockerfile
+docker-compose.yml
