@@ -38,19 +38,20 @@ def show_executive_roadmap():
     with tabs[1]:
         st.markdown("#### High-Level System Context")
         st.caption("Directory-level dependency clustering for executive overview.")
-        with st.spinner("Generating summary graph..."):
-            try:
-                res = requests.get(f"{FASTAPI_URL}/report/summary-graphviz/{run_id}", timeout=10)
-                if res.status_code == 200:
-                    dot = res.json().get("dot", "")
-                    if dot:
-                        st.graphviz_chart(dot, use_container_width=True)
+        if st.button("Generate Visual Summary"):
+            with st.spinner("Generating summary graph..."):
+                try:
+                    res = requests.get(f"{FASTAPI_URL}/report/summary-graphviz/{run_id}", timeout=10)
+                    if res.status_code == 200:
+                        dot = res.json().get("dot", "")
+                        if dot:
+                            st.graphviz_chart(dot, use_container_width=True)
+                        else:
+                            st.info("Not enough context detected to generate summary.")
                     else:
-                        st.info("Not enough context detected to generate summary.")
-                else:
-                    st.error("Failed to generate summary graph.")
-            except Exception as e:
-                st.error(f"Connection error: {e}")
+                        st.error("Failed to generate summary graph.")
+                except Exception as e:
+                    st.error(f"Connection error: {e}")
 
     with tabs[2]:
         st.markdown("#### Reachability Network (Sampled)")

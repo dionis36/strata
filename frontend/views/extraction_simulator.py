@@ -86,32 +86,36 @@ def show_extraction_simulator():
         with col2:
             st.markdown("### 🕸️ Extraction Blast Radius")
             
-            # Use PyVis for graph rendering
-            net = Network(height="500px", width="100%", bgcolor="#0e1117", font_color="#e0e0e0", directed=True)
-            
-            # Add target node
-            net.add_node(sim["target"], label=os.path.basename(sim["target"]), color="#f85149", size=25, title=f"Target: {sim['target']}")
-            
-            # Add blast radius nodes (Downstream)
-            for f in sim["blast_radius"]["files"]:
-                if f != sim["target"]:
-                    net.add_node(f, label=os.path.basename(f), color="#d29922", size=15, title=f"Downstream: {f}")
-                    net.add_edge(f, sim["target"], title="depends on", color="#d29922")
-            
-            # Add dependency payload (Upstream)
-            for f in sim["dependency_payload"]["files"]:
-                if f != sim["target"]:
-                    # Check if node already added as downstream
-                    try:
-                        net.add_node(f, label=os.path.basename(f), color="#58a6ff", size=10, title=f"Upstream: {f}")
-                    except: pass
-                    net.add_edge(sim["target"], f, title="calls", color="#58a6ff")
+            total_nodes = len(sim["blast_radius"]["files"]) + len(sim["dependency_payload"]["files"])
+            if total_nodes > 150:
+                st.warning(f"⚠️ Graph too large for interactive rendering ({total_nodes} nodes). Please rely on the metrics panel.")
+            else:
+                # Use PyVis for graph rendering
+                net = Network(height="500px", width="100%", bgcolor="#0e1117", font_color="#e0e0e0", directed=True)
+                
+                # Add target node
+                net.add_node(sim["target"], label=os.path.basename(sim["target"]), color="#f85149", size=25, title=f"Target: {sim['target']}")
+                
+                # Add blast radius nodes (Downstream)
+                for f in sim["blast_radius"]["files"]:
+                    if f != sim["target"]:
+                        net.add_node(f, label=os.path.basename(f), color="#d29922", size=15, title=f"Downstream: {f}")
+                        net.add_edge(f, sim["target"], title="depends on", color="#d29922")
+                
+                # Add dependency payload (Upstream)
+                for f in sim["dependency_payload"]["files"]:
+                    if f != sim["target"]:
+                        # Check if node already added as downstream
+                        try:
+                            net.add_node(f, label=os.path.basename(f), color="#58a6ff", size=10, title=f"Upstream: {f}")
+                        except: pass
+                        net.add_edge(sim["target"], f, title="calls", color="#58a6ff")
 
-            net.save_graph("/tmp/extraction_sim.html")
-            with open("/tmp/extraction_sim.html", "r", encoding="utf-8") as f:
-                html = f.read()
-            
-            components.html(html, height=550)
+                net.save_graph("/tmp/extraction_sim.html")
+                with open("/tmp/extraction_sim.html", "r", encoding="utf-8") as f:
+                    html = f.read()
+                
+                components.html(html, height=550)
 
         st.markdown("---")
         st.markdown("#### 📝 Simulation Findings")

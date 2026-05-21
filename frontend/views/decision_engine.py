@@ -30,13 +30,44 @@ def show_modernization_decision_engine():
         return
 
     kpis = data.get("kpis", {})
+    
+    # Humanize Effort Points
+    raw_effort = kpis.get("Overall Migration Effort", "0 Points")
+    try:
+        effort_points = int(raw_effort.split()[0])
+        if effort_points < 100: human_effort = "Small (Days)"
+        elif effort_points < 500: human_effort = "Medium (Weeks)"
+        else: human_effort = "Large (Months)"
+    except:
+        human_effort = raw_effort
+        effort_points = 0
+        
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("Total Migration Effort", kpis.get("Overall Migration Effort", "0 Points"))
+        st.metric(
+            "Estimated Migration Effort", 
+            human_effort,
+            delta=f"{effort_points} Raw Logic Points",
+            delta_color="off",
+            help="An estimate of time required based on code complexity and size."
+        )
     with col2:
-        st.metric("Recommended Path", kpis.get("Most Common Strategy", "Unknown"))
+        strategy_icons = {
+            "REWRITE": "🔴", "STRANGLER FIG": "🟡", "EXTRACT (MICROSERVICE)": "🟢", "REPLATFORM": "🔵", "RETAIN / REHOST": "⚪"
+        }
+        strategy_raw = kpis.get("Most Common Strategy", "Unknown")
+        icon = strategy_icons.get(strategy_raw, "")
+        st.metric(
+            "Primary Modernization Path", 
+            f"{icon} {strategy_raw}",
+            help="The most frequent recommendation. e.g., 'Extract' means moving clean isolated code to a microservice."
+        )
     with col3:
-        st.metric("High-ROI Targets", kpis.get("High Value Targets", 0))
+        st.metric(
+            "Quick Wins (High ROI)", 
+            kpis.get("High Value Targets", 0),
+            help="Modules where the benefit of modernization heavily outweighs the effort. Score > 70."
+        )
 
     st.markdown("---")
 
@@ -46,8 +77,23 @@ def show_modernization_decision_engine():
         
         # Visualize ROI vs Effort
         st.markdown("#### 🎯 Modernization ROI Matrix")
-        # Extract numeric effort for plotting
+        # Extract numeric effort for plotting and humanizing
         df['EffortScore'] = df['Migration Effort'].apply(lambda x: int(x.split()[0]))
+        
+        def humanize_score(points):
+            if points < 20: return "Small (Days)"
+            elif points < 100: return "Medium (Weeks)"
+            else: return "Large (Months)"
+            
+        df['Estimated Effort'] = df['EffortScore'].apply(humanize_score)
+        
+        # Add badges to strategies
+        strategy_icons_full = {
+            "REWRITE": "🔴 REWRITE", "STRANGLER FIG": "🟡 STRANGLER FIG", 
+            "EXTRACT (MICROSERVICE)": "🟢 EXTRACT", "REPLATFORM": "🔵 REPLATFORM", 
+            "RETAIN / REHOST": "⚪ RETAIN"
+        }
+        df['Strategy'] = df['Recommended Strategy'].apply(lambda x: strategy_icons_full.get(x, x))
         
         fig = px.scatter(
             df, 
@@ -72,14 +118,16 @@ def show_modernization_decision_engine():
 
         st.markdown("#### 📋 Strategic Roadmap Details")
         st.dataframe(
-            df[["Context", "Recommended Strategy", "Modernization ROI", "Migration Effort", "Primary Blocker"]],
+            df[["Context", "Strategy", "Modernization ROI", "Estimated Effort", "Primary Blocker"]],
             hide_index=True,
             use_container_width=True
         )
         
         # Deep Dive rationale
-        st.markdown("#### 🔍 Strategic Justification")
-        for rec in recommendations:
+        st.markdown("#### 🔍 Top 10 Strategic Justifications")
+        st.caption("Detailed rationale for the most critical modules to prevent UI overload.")
+        top_recommendations = recommendations[:10]
+        for rec in top_recommendations:
             with st.expander(f"Strategy for: {rec['Context']}"):
                 st.markdown(f"**RECOMMENDED**: `{rec['Recommended Strategy']}`")
                 st.markdown(f"**RATIONALE**: {rec['Rationale']}")

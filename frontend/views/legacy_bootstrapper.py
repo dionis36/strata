@@ -78,7 +78,7 @@ def show_legacy_bootstrapper():
         st.markdown("##### Inferred Inclusion Hierarchy")
         adjacency = tree_data.get("bootstrap_chain", {})
         if adjacency:
-            def generate_html_tree(node, graph, visited=None):
+            def generate_html_tree(node, graph, visited=None, depth=0):
                 if visited is None: visited = set()
                 children = graph.get(node, [])
                 label = f"📄 <b>{node}</b>"
@@ -86,12 +86,15 @@ def show_legacy_bootstrapper():
                 if node in visited:
                     return f"<div style='margin-left: 20px; color: #777; font-size: 0.9rem;'>{label} <span style='color: #f87171;'>(circular loop)</span></div>"
                 
+                if depth > 3:
+                    return f"<div style='margin-left: 20px; font-size: 0.9rem; color: #58a6ff;'>[+] ... ({len(children)} deeper dependencies hidden)</div>"
+                
                 visited.add(node)
                 
                 if not children:
                     return f"<div style='margin-left: 20px; font-size: 0.9rem;'>{label}</div>"
                 
-                children_html = "".join([generate_html_tree(c, graph, visited.copy()) for c in children])
+                children_html = "".join([generate_html_tree(c, graph, visited.copy(), depth + 1) for c in children])
                 return f"<details open style='margin-left: 10px; margin-bottom: 2px;'><summary style='cursor: pointer; padding: 2px;'>{label}</summary><div style='border-left: 1px dashed #444; margin-left: 7px; padding-top: 4px; padding-bottom: 4px;'>{children_html}</div></details>"
 
             in_degrees = {k: 0 for k in adjacency.keys()}
