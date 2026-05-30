@@ -171,3 +171,36 @@ class LegacyMetrics(Base):
     autoloading_strategy = Column(String, nullable=True)
     
     created_at     = Column(DateTime, default=func.now(), nullable=False)
+
+
+class GraphNode(Base):
+    """
+    Phase 4: Normalized AST node storage.
+    Represents classes, methods, functions, tables, namespaces, etc.
+    """
+    __tablename__ = "graph_nodes"
+
+    id            = Column(String, primary_key=True)  # Deterministic Hash ID
+    run_id        = Column(Integer, ForeignKey("analysis_run.id"), primary_key=True)
+    name          = Column(String, nullable=False)
+    fqn           = Column(String, nullable=False)
+    node_type     = Column(String, nullable=False)  # class, method, table, etc.
+    namespace     = Column(String, nullable=True)
+    file_path     = Column(String, nullable=True)
+    metadata_json = Column(String, nullable=True)   # Serialized raw attributes/AST info
+    created_at    = Column(DateTime, default=func.now(), nullable=False)
+
+
+class GraphEdge(Base):
+    """
+    Phase 4: Normalized AST edge storage.
+    Connects GraphNodes representing dependencies.
+    """
+    __tablename__ = "graph_edges"
+
+    id          = Column(Integer, primary_key=True, autoincrement=True)
+    run_id      = Column(Integer, ForeignKey("analysis_run.id"), nullable=False)
+    source_id   = Column(String, nullable=False)
+    target_id   = Column(String, nullable=False)
+    edge_type   = Column(String, nullable=False)  # CALLS, DECLARES, INHERITS, etc.
+    created_at  = Column(DateTime, default=func.now(), nullable=False)

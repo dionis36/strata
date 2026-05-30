@@ -508,6 +508,80 @@ def get_simulation_impact(run_id: int, fqn: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/simulation/ghost-graph/{run_id}", tags=["Modernization Advisory"], summary="Simulate post-extraction ghost graph")
+def get_simulation_ghost_graph(run_id: int, fqn: str):
+    """Module A.2: Simulates and visualizes the target decoupled to-be architecture."""
+    try:
+        service = SimulationService()
+        return service.get_ghost_graph(run_id, fqn)
+    except Exception as e:
+        logger.error(f"Failed to run ghost graph simulation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/analysis/query-graph/{run_id}", tags=["Discovery & Ingestion"], summary="Query normalized graph relations")
+def query_graph_relations(
+    run_id: int,
+    node_type: Optional[str] = None,
+    namespace: Optional[str] = None,
+    edge_type: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """Module A.3: Directly queries SQLite GraphNode and GraphEdge tables for custom subgraphs."""
+    try:
+        from infrastructure.persistence.models import GraphNode, GraphEdge
+        import json
+        
+        node_query = db.query(GraphNode).filter(GraphNode.run_id == run_id)
+        if node_type:
+            node_query = node_query.filter(GraphNode.node_type == node_type)
+        if namespace:
+            node_query = node_query.filter(GraphNode.namespace.like(f"{namespace}%"))
+            
+        nodes = node_query.all()
+        node_ids = {n.id for n in nodes}
+        
+        edge_query = db.query(GraphEdge).filter(GraphEdge.run_id == run_id)
+        if edge_type:
+            edge_query = edge_query.filter(GraphEdge.edge_type == edge_type)
+            
+        edges = edge_query.all()
+        
+        filtered_edges = []
+        for e in edges:
+            if not node_type and not namespace:
+                filtered_edges.append(e)
+            elif e.source_id in node_ids and e.target_id in node_ids:
+                filtered_edges.append(e)
+                
+        return {
+            "nodes": [
+                {
+                    "id": n.id,
+                    "name": n.name,
+                    "fqn": n.fqn,
+                    "type": n.node_type,
+                    "namespace": n.namespace,
+                    "file_path": n.file_path,
+                    "metadata": json.loads(n.metadata_json or "{}")
+                }
+                for n in nodes
+            ],
+            "edges": [
+                {
+                    "id": e.id,
+                    "source": e.source_id,
+                    "target": e.target_id,
+                    "type": e.edge_type
+                }
+                for e in filtered_edges
+            ]
+        }
+    except Exception as e:
+        logger.error(f"Failed to query graph: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/security-risk/{run_id}", tags=["Intelligence Modules"], summary="Security & Vulnerability audit")
 def get_security_risk(run_id: int, db: Session = Depends(get_db)):
     """Module H: Cross-references structural risk with security anti-patterns."""

@@ -164,6 +164,40 @@ class AnalysisService:
             # 6. Save Graph JSON
             graph_data = graph.to_json_dict()
             self.repo.serialize_graph(run.id, graph_data)
+
+            # 6.5 Persist Normalized Graph Nodes and Edges in Database (Phase 4)
+            from infrastructure.persistence.models import GraphNode, GraphEdge
+            import json
+            
+            # Clear any existing graph data for this run to avoid duplicates
+            self.db.query(GraphNode).filter(GraphNode.run_id == run.id).delete()
+            self.db.query(GraphEdge).filter(GraphEdge.run_id == run.id).delete()
+            
+            db_nodes = []
+            for node_data in graph_data.get("nodes", []):
+                metadata_raw = node_data.get("metadata", {})
+                db_nodes.append(GraphNode(
+                    id=node_data.get("id"),
+                    run_id=run.id,
+                    name=node_data.get("name") or "Unknown",
+                    fqn=node_data.get("fqn") or node_data.get("id") or "Unknown",
+                    node_type=node_data.get("type") or "class",
+                    namespace=node_data.get("namespace"),
+                    file_path=node_data.get("file_path"),
+                    metadata_json=json.dumps(metadata_raw)
+                ))
+            self.db.bulk_save_objects(db_nodes)
+            
+            db_edges = []
+            for link_data in graph_data.get("links", []):
+                db_edges.append(GraphEdge(
+                    run_id=run.id,
+                    source_id=link_data.get("source"),
+                    target_id=link_data.get("target"),
+                    edge_type=link_data.get("type") or "CALLS"
+                ))
+            self.db.bulk_save_objects(db_edges)
+            self.db.commit()
             
             # 7. Persist minimal run metadata
             self.repo.update_metrics(run.id, {

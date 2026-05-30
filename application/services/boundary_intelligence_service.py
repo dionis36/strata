@@ -21,7 +21,9 @@ class BoundaryIntelligenceService:
         unique_files = sorted(list(set(
             n.get("file_path") or n.get("fqn") or n.get("name") 
             for n in nodes 
-            if (n.get("file_path") or n.get("fqn") or n.get("name")) and "data/OWASPWebGoatPHP-master" in (n.get("file_path") or n.get("fqn") or n.get("name", ""))
+            if (n.get("file_path") or n.get("fqn") or n.get("name")) 
+            and (n.get("type") in ["file", "NodeType.FILE"])
+            and not ("/vendor/" in (n.get("file_path") or n.get("fqn") or n.get("name", "")).lower())
         )))
         
         presentation_coupling = []
