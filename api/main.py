@@ -485,6 +485,18 @@ def get_strategic_roadmap(run_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/graph/{run_id}/autoload", tags=["Modernization Advisory"], summary="Generate PSR-4 autoload mapping")
+def get_autoload(run_id: int):
+    """Module D.1: Generates dynamic PSR-4 autoload mapping based on AST taxonomy."""
+    try:
+        service = AdvisoryService()
+        return service.get_autoload_mappings(run_id)
+    except Exception as e:
+        logger.error(f"Failed to generate autoload mappings: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
 @app.get("/simulation/impact/{run_id}", tags=["Modernization Advisory"], summary="Simulate extraction impact")
 def get_simulation_impact(run_id: int, fqn: str):
     """Module D: Predicts what will break if a specific component is extracted into a service."""
@@ -520,14 +532,14 @@ def get_roadmap(run_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/report/summary-graphviz/{run_id}", response_model=GraphvizResponse, tags=["Reporting & Visuals"], summary="Get high-level DOT graph")
-def get_summary_graph(run_id: int, db: Session = Depends(get_db)):
-    """Returns a simplified DOT string representing directory-level coupling."""
+@app.get("/report/summary-network/{run_id}", tags=["Reporting & Visuals"], summary="Get high-level interactive network")
+def get_summary_network(run_id: int, db: Session = Depends(get_db)):
+    """Returns a simplified JSON network representing directory-level coupling."""
     try:
         service = ReportService(db)
-        return {"dot": service.generate_summary_graphviz(run_id)}
+        return service.generate_summary_network(run_id)
     except Exception as e:
-        logger.error(f"Failed to generate summary graph: {e}")
+        logger.error(f"Failed to generate summary network: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

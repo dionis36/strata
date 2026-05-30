@@ -41,31 +41,32 @@ class ReportService:
         dot_lines.append("}")
         return "\n".join(dot_lines)
 
-    def generate_summary_graphviz(self, run_id: int) -> str:
+    def generate_summary_network(self, run_id: int) -> dict:
         """
-        Generates a high-level directory-to-directory dependency graph.
-        Perfect for executive overview without UI lag.
+        Generates a high-level directory-to-directory dependency network in JSON.
+        Perfect for interactive executive overview.
         """
         edges = self.db.query(ComponentDependency).filter(ComponentDependency.run_id == run_id).all()
         
+        nodes_set = set()
         summary_edges = set()
         for e in edges:
-            # Extract parent directory as the node
+            # Extract top-level module directory as the node (index 3)
             s_parts = e.source_id.split("/")
             t_parts = e.target_id.split("/")
             
             if len(s_parts) > 3 and len(t_parts) > 3:
-                s_dir = s_parts[2] # data/Project/DIR
-                t_dir = t_parts[2]
+                s_dir = s_parts[3] 
+                t_dir = t_parts[3]
                 if s_dir != t_dir:
+                    nodes_set.add(s_dir)
+                    nodes_set.add(t_dir)
                     summary_edges.add((s_dir, t_dir))
         
-        dot_lines = ["digraph Summary {"]
-        dot_lines.append("  rankdir=TD; node [shape=component, style=filled, fillcolor=\"#1e293b\", color=\"#38bdf8\", fontcolor=white];")
-        for s, t in summary_edges:
-            dot_lines.append(f'  "{s}" -> "{t}";')
-        dot_lines.append("}")
-        return "\n".join(dot_lines)
+        return {
+            "nodes": list(nodes_set),
+            "edges": [{"source": s, "target": t} for s, t in summary_edges]
+        }
 
     def generate_neo4j_cypher(self, run_id: int) -> str:
         """

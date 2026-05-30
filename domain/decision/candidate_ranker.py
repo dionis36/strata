@@ -17,7 +17,7 @@ class CandidateRanker:
         # 3. Decision Logic & Primary Algorithmic Verdict
         recommendation = RecommendationCategory.DO_NOT_EXTRACT
         
-        if impact.data_isolation_difficulty >= 4 or impact.risk_change >= 0.15:
+        if impact.data_isolation_difficulty >= 4 or impact.risk_change >= 0.26:
             recommendation = RecommendationCategory.DO_NOT_EXTRACT
             reasoning.append("**Algorithmic Verdict: Extraction Blocked.** This component is critically entangled with the monolith's data or state. Extracting it would cause massive architectural cascading failures.")
         elif unit.score < 0.35 or impact.interface_complexity >= 15:

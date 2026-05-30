@@ -6,8 +6,8 @@ from domain.models.graph_model import GraphModel
 def test_graph_model_creation():
     graph = GraphModel()
     
-    node1 = Node(id="ClassA", name="ClassA", node_type=NodeType.CLASS, methods=["method1"])
-    node2 = Node(id="ClassB", name="ClassB", node_type=NodeType.CLASS, methods=["method2"])
+    node1 = Node(id="ClassA", name="ClassA", fqn="ClassA", node_type=NodeType.CLASS, methods=["method1"])
+    node2 = Node(id="ClassB", name="ClassB", fqn="ClassB", node_type=NodeType.CLASS, methods=["method2"])
     
 
     edge = Edge(source_id="ClassA", target_id="ClassB", edge_type=EdgeType.CALLS)

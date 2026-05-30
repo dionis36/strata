@@ -7,7 +7,7 @@ from domain.utils.id_generator import generate_deterministic_id
 
 class TestASTBridge(unittest.TestCase):
     def setUp(self):
-        self.bridge = ParserBridge()
+        self.bridge = ParserBridge(None)
         self.fixture_path = os.path.abspath("tests/fixtures/kitchen_sink.php")
         self.root_path = os.path.abspath(".")
 

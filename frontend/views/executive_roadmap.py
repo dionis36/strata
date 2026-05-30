@@ -37,19 +37,34 @@ def show_executive_roadmap():
 
     with tabs[1]:
         st.markdown("#### High-Level System Context")
-        st.caption("Directory-level dependency clustering for executive overview.")
+        st.caption("Directory-level dependency clustering for executive overview. Interactive graph (zoom, pan, drag).")
         if st.button("Generate Visual Summary"):
-            with st.spinner("Generating summary graph..."):
+            with st.spinner("Generating interactive network..."):
                 try:
-                    res = requests.get(f"{FASTAPI_URL}/report/summary-graphviz/{run_id}", timeout=10)
+                    res = requests.get(f"{FASTAPI_URL}/report/summary-network/{run_id}", timeout=10)
                     if res.status_code == 200:
-                        dot = res.json().get("dot", "")
-                        if dot:
-                            st.graphviz_chart(dot, use_container_width=True)
+                        data = res.json()
+                        nodes = data.get("nodes", [])
+                        edges = data.get("edges", [])
+                        
+                        if nodes:
+                            from pyvis.network import Network
+                            import streamlit.components.v1 as components
+                            
+                            net = Network(height="600px", width="100%", bgcolor="#0e1117", font_color="#e0e0e0", directed=True)
+                            for node in nodes:
+                                net.add_node(node, label=node, color="#38bdf8", size=20)
+                            for edge in edges:
+                                net.add_edge(edge["source"], edge["target"], color="#9ca3af")
+                                
+                            net.save_graph("/tmp/summary_net.html")
+                            with open("/tmp/summary_net.html", "r", encoding="utf-8") as f:
+                                html = f.read()
+                            components.html(html, height=650)
                         else:
-                            st.info("Not enough context detected to generate summary.")
+                            st.info("Not enough context detected to generate summary. The system may lack inter-module dependencies.")
                     else:
-                        st.error("Failed to generate summary graph.")
+                        st.error("Failed to generate summary network.")
                 except Exception as e:
                     st.error(f"Connection error: {e}")
 

@@ -16,12 +16,24 @@ def run_benchmark():
     # Ground Truth for WebGoat app/model
     ground_truth = {
         "/data/OWASPWebGoatPHP-master/app/model": {
-            "expected_safe_units": [], # Exploration phase
-            "expected_blocked_units": []
+            "expected_safe_units": [
+                "jFormInputEmail",
+                "jFormInputDate",
+                "webgoat\\ContestUsers",
+                "webgoat\\WorkshopUsers"
+            ],
+            "expected_blocked_units": [
+                "User",
+                "UserRepository",
+                "Xuser",
+                "webgoat\\BaseLesson",
+                "jFormCaptcha"
+            ]
         }
     }
     
     print("📊 Initializing Strata Accuracy Benchmark...")
+    results = {}
     
     for project_path, targets in ground_truth.items():
         print(f"\n📂 Benchmarking Project: {project_path}")
@@ -34,16 +46,70 @@ def run_benchmark():
         candidates = extraction_service.analyze_extraction(run_id)
         
         # 3. Calculate Metrics
-        recommended_units = [c["unit"] for c in candidates if c["recommendation"] == "SAFE_TO_EXTRACT"]
-        blocked_units = [c["unit"] for c in candidates if c["recommendation"] == "DO_NOT_EXTRACT"]
+        tp = 0
+        fp = 0
+        fn = 0
+        tn = 0
         
-        print(f"🔍 Recommended for Modernization: {recommended_units}")
-        print(f"🛡️ Blocked as High-Risk Monolith Core: {blocked_units}")
+        for c in candidates:
+            # Safely handle Enum comparison
+            rec_val = c["recommendation"].value if hasattr(c["recommendation"], "value") else c["recommendation"]
+            
+            # Extract all FQNs and names present in this candidate
+            candidate_names = set()
+            for detail in c.get("node_details", []):
+                if detail.get("fqn"):
+                    candidate_names.add(detail["fqn"])
+                if detail.get("name"):
+                    candidate_names.add(detail["name"])
+                    
+            # Check if this candidate contains any expected safe unit
+            has_safe = any(u in candidate_names for u in targets["expected_safe_units"])
+            # Check if this candidate contains any expected blocked unit
+            has_blocked = any(u in candidate_names for u in targets["expected_blocked_units"])
+            
+            if has_safe:
+                # SAFE_TO_EXTRACT and EXTRACT_WITH_CAUTION are extractable categories
+                if rec_val in ["SAFE_TO_EXTRACT", "EXTRACT_WITH_CAUTION"]:
+                    tp += 1
+                elif rec_val in ["DO_NOT_EXTRACT", "REQUIRES_REFACTOR_FIRST"]:
+                    fn += 1
+                    
+            if has_blocked:
+                if rec_val in ["SAFE_TO_EXTRACT", "EXTRACT_WITH_CAUTION"]:
+                    fp += 1
+                elif rec_val in ["DO_NOT_EXTRACT", "REQUIRES_REFACTOR_FIRST"]:
+                    tn += 1
+                    
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+        f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
         
-        if len(recommended_units) > 0:
-            print("✨ **BENCHMARK SUCCESS**: Intelligence Engine is generating modernization candidates on a real-world codebase.")
+        print(f"  True Positives (TP): {tp}")
+        print(f"  False Positives (FP): {fp}")
+        print(f"  False Negatives (FN): {fn}")
+        print(f"  True Negatives (TN): {tn}")
+        print(f"  Precision: {precision:.3f}")
+        print(f"  Recall: {recall:.3f}")
+        print(f"  F1-Score: {f1:.3f}")
+        
+        results[project_path] = {
+            "tp": tp,
+            "fp": fp,
+            "fn": fn,
+            "tn": tn,
+            "precision": precision,
+            "recall": recall,
+            "f1_score": f1
+        }
+        
+        if f1 >= 0.80:
+            print("✨ **BENCHMARK SUCCESS**: Intelligence Engine is generating modernization candidates with high accuracy.")
         else:
-            print("⚠️ **BENCHMARK WARNING**: No candidates identified. Review topological density.")
+            print("⚠️ **BENCHMARK WARNING**: Accuracy metrics are below expectations. Review topological density.")
+            
+    return results
 
 if __name__ == "__main__":
     run_benchmark()
+

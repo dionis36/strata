@@ -19,6 +19,15 @@ class GraphSimulator:
         g_sim = self.original_graph.copy()
         nodes_to_remove = set(unit.nodes)
         
+        # Expand to include declared nodes (e.g. methods)
+        declared_nodes = set()
+        for u in nodes_to_remove:
+            for v in self.original_graph.successors(u):
+                edge_type = self.original_graph.edges[u, v].get("type", "")
+                if edge_type == "DECLARES" or getattr(edge_type, "value", "") == "declares":
+                    declared_nodes.add(v)
+        nodes_to_remove.update(declared_nodes)
+        
         if not nodes_to_remove:
             return g_sim
             

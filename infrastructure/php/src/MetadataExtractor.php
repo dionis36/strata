@@ -536,9 +536,13 @@ class MetadataExtractor extends NodeVisitorAbstract
 
         $name = null;
         if ($node instanceof MethodCall) {
-            $name = (string) $node->name;
+            if ($node->name instanceof Node\Identifier) {
+                $name = (string) $node->name;
+            }
         } elseif ($node instanceof StaticCall) {
-            $name = (string) $node->name;
+            if ($node->name instanceof Node\Identifier || $node->name instanceof Node\Name) {
+                $name = (string) $node->name;
+            }
         } elseif ($node instanceof Node\Expr\FuncCall) {
             if ($node->name instanceof Node\Name) {
                 $name = (string) $node->name;

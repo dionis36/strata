@@ -113,8 +113,19 @@ class EvidenceBuilder:
         if not graph:
             return {"dependent_components": [], "scc_members": []}
 
-        nodes   = graph.get("nodes", {})    # dict: id -> node_data
+        nodes   = graph.get("nodes", {})    # dict: id -> node_data or list
         inbound = graph.get("inbound", {})  # dict: id -> [source_ids]
+
+        if isinstance(nodes, list):
+            # Raw list format, index on the fly
+            nodes_list = nodes
+            nodes = {n["id"]: n for n in nodes_list}
+            inbound = {}
+            for link in graph.get("links", []):
+                target = link.get("target") or link.get("callee")
+                source = link.get("source") or link.get("caller")
+                if target and source and source != target:
+                    inbound.setdefault(target, []).append(source)
 
         # Direct inbound dependents (capped to avoid payload bloat)
         dependents = inbound.get(component_name, [])[:10]
@@ -141,7 +152,11 @@ class EvidenceBuilder:
         if not graph:
             return {"file_path": None}
 
-        node = graph.get("nodes", {}).get(component_name)
+        nodes = graph.get("nodes", {})
+        if isinstance(nodes, list):
+            nodes = {n["id"]: n for n in nodes}
+
+        node = nodes.get(component_name)
         if node:
             raw_path = node.get("file_path") or node.get("filepath")
             if raw_path:

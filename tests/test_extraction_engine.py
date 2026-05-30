@@ -42,7 +42,7 @@ def test_cluster_scorer_and_conflict_resolver(mock_graph):
     for c in candidates:
         scorer.score_cluster(c)
         
-    resolver = ConflictResolver(mock_graph)
+    resolver = ConflictResolver(mock_graph, original_risk_map={n: 0.5 for n in mock_graph.nodes()})
     units = resolver.resolve(candidates)
     
     # Ensure all nodes are present in exactly one unit

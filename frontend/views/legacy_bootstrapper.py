@@ -59,20 +59,36 @@ def show_legacy_bootstrapper():
         st.markdown("##### PSR-4 Autoloading Bridge")
         st.markdown("Generated based on detected namespace patterns and directory taxonomy.")
         
-        # Mocking composer.json generation logic for now
-        composer_json = {
-            "name": f"strata-modernization/{st.session_state.get('project_slug', 'legacy-app')}",
-            "require": {
-                "php": ">=8.1"
-            },
-            "autoload": {
-                "psr-4": {
-                    "App\\": "src/"
-                }
-            }
-        }
-        st.code(str(composer_json).replace("'", '"'), language="json")
-        st.download_button("Download composer.json", str(composer_json).replace("'", '"'), file_name="composer.json")
+        with st.spinner("Generating PSR-4 mapping..."):
+            try:
+                res = requests.get(f"{FASTAPI_URL}/graph/{run_id}/autoload", timeout=10)
+                if res.status_code == 200:
+                    autoload_data = res.json()
+                    psr4 = autoload_data.get("psr-4", {})
+                    
+                    # If empty (no namespaces detected), fallback to default template with warning
+                    if not psr4:
+                        st.warning("⚠️ No namespaced classes detected. Proposing a default layout template.")
+                        psr4 = {"App\\": "src/"}
+                        
+                    composer_json = {
+                        "name": f"strata-modernization/{st.session_state.get('project_slug', 'legacy-app')}",
+                        "require": {
+                            "php": ">=8.1"
+                        },
+                        "autoload": {
+                            "psr-4": psr4
+                        }
+                    }
+                    import json
+                    composer_str = json.dumps(composer_json, indent=4)
+                    st.code(composer_str, language="json")
+                    st.download_button("Download composer.json", composer_str, file_name="composer.json")
+                else:
+                    st.error("Failed to generate autoload mappings.")
+            except Exception as e:
+                st.error(f"Error fetching autoload mappings: {e}")
+
 
     with tabs[1]:
         st.markdown("##### Inferred Inclusion Hierarchy")

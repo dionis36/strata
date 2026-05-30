@@ -71,16 +71,13 @@ class ParserBridge:
                 if isinstance(c_data_map, dict):
                     for fqn, cdata in c_data_map.items():
                         c_id = generate_deterministic_id(fqn, ntype.value)
-                        add_node_safe(Node(
-                            id=c_id, name=cdata["name"], node_type=ntype, fqn=fqn, file_path=path, metadata=cdata
-                        ))
-                        all_edges.append(Edge(source_id=f_id, target_id=c_id, edge_type=EdgeType.DECLARES))
-                        symbol_map[fqn.lower()] = c_id
                         
                         # Methods inside classes
                         methods = cdata.get("methods", [])
+                        method_names = []
                         if isinstance(methods, list):
                             for mdata in methods:
+                                method_names.append(mdata["name"])
                                 m_fqn = f"{fqn}::{mdata['name']}"
                                 m_id = generate_deterministic_id(m_fqn, NodeType.METHOD.value)
                                 add_node_safe(Node(id=m_id, name=mdata["name"], node_type=NodeType.METHOD, fqn=m_fqn, file_path=path))
@@ -91,6 +88,12 @@ class ParserBridge:
                                 if m_name not in method_map:
                                     method_map[m_name] = []
                                 method_map[m_name].append(m_id)
+
+                        add_node_safe(Node(
+                            id=c_id, name=cdata["name"], node_type=ntype, fqn=fqn, file_path=path, metadata=cdata, methods=method_names
+                        ))
+                        all_edges.append(Edge(source_id=f_id, target_id=c_id, edge_type=EdgeType.DECLARES))
+                        symbol_map[fqn.lower()] = c_id
 
             # Inheritance & Abstraction mapping
             for c_type in ["classes", "interfaces"]:
@@ -169,14 +172,24 @@ class ParserBridge:
             for call in metadata.get("calls", []):
                 # Identify source of the call
                 source_id = f_id
+                source_class_id = None
                 if call.get("sourceMethod") and call.get("source"):
                     m_fqn = f"{call['source']}::{call['sourceMethod']}".lower()
                     source_id = symbol_map.get(m_fqn, f_id)
+                    source_class_id = symbol_map.get(call["source"].lower())
                 elif call.get("sourceFunction"):
                     source_id = symbol_map.get(call["sourceFunction"].lower(), f_id)
+                elif call.get("source"):
+                    source_class_id = symbol_map.get(call["source"].lower())
                 
                 # Resolve target
                 call_type = call.get("type", "method_call")
+
+                # Helper to add edge for source_id and source_class_id
+                def add_edge_safe(target_node_id, edge_type):
+                    all_edges.append(Edge(source_id=source_id, target_id=target_node_id, edge_type=edge_type))
+                    if source_class_id and source_class_id != source_id:
+                        all_edges.append(Edge(source_id=source_class_id, target_id=target_node_id, edge_type=edge_type))
                 
                 if call_type == "method_call":
                     # Fuzzy match for dynamic method calls (Era 2/3 logic)
@@ -185,31 +198,41 @@ class ParserBridge:
                         # Add an edge to the first 5 potential matches to prevent graph explosion
                         # while still capturing the structural dependency
                         for target_m_id in method_map[f_name][:5]:
-                            all_edges.append(Edge(source_id=source_id, target_id=target_m_id, edge_type=EdgeType.CALLS))
+                            add_edge_safe(target_m_id, EdgeType.CALLS)
                             
                 elif call_type == "static_call":
                     c_name = call.get("class", "").lower()
                     m_name = call.get("method", "").lower()
                     target_fqn = f"{c_name}::{m_name}"
                     if target_fqn in symbol_map:
-                        all_edges.append(Edge(source_id=source_id, target_id=symbol_map[target_fqn], edge_type=EdgeType.CALLS))
+                        add_edge_safe(symbol_map[target_fqn], EdgeType.CALLS)
                     elif c_name in symbol_map:
-                        all_edges.append(Edge(source_id=source_id, target_id=symbol_map[c_name], edge_type=EdgeType.CALLS))
+                        add_edge_safe(symbol_map[c_name], EdgeType.CALLS)
+                    else:
+                        orig_c = call.get("class")
+                        if orig_c:
+                            target_id = generate_deterministic_id(orig_c, NodeType.CLASS.value)
+                            add_edge_safe(target_id, EdgeType.CALLS)
                         
                 elif call_type == "instantiation":
                     c_name = call.get("class", "").lower()
                     if c_name in symbol_map:
-                        all_edges.append(Edge(source_id=source_id, target_id=symbol_map[c_name], edge_type=EdgeType.CALLS))
+                        add_edge_safe(symbol_map[c_name], EdgeType.CALLS)
+                    else:
+                        orig_c = call.get("class")
+                        if orig_c:
+                            target_id = generate_deterministic_id(orig_c, NodeType.CLASS.value)
+                            add_edge_safe(target_id, EdgeType.CALLS)
                 
                 else:
                     # Fallback for generic calls
                     target_fqn = (call.get("class") or call.get("method", "")).lower()
                     if target_fqn and target_fqn in symbol_map:
-                        all_edges.append(Edge(source_id=source_id, target_id=symbol_map[target_fqn], edge_type=EdgeType.CALLS))
+                        add_edge_safe(symbol_map[target_fqn], EdgeType.CALLS)
                     elif not call.get("class") and call.get("method"):
                         f_name = call["method"].lower()
                         if f_name in symbol_map:
-                            all_edges.append(Edge(source_id=source_id, target_id=symbol_map[f_name], edge_type=EdgeType.CALLS))
+                            add_edge_safe(symbol_map[f_name], EdgeType.CALLS)
         
         return all_nodes, all_edges
 

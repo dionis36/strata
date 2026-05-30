@@ -178,3 +178,85 @@ class AdvisoryService:
             val = i.get(key)
             counts[val] = counts.get(val, 0) + 1
         return max(counts, key=counts.get)
+
+    def get_autoload_mappings(self, run_id: int) -> Dict[str, Any]:
+        graph_file = os.path.join(self.data_dir, f"graph_{run_id}.json")
+        if not os.path.exists(graph_file):
+            return {"error": "Graph data not found"}
+
+        with open(graph_file, "r") as f:
+            data = json.load(f)
+
+        nodes = data.get("nodes", [])
+        
+        # 1. Determine project root path dynamically
+        file_paths = [n.get("fqn", "") for n in nodes if n.get("type") in ["file", "NodeType.FILE"]]
+        if not file_paths:
+            project_root = "/data"
+        else:
+            try:
+                project_root = os.path.commonpath(file_paths)
+            except Exception:
+                project_root = "/data"
+
+        # 2. Map namespace prefixes to folders relative to project root
+        mappings = {}
+        for n in nodes:
+            ntype = n.get("type")
+            if ntype not in ["class", "interface", "trait", "NodeType.CLASS", "NodeType.INTERFACE", "NodeType.TRAIT"]:
+                continue
+                
+            fqn = n.get("fqn", "")
+            name = n.get("name", "")
+            file_path = n.get("file_path", "")
+            
+            if not fqn or not name or not file_path:
+                continue
+                
+            if not file_path.startswith(project_root):
+                continue
+                
+            rel_path = os.path.relpath(file_path, project_root)
+            
+            if fqn.endswith(name):
+                namespace = fqn[:-len(name)].rstrip("\\")
+            else:
+                parts = fqn.rsplit("\\", 1)
+                namespace = parts[0] if len(parts) > 1 else ""
+                
+            if not namespace:
+                continue
+                
+            rel_dir = os.path.dirname(rel_path).replace("\\", "/")
+            if not rel_dir or rel_dir == ".":
+                rel_dir = ""
+            else:
+                rel_dir = rel_dir + "/"
+                
+            ns_parts = [p for p in namespace.split("\\") if p]
+            dir_parts = [p for p in rel_dir.split("/") if p]
+            
+            while len(ns_parts) > 1 and len(dir_parts) > 1 and ns_parts[-1].lower() == dir_parts[-1].lower():
+                ns_parts.pop()
+                dir_parts.pop()
+                
+            prefix_ns = "\\".join(ns_parts) + "\\"
+            prefix_dir = "/".join(dir_parts)
+            if prefix_dir and not prefix_dir.endswith("/"):
+                prefix_dir = prefix_dir + "/"
+                
+            if prefix_ns not in mappings:
+                mappings[prefix_ns] = {}
+            mappings[prefix_ns][prefix_dir] = mappings[prefix_ns].get(prefix_dir, 0) + 1
+            
+        # 3. Choose the most common relative directory for each namespace prefix
+        final_psr4 = {}
+        for ns, dirs in mappings.items():
+            best_dir = max(dirs, key=dirs.get)
+            final_psr4[ns] = best_dir
+            
+        return {
+            "project_root": project_root,
+            "psr-4": final_psr4
+        }
+

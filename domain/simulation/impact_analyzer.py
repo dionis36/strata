@@ -18,6 +18,15 @@ class ImpactAnalyzer:
         """
         nodes = set(unit.nodes)
         
+        # Expand to include declared nodes (e.g. methods)
+        declared_nodes = set()
+        for u in nodes:
+            for v in self.G.successors(u):
+                edge_type = self.G.edges[u, v].get("type", "")
+                if edge_type == "DECLARES" or getattr(edge_type, "value", "") == "declares":
+                    declared_nodes.add(v)
+        nodes.update(declared_nodes)
+        
         # 1. Dependency Breaks (how many coupling edges are severed)
         dependency_breaks = 0
         for u in nodes:
