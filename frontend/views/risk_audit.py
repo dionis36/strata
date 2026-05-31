@@ -104,6 +104,9 @@ def show_risk_audit():
                     "Fan-Out": st.column_config.NumberColumn("Fan-Out", help="Number of external dependencies."),
                     "Security Sinks": st.column_config.NumberColumn("Sinks"),
                     "Global Accesses": st.column_config.NumberColumn("Global Accesses"),
+                    "Domain Archetype": st.column_config.TextColumn("Archetype"),
+                    "Test Coverage": st.column_config.TextColumn("Coverage"),
+                    "Semantic Multiplier": st.column_config.NumberColumn("Risk Multiplier", help="Semantic AI Adjustment")
                 }
             )
         else:

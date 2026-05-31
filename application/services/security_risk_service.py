@@ -179,7 +179,11 @@ class SecurityRiskService:
                     "Max Method LOC": max_method_loc,
                     "Fan-Out": fan_out,
                     "Security Sinks": file_sinks,
-                    "Global Accesses": global_usage
+                    "Global Accesses": global_usage,
+                    # Phase 9: Semantic Data
+                    "Domain Archetype": n.get("domain_archetype", "UNKNOWN"),
+                    "Semantic Multiplier": n.get("semantic_multiplier", 1.0),
+                    "Test Coverage": f"{(n.get('test_coverage') * 100):.1f}%" if n.get("test_coverage") is not None else "N/A"
                 })
 
         avg_mi = sum(f["Maintainability Index"] for f in file_matrix) / len(file_matrix) if file_matrix else 100

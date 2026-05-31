@@ -15,6 +15,16 @@ def fetch_strategic_roadmap(run_id: int):
         st.error(f"Failed to fetch roadmap: {e}")
     return None
 
+@st.cache_data(ttl=60)
+def fetch_ai_advisory(run_id: int):
+    try:
+        res = requests.get(f"{FASTAPI_URL}/advisory/ai/{run_id}", timeout=30)
+        if res.status_code == 200:
+            return res.json()
+    except Exception:
+        pass
+    return None
+
 def show_modernization_decision_engine():
     st.markdown("## 🧠 Modernization Decision Engine")
     st.caption("Strategic advisory based on structural risk, domain coupling, and modernization ROI.")
@@ -142,6 +152,42 @@ def show_modernization_decision_engine():
                 )
     else:
         st.info("The engine is still processing strategy profiles. Please check back shortly.")
+
+    # --- Phase 10: AI Narratives & Mermaid Diagrams ---
+    st.markdown("---")
+    st.markdown("### 🤖 Deep AI Architectural Intelligence")
+    st.caption("AI-synthesized modernization paths directly targeting God Classes and structural tight coupling.")
+    
+    ai_data = fetch_ai_advisory(run_id)
+    if ai_data and ai_data.get("findings"):
+        findings = ai_data["findings"]
+        for f in findings:
+            priority_color = "🔴" if f.get("priority") == "Critical" else "🟠" if f.get("priority") == "High" else "🟡"
+            
+            with st.expander(f"{priority_color} {f.get('observation', 'Architecture Finding')}"):
+                c1, c2 = st.columns([2, 1])
+                with c1:
+                    st.markdown("##### The Assessment")
+                    st.markdown(f.get('impact', ''))
+                    
+                    st.markdown("##### Executive Recommendation")
+                    st.success(f.get('recommended_action', ''))
+                    
+                    if "Playbook Standard" in f.get('category', ''):
+                        st.info("📖 **Playbook Standard Enforced**: This recommendation follows strict, deterministic modernization rules.")
+                    else:
+                        st.caption(f"**Confidence**: {f.get('confidence', 'N/A')} | **Category**: {f.get('category', 'General')}")
+                
+                with c2:
+                    diagram = f.get('mermaid_diagram')
+                    if diagram:
+                        st.markdown("##### Extraction Blueprint")
+                        # We use standard code block which Streamlit automatically renders as Mermaid if Streamlit >= 1.35
+                        st.markdown(f"```mermaid\n{diagram}\n```")
+                    else:
+                        st.markdown("*No diagram available for this finding.*")
+    else:
+        st.info("Waiting for AI analysis to complete...")
 
 if __name__ == "__main__":
     show_modernization_decision_engine()

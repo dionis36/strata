@@ -208,13 +208,21 @@ def show_system_topology():
             }
             """)
             
-            # 3. Enhanced Color Mapping
+            # 3. Enhanced Color Mapping & Shape Mapping
             role_colors = {
                 "entry_point": "#ff4b4b", "controller": "#00d4ff", "view": "#00cc96",
                 "config": "#f9a825", "bootstrap": "#ab47bc", "vendor": "#757575",
                 "file": "#90a4ae", "class": "#5c6bc0", 
                 "method": "#7e57c2", "function": "#ffa726",
                 "global_var": "#ec407a", "namespace": "#26a69a"
+            }
+            
+            archetype_shapes = {
+                "ENTITY": "dot",
+                "CONTROLLER": "diamond",
+                "UTILITY": "square",
+                "GOD_CLASS": "star",
+                "UNKNOWN": "dot"
             }
 
             for n in top_nodes:
@@ -223,13 +231,41 @@ def show_system_topology():
                 degree = node_degree.get(n["id"], 1)
                 size = 15 + (degree * 2) if degree > 5 else 15
                 
+                archetype = n.get("domain_archetype", "UNKNOWN")
+                shape = archetype_shapes.get(archetype, "dot")
+                if archetype == "GOD_CLASS":
+                    color = "#ff1744" # Pulsing Red Equivalent
+                    size += 10
+                
                 label = n.get("name")
-                title = f"FQN: {n.get('fqn')}\nType: {ntype}\nConnections: {degree}"
-                net.add_node(n["id"], label=label, title=title, color=color, size=min(size, 50))
+                cov_str = f"{(n.get('test_coverage') * 100):.1f}%" if n.get("test_coverage") is not None else "N/A"
+                title = (
+                    f"FQN: {n.get('fqn')}\nType: {ntype}\n"
+                    f"Archetype: {archetype}\nConnections: {degree}\n"
+                    f"WMC: {n.get('wmc', 0)}\nLCOM: {n.get('lcom', 0):.2f}\n"
+                    f"Coverage: {cov_str}"
+                )
+                net.add_node(n["id"], label=label, title=title, color=color, shape=shape, size=min(size, 50))
             
+            # Map edge types
             for link in links:
                 if link["source"] in top_node_ids and link["target"] in top_node_ids:
-                    net.add_edge(link["source"], link["target"], color="rgba(150, 150, 150, 0.3)", width=1.5)
+                    edge_type = link.get("type", "calls")
+                    e_color = "rgba(150, 150, 150, 0.3)"
+                    e_width = 1.5
+                    e_dashes = False
+                    
+                    if edge_type == "injects":
+                        e_color = "rgba(0, 204, 150, 0.7)" # Green
+                        e_dashes = True
+                    elif edge_type == "static_call":
+                        e_color = "rgba(255, 75, 75, 0.8)" # Solid Red
+                        e_width = 2.5
+                    elif edge_type == "instantiates":
+                        e_color = "rgba(249, 168, 37, 0.8)" # Solid Orange
+                        e_width = 2.0
+                        
+                    net.add_edge(link["source"], link["target"], color=e_color, width=e_width, dashes=e_dashes)
             
             net.save_graph("/tmp/topology_graph.html")
             with open("/tmp/topology_graph.html", "r", encoding="utf-8") as f:

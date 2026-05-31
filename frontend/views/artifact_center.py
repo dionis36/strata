@@ -144,12 +144,15 @@ def show_artifact_center():
         st.markdown("---")
         
         # 2. Rector Config
-        st.markdown("#### 2. Rector Configuration")
-        st.caption("Automated PHP refactoring rules based on detected legacy patterns (`rector.php`).")
+        st.markdown("#### 2. AI-Synthesized Rector Configuration")
+        st.caption("Automated PHP refactoring rules synthesized by the LLM based on detected legacy patterns (`rector.php`).")
         if st.button("Generate rector.php"):
-            with st.spinner("Generating Rector rules..."):
+            with st.spinner("Synthesizing custom Rector rules via AI..."):
                 res = requests.get(f"{FASTAPI_URL}/artifacts/rector/{run_id}")
                 if res.status_code == 200:
+                    st.success("✅ Rector Configuration Synthesized")
+                    with st.expander("👁️ View AI-Generated rector.php", expanded=True):
+                        st.code(res.text, language="php")
                     st.download_button(
                         label="⬇️ Download rector.php",
                         data=res.text,

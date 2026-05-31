@@ -170,6 +170,21 @@ class AnalysisService:
 
             # 6. Save Graph JSON
             graph_data = graph.to_json_dict()
+            for node in graph_data.get("nodes", []):
+                nid = node.get("id")
+                # Look up either by ID or FQN
+                metrics = metrics_matrix.get(nid, {})
+                if not metrics:
+                    fqn = node.get("fqn")
+                    if fqn:
+                        metrics = metrics_matrix.get(fqn, {})
+                node.update({
+                    "domain_archetype": metrics.get("domain_archetype", "UNKNOWN"),
+                    "wmc": metrics.get("wmc", 0),
+                    "lcom": metrics.get("lcom", 0.0),
+                    "is_stateful": metrics.get("is_stateful", False),
+                    "test_coverage": metrics.get("test_coverage")
+                })
             self.repo.serialize_graph(run.id, graph_data)
 
             # 6.5 Persist Normalized Graph Nodes and Edges in Database (Phase 4)
