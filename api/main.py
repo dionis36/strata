@@ -698,3 +698,67 @@ def get_dashboard(project_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Failed to fetch dashboard: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# --- Artifact Generation Endpoints ---
+
+@app.get("/artifacts/sarif/{run_id}", tags=["Artifacts"], summary="Generate SARIF JSON")
+def get_sarif_artifact(run_id: int, db: Session = Depends(get_db)):
+    from application.services.artifact_service import ArtifactService
+    return ArtifactService(db).generate_sarif(run_id)
+
+@app.get("/artifacts/rector/{run_id}", tags=["Artifacts"], summary="Generate rector.php config")
+def get_rector_config(run_id: int, db: Session = Depends(get_db)):
+    from application.services.artifact_service import ArtifactService
+    from fastapi.responses import PlainTextResponse
+    return PlainTextResponse(ArtifactService(db).generate_rector_config(run_id))
+
+@app.get("/artifacts/deptrac/{run_id}", tags=["Artifacts"], summary="Generate deptrac.yaml config")
+def get_deptrac_config(run_id: int, db: Session = Depends(get_db)):
+    from application.services.artifact_service import ArtifactService
+    from fastapi.responses import PlainTextResponse
+    return PlainTextResponse(ArtifactService(db).generate_deptrac_yaml(run_id))
+
+@app.get("/artifacts/json/{run_id}", tags=["Artifacts"], summary="Generate strict Machine JSON dump")
+def get_machine_json(run_id: int, db: Session = Depends(get_db)):
+    from application.services.artifact_service import ArtifactService
+    import json
+    return json.loads(ArtifactService(db).generate_machine_json(run_id))
+
+@app.get("/artifacts/csv/{run_id}", tags=["Artifacts"], summary="Generate CSV risk export")
+def get_csv_export(run_id: int, db: Session = Depends(get_db)):
+    from application.services.artifact_service import ArtifactService
+    from fastapi.responses import PlainTextResponse
+    return PlainTextResponse(ArtifactService(db).generate_csv_export(run_id))
+
+@app.get("/artifacts/report/{run_id}", tags=["Artifacts"], summary="Generate Executive HTML Report")
+def get_html_report(run_id: int, db: Session = Depends(get_db)):
+    from application.services.artifact_service import ArtifactService
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(ArtifactService(db).generate_human_report(run_id))
+
+@app.get("/artifacts/technical/{run_id}", tags=["Artifacts"], summary="Generate Technical Assessment")
+def get_technical_report(run_id: int, db: Session = Depends(get_db)):
+    from application.services.artifact_service import ArtifactService
+    from fastapi.responses import PlainTextResponse
+    return PlainTextResponse(ArtifactService(db).generate_technical_report(run_id))
+
+@app.get("/artifacts/bundle/{run_id}", tags=["Artifacts"], summary="Download Full Workspace Bundle")
+def get_artifact_bundle(
+    run_id: int, 
+    html: bool = True, md: bool = True, csv: bool = True,
+    sarif: bool = True, rector: bool = True, deptrac: bool = True,
+    db: Session = Depends(get_db)
+):
+    from application.services.artifact_service import ArtifactService
+    from fastapi.responses import StreamingResponse
+    import io
+    
+    zip_bytes = ArtifactService(db).generate_workspace_bundle(
+        run_id, html=html, md=md, csv=csv, sarif=sarif, rector=rector, deptrac=deptrac
+    )
+    return StreamingResponse(
+        io.BytesIO(zip_bytes), 
+        media_type="application/zip", 
+        headers={"Content-Disposition": f"attachment; filename=strata_workspace_{run_id}.zip"}
+    )
+

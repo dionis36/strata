@@ -57,6 +57,7 @@ from views.decision_engine import show_modernization_decision_engine
 from views.legacy_bootstrapper import show_legacy_bootstrapper
 
 from views.boundary_intelligence import show_boundary_intelligence
+from views.artifact_center import show_artifact_center
 
 # Modern Streamlit Navigation (v1.31+)
 pages = {
@@ -81,6 +82,9 @@ pages = {
         st.Page(show_extraction_simulator, title="Extraction Simulator", icon=":material/biotech:"),
         st.Page(show_executive_roadmap, title="Strategic Roadmap", icon=":material/insights:"),
         st.Page(show_legacy_bootstrapper, title="Legacy Bootstrapper", icon=":material/build:"),
+    ],
+    "E. Artifact Center": [
+        st.Page(show_artifact_center, title="Artifact Center", icon=":material/download:"),
     ]
 }
 
@@ -126,6 +130,7 @@ with st.sidebar:
     - **B. Discovery**: Map the structure & Topology
     - **C. Intelligence**: Audit deep risks
     - **D. Roadmap**: Strategic Advisory
+    - **E. Artifacts**: Downloads & Exports
     """)
     st.markdown("---")
 
