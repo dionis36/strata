@@ -113,7 +113,11 @@ class AnalysisRunRepository:
                 fan_in_ratio=metrics.get('fan_in_ratio', 0.0),
                 fan_out_ratio=metrics.get('fan_out_ratio', 0.0),
                 scc_density=metrics.get('scc_density', 0.0),
-                reachability_ratio=metrics.get('reachability_ratio', 0.0)
+                reachability_ratio=metrics.get('reachability_ratio', 0.0),
+                domain_archetype=metrics.get('domain_archetype'),
+                is_stateful=metrics.get('is_stateful', False),
+                lcom=metrics.get('lcom', 0.0),
+                wmc=metrics.get('wmc', 0)
             )
             objects.append(cm)
             
@@ -199,6 +203,11 @@ class RiskRepository:
                 risk_score=r["risk_score"],
                 risk_level=r["risk_level"],
                 behavioral_factor=r.get("behavioral_factor", 0.0),
+                domain_archetype=r.get("domain_archetype"),
+                is_stateful=r.get("is_stateful", False),
+                lcom=r.get("lcom", 0.0),
+                wmc=r.get("wmc", 0),
+                semantic_multiplier=r.get("semantic_multiplier", 1.0),
                 final_risk=r.get("final_risk", r["risk_score"]),
             )
             for r in risk_results

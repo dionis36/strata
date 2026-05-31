@@ -9,6 +9,7 @@ use PhpParser\Node\Stmt\Interface_;
 use PhpParser\Node\Stmt\Trait_;
 use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\Node\Stmt\ClassMethod;
+use PhpParser\Node\Stmt\Property;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\New_;
@@ -95,8 +96,26 @@ class MetadataExtractor extends NodeVisitorAbstract
             $node instanceof Node\Stmt\Catch_ || 
             $node instanceof Node\Expr\BinaryOp\BooleanAnd || 
             $node instanceof Node\Expr\BinaryOp\BooleanOr || 
-            $node instanceof Node\Expr\Ternary) {
+            $node instanceof Node\Expr\Ternary ||
+            $node instanceof Node\Stmt\Case_) {
             $this->metadata['complexity']++;
+            
+            if ($this->currentClass) {
+                if (!isset($this->metadata['classes'][$this->currentClass]['wmc'])) {
+                    $this->metadata['classes'][$this->currentClass]['wmc'] = 0;
+                }
+                $this->metadata['classes'][$this->currentClass]['wmc']++;
+                
+                if ($this->currentMethod) {
+                    $methodIndex = count($this->metadata['classes'][$this->currentClass]['methods']) - 1;
+                    if ($methodIndex >= 0) {
+                        if (!isset($this->metadata['classes'][$this->currentClass]['methods'][$methodIndex]['complexity'])) {
+                            $this->metadata['classes'][$this->currentClass]['methods'][$methodIndex]['complexity'] = 1;
+                        }
+                        $this->metadata['classes'][$this->currentClass]['methods'][$methodIndex]['complexity']++;
+                    }
+                }
+            }
         }
 
         // --- Nesting Depth ---
@@ -142,14 +161,33 @@ class MetadataExtractor extends NodeVisitorAbstract
         if ($node instanceof Class_) {
             $namespacedName = $node->namespacedName ? ltrim((string) $node->namespacedName, '\\') : (string) $node->name;
             $this->currentClass = $namespacedName;
+            
+            $docComment = $node->getDocComment();
+            $docText = $docComment ? $docComment->getText() : null;
+
             $this->metadata['classes'][$this->currentClass] = [
                 'name' => (string) $node->name,
                 'fqn' => $this->currentClass,
                 'extends' => $node->extends ? (string) $node->extends : null,
                 'implements' => array_map(fn($i) => (string) $i, $node->implements),
                 'methods' => [],
+                'properties' => [],
+                'doc_comment' => $docText,
+                'wmc' => 0,
                 'line' => $node->getLine()
             ];
+        }
+
+        if ($node instanceof Property) {
+            if ($this->currentClass) {
+                foreach ($node->props as $prop) {
+                    $this->metadata['classes'][$this->currentClass]['properties'][] = [
+                        'name' => (string) $prop->name,
+                        'isStatic' => $node->isStatic(),
+                        'visibility' => $node->isPublic() ? 'public' : ($node->isProtected() ? 'protected' : 'private')
+                    ];
+                }
+            }
         }
 
         if ($node instanceof Interface_) {
@@ -189,6 +227,8 @@ class MetadataExtractor extends NodeVisitorAbstract
                 'returnType' => $this->resolveType($node->returnType),
                 'line' => $node->getLine(),
                 'loc' => $loc,
+                'complexity' => 1,
+                'accessed_properties' => [],
                 'globals' => []
             ];
         }
@@ -317,6 +357,21 @@ class MetadataExtractor extends NodeVisitorAbstract
                     'sourceMethod'   => $this->currentMethod,
                     'sourceFunction' => $this->currentFunction
                 ];
+            }
+        }
+        
+        // --- LCOM Support: Track accessed class properties ---
+        if ($node instanceof Node\Expr\PropertyFetch) {
+            if ($node->var instanceof Node\Expr\Variable && $node->var->name === 'this') {
+                if ($node->name instanceof Node\Identifier && $this->currentClass && $this->currentMethod) {
+                    $propName = (string) $node->name;
+                    $methodIndex = count($this->metadata['classes'][$this->currentClass]['methods']) - 1;
+                    if ($methodIndex >= 0) {
+                        if (!in_array($propName, $this->metadata['classes'][$this->currentClass]['methods'][$methodIndex]['accessed_properties'])) {
+                            $this->metadata['classes'][$this->currentClass]['methods'][$methodIndex]['accessed_properties'][] = $propName;
+                        }
+                    }
+                }
             }
         }
 

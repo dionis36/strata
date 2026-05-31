@@ -113,6 +113,11 @@ class EvidenceBuilder:
                 "risk_score": r.risk_score,
                 "coupling_pressure": r.coupling_pressure,
                 "blast_radius": r.norm_blast_radius,
+                "domain_archetype": getattr(r, 'domain_archetype', 'UNKNOWN'),
+                "is_stateful": getattr(r, 'is_stateful', False),
+                "lcom": getattr(r, 'lcom', 0.0),
+                "wmc": getattr(r, 'wmc', 0),
+                "semantic_multiplier": getattr(r, 'semantic_multiplier', 1.0),
                 "ast_metadata": ast_metadata,
                 "dependency_edges": dependencies
             })
@@ -142,7 +147,8 @@ class EvidenceBuilder:
                 reasoning=ai_f.reasoning,
                 recommended_action=ai_f.recommended_action,
                 priority=ai_f.priority,
-                confidence=ai_f.confidence
+                confidence=ai_f.confidence,
+                mermaid_diagram=ai_f.mermaid_diagram
             )
             findings.append(f)
             

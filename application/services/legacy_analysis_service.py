@@ -22,11 +22,18 @@ class LegacyAnalysisService:
         """
         Extracts high-level legacy environment insights from a completed run.
         """
-        # 1. Aggregate signals for Era/Score calculation
+        from infrastructure.persistence.models import AnalysisRun, Project
+        
+        # 1. Fetch root_path for dependency intelligence (composer.json parsing)
+        run = self.db.query(AnalysisRun).filter(AnalysisRun.id == run_id).first()
+        project = self.db.query(Project).filter(Project.id == run.project_id).first() if run else None
+        root_path = project.root_path if project else None
+        
+        # 2. Aggregate signals for Era/Score calculation
         stats = self._aggregate_signals(nodes, edges)
         
-        # 2. Framework Fingerprinting (Requirement 9)
-        framework = FrameworkFingerprinter.detect(nodes, edges)
+        # 3. Framework Fingerprinting (Requirement 9) - Now parses composer.json
+        framework = FrameworkFingerprinter.detect(nodes, edges, root_path)
         
         # 3. Deep Technical Profiling (Requirement 10-13)
         tech_profile = TechStackProfiler.profile(nodes, edges)

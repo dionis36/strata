@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Boolean
 from sqlalchemy.sql import func
 from infrastructure.persistence.database import Base
 
@@ -59,6 +59,13 @@ class ComponentMetric(Base):
     fan_out_ratio = Column(Float, default=0.0)
     scc_density = Column(Float, default=0.0)
     reachability_ratio = Column(Float, default=0.0)
+    
+    # Phase 5: Semantic Intelligence
+    domain_archetype = Column(String, nullable=True)
+    is_stateful = Column(Boolean, default=False)
+    lcom = Column(Float, default=0.0)
+    wmc = Column(Integer, default=0)
+    
     created_at = Column(DateTime, default=func.now(), nullable=False)
 
 class ComponentBehavior(Base):
@@ -100,6 +107,14 @@ class ComponentRisk(Base):
 
     # Behavioral Intelligence (Phase 4)
     behavioral_factor = Column(Float, default=0.0)
+    
+    # Semantic Intelligence (Phase 5)
+    domain_archetype = Column(String, nullable=True)
+    is_stateful = Column(Boolean, default=False)
+    lcom = Column(Float, default=0.0)
+    wmc = Column(Integer, default=0)
+    semantic_multiplier = Column(Float, default=1.0)
+    
     final_risk        = Column(Float, nullable=False, default=0.0)
 
 

@@ -16,6 +16,7 @@ class Finding(BaseModel):
     recommended_action: str
     priority: Literal["Critical", "High", "Medium", "Low"]
     confidence: Literal["Confirmed", "Probable", "Insufficient Evidence"]
+    mermaid_diagram: Optional[str] = None
     prerequisites: List[str] = Field(default_factory=list)
 
 class Module(BaseModel):

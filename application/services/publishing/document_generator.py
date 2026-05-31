@@ -46,6 +46,11 @@ class DocumentGenerator:
                 lines.append(f"- **Evidence:** `{ev_targets}`")
                 lines.append(f"- **Impact:** {f.impact}")
                 lines.append(f"- **Recommendation:** {f.recommended_action} *(Confidence: {f.confidence})*")
+                if f.mermaid_diagram:
+                    lines.append("")
+                    lines.append("```mermaid")
+                    lines.append(f.mermaid_diagram)
+                    lines.append("```")
                 lines.append("")
                 
         return "\n".join(lines)
@@ -71,6 +76,11 @@ class DocumentGenerator:
             evs = [f"*{e.type}* {e.target}" + (f" ({e.metric_value})" if e.metric_value else "") for e in f.evidence]
             lines.append("**Evidence Signals:** " + ", ".join(evs))
             lines.append(f"**Action:** {f.recommended_action}")
+            if f.mermaid_diagram:
+                lines.append("")
+                lines.append("```mermaid")
+                lines.append(f.mermaid_diagram)
+                lines.append("```")
             lines.append("---")
             
         return "\n".join(lines)

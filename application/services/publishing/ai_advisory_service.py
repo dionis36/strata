@@ -17,9 +17,16 @@ class GeminiFindingResponse(BaseModel):
     recommended_action: str
     priority: str
     confidence: str
+    mermaid_diagram: str
 
 class GeminiFindingList(BaseModel):
     findings: list[GeminiFindingResponse]
+
+class RectorArtifact(BaseModel):
+    target_php_version: str
+    suggested_rules: list[str]
+    rector_php_code: str
+    explanation: str
 
 class AIAdvisoryService:
     """Uses Gemini to synthesize intelligent impact and reasoning for evidence nodes."""
@@ -41,12 +48,21 @@ class AIAdvisoryService:
         prompt = f"""
         You are a Principal PHP Architect analyzing a legacy codebase.
         
-        Analyze these highest-risk components extracted from the AST:
+        Analyze these highest-risk components extracted directly from the Abstract Syntax Tree (AST):
         {json.dumps(batch, indent=2)}
         
         For each component, generate a highly specific, consultant-grade architectural assessment.
-        Do NOT use generic filler like 'opportunities for improvement' or 'areas of high complexity'.
-        Be extremely concrete about what the coupling and blast radius mean for a PHP application's maintainability.
+        Do NOT use generic filler. Base your analysis on the provided semantic metrics:
+        - `domain_archetype`: The system-assigned role of the class (e.g., ENTITY, UTILITY, CONTROLLER, GOD_CLASS).
+        - `lcom`: Lack of Cohesion of Methods. A score > 0.8 means the class is severely disjointed.
+        - `wmc`: Weighted Method Count (Cyclomatic Complexity). > 50 indicates massive logic bloat.
+        - `semantic_multiplier`: How the system adjusted the raw graph risk based on semantic rules.
+        
+        If a class is flagged as a GOD_CLASS, explicitly advise breaking it down based on its disjointed LCOM properties. 
+        If it's a UTILITY that had its risk slashed, explain why it is structurally safe despite high fan-in.
+        Cite exact structural anti-patterns and use the `ast_metadata` to point to specific dependencies or line numbers.
+        
+        CRITICAL: Generate a valid `Mermaid.js` syntax string for the `mermaid_diagram` field. This diagram should be a `graph TD` that visually plots the component, its tightest dependencies, and a proposed architectural extraction boundary to fix the bottleneck. Do not wrap the string in markdown backticks, just the raw mermaid code.
         """
         
         try:
@@ -87,6 +103,50 @@ class AIAdvisoryService:
                 reasoning=reasoning,
                 recommended_action=action,
                 priority=priority,
-                confidence="Confirmed" if risk_score > 0.8 else "Probable"
+                confidence="Confirmed" if risk_score > 0.8 else "Probable",
+                mermaid_diagram=f"graph TD\n  {name} --> LegacyDependencies\n  style {name} fill:#f9f,stroke:#333,stroke-width:4px"
             ))
         return results
+
+    def synthesize_rector_config(self, system_framework: str, php_era: str, ast_metrics: str) -> RectorArtifact:
+        """Calls Gemini to write a bespoke, actionable rector.php script."""
+        if not self.client:
+            logger.warning("No GEMINI_API_KEY found. Falling back to static rector config.")
+            return self._generate_rector_fallback()
+            
+        prompt = f"""
+        You are an expert PHP modernization tool. 
+        Analyze this extracted legacy codebase data:
+        - Framework: {system_framework}
+        - Era: {php_era}
+        - AST Metadata & Issues: {ast_metrics}
+        
+        Generate a complete, ready-to-run `rector.php` configuration file to upgrade this exact codebase.
+        Include specific Rector Sets and Rules that perfectly map to the framework and issues described.
+        Ensure the output strictly adheres to the JSON schema.
+        DO NOT include markdown backticks around the `rector_php_code` string itself.
+        """
+        
+        try:
+            response = self.client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=RectorArtifact,
+                ),
+            )
+            data = json.loads(response.text)
+            return RectorArtifact(**data)
+        except Exception as e:
+            logger.error(f"Gemini API Error (Rector): {e}")
+            return self._generate_rector_fallback()
+            
+    def _generate_rector_fallback(self) -> RectorArtifact:
+        fallback_code = "<?php\n\nuse Rector\\Config\\RectorConfig;\nuse Rector\\Set\\ValueObject\\LevelSetList;\n\nreturn static function (RectorConfig $rectorConfig): void {\n    $rectorConfig->sets([\n        LevelSetList::UP_TO_PHP_82\n    ]);\n};\n"
+        return RectorArtifact(
+            target_php_version="8.2",
+            suggested_rules=["LevelSetList::UP_TO_PHP_82"],
+            rector_php_code=fallback_code,
+            explanation="Static fallback configuration due to missing API key."
+        )

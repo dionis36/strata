@@ -68,6 +68,11 @@ class RiskService:
                 "scc_size":        row.scc_size,
                 "write_intensity": b_row.write_intensity if b_row else 0.0,
                 "table_dependencies": b_row.table_dependencies if b_row else 0.0,
+                # Semantic fields (Phase 5)
+                "domain_archetype": row.domain_archetype,
+                "is_stateful":     row.is_stateful,
+                "lcom":            row.lcom,
+                "wmc":             row.wmc,
             })
 
 
@@ -95,8 +100,32 @@ class RiskService:
                 )
                 behavioral_factor = min(1.0, behavioral_factor)
                 
-            final_risk = risk_score * (1.0 + behavioral_factor)
+            # Phase 5: Semantic Multiplier
+            semantic_multiplier = 1.0
+            archetype = metric.get("domain_archetype", "UNKNOWN")
+            
+            # The Utility Rule
+            if archetype == "UTILITY" and not metric.get("is_stateful"):
+                semantic_multiplier = 0.2
+            # The Controller Rule
+            elif archetype == "CONTROLLER" and features["instability"] > 0.8:
+                semantic_multiplier = 1.5
+            # The God Class Rule
+            elif archetype == "GOD_CLASS":
+                semantic_multiplier = 2.0
+                
+            final_risk = risk_score * (1.0 + behavioral_factor) * semantic_multiplier
             final_risk = min(1.0, final_risk)
+            
+            # Recalculate Risk Level if multiplier changed it
+            if final_risk >= classifier.thresholds["critical"]:
+                risk_level = "CRITICAL"
+            elif final_risk >= classifier.thresholds["high"]:
+                risk_level = "HIGH"
+            elif final_risk >= classifier.thresholds["medium"]:
+                risk_level = "MEDIUM"
+            else:
+                risk_level = "LOW"
 
             results.append({
                 "component_name":   metric["component_name"],
@@ -111,6 +140,12 @@ class RiskService:
                 "instability":       features["instability"],
                 "cycle_flag":        features["cycle_flag"],
                 "coupling_pressure": features["coupling_pressure"],
+                # Semantic data
+                "domain_archetype":  archetype,
+                "is_stateful":       metric.get("is_stateful", False),
+                "lcom":              metric.get("lcom", 0.0),
+                "wmc":               metric.get("wmc", 0),
+                "semantic_multiplier": semantic_multiplier,
                 # Risk output
                 "risk_score":        risk_score,
                 "risk_level":        risk_level,

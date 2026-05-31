@@ -139,4 +139,58 @@ class MetricCalculator:
             metrics_store[node]['fan_out_ratio'] = out_degrees.get(node, 0) / self.total_nodes
             metrics_store[node]['scc_density'] = scc_map[node]['size'] / self.total_nodes
 
+            # --- Phase 5: Semantic Extractions ---
+            node_data = self.graph.nodes[node]
+            metadata = node_data.get('metadata', {}) or {}
+            
+            wmc = metadata.get('wmc', 0)
+            properties = metadata.get('properties', [])
+            methods = metadata.get('methods', [])
+            doc_comment = metadata.get('doc_comment', '')
+            
+            is_stateful = False
+            for prop in properties:
+                if not prop.get('isStatic', False):
+                    is_stateful = True
+                    break
+
+            # LCOM Calculation (Henderson-Sellers formula)
+            lcom = 0.0
+            if len(methods) > 1 and len(properties) > 0:
+                p_sum = 0
+                for m in methods:
+                    p_sum += len(m.get('accessed_properties', []))
+                m_count = len(methods)
+                a = len(properties)
+                if m_count > 0 and a > 0:
+                    lcom = 1.0 - (p_sum / (m_count * a))
+                lcom = max(0.0, float(lcom))
+            
+            # Domain Archetype Mapping
+            domain_archetype = 'UNKNOWN'
+            fqn = str(node_data.get('fqn', '')).lower()
+            name = str(node_data.get('name', '')).lower()
+            extends = str(metadata.get('extends', '')).lower()
+            
+            if doc_comment and ('@entity' in str(doc_comment).lower() or '@table' in str(doc_comment).lower()):
+                domain_archetype = 'ENTITY'
+            elif 'model' in extends or name.endswith('model'):
+                domain_archetype = 'ENTITY'
+            elif 'controller' in extends or name.endswith('controller'):
+                domain_archetype = 'CONTROLLER'
+            elif 'service' in name:
+                domain_archetype = 'SERVICE'
+            elif not is_stateful and (in_degrees.get(node, 0) > 0) and (out_degrees.get(node, 0) == 0):
+                domain_archetype = 'UTILITY'
+            else:
+                domain_archetype = 'GENERIC'
+
+            if wmc > 50 and lcom > 0.8:
+                domain_archetype = 'GOD_CLASS'
+
+            metrics_store[node]['is_stateful'] = is_stateful
+            metrics_store[node]['lcom'] = lcom
+            metrics_store[node]['wmc'] = int(wmc)
+            metrics_store[node]['domain_archetype'] = domain_archetype
+
         return metrics_store

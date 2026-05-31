@@ -79,58 +79,24 @@ class ArtifactService:
         return sarif
 
     def generate_rector_config(self, run_id: int) -> str:
-        """Generates a rector.php configuration file string based on legacy metrics."""
-        legacy = self.db.query(LegacyMetrics).filter(LegacyMetrics.run_id == run_id).first()
+        """Generates a rector.php configuration file string using Gemini."""
+        from application.services.publishing.evidence_builder import EvidenceBuilder
+        from application.services.publishing.ai_advisory_service import AIAdvisoryService
         
-        sets_to_add = []
-        rules_to_add = []
+        # Build canonical model for context
+        model = EvidenceBuilder(self.db).build(run_id)
         
-        if legacy:
-            if legacy.php_era in ["Era A/B (PHP 4 / Early PHP 5)", "Era B/C (PHP 5 Transitional)", "Era C (PHP 5 Transitional)"]:
-                sets_to_add.append("LevelSetList::UP_TO_PHP_81")
-            
-            # Simple heuristic for db layer
-            db_layer = legacy.db_layer or ""
-            if "mysql_" in db_layer.lower() or "legacy" in db_layer.lower():
-                rules_to_add.append("MysqlToMysqliRector::class")
-
-        php_code = [
-            "<?php",
-            "",
-            "declare(strict_types=1);",
-            "",
-            "use Rector\\Config\\RectorConfig;",
-            "use Rector\\Set\\ValueObject\\LevelSetList;"
-        ]
+        # We need a summary of the worst AST issues
+        ast_summary = " | ".join([f.observation for f in model.findings[:10]])
         
-        if "MysqlToMysqliRector::class" in rules_to_add:
-            php_code.append("use Rector\\MysqlToMysqli\\Rector\\FuncCall\\MysqlToMysqliRector;")
-            
-        php_code.append("")
-        php_code.append("return static function (RectorConfig $rectorConfig): void {")
-        php_code.append("    $rectorConfig->paths([")
-        php_code.append("        __DIR__ . '/src',")
-        php_code.append("        __DIR__ . '/app',")
-        php_code.append("    ]);")
-        php_code.append("")
+        ai_service = AIAdvisoryService()
+        rector_artifact = ai_service.synthesize_rector_config(
+            system_framework=model.system_context.framework,
+            php_era=model.system_context.php_era,
+            ast_metrics=ast_summary
+        )
         
-        if rules_to_add:
-            php_code.append("    $rectorConfig->rules([")
-            for rule in rules_to_add:
-                php_code.append(f"        {rule},")
-            php_code.append("    ]);")
-            php_code.append("")
-            
-        if sets_to_add:
-            php_code.append("    $rectorConfig->sets([")
-            for s in sets_to_add:
-                php_code.append(f"        {s},")
-            php_code.append("    ]);")
-            
-        php_code.append("};")
-        php_code.append("")
-        
-        return "\n".join(php_code)
+        return rector_artifact.rector_php_code
 
     def generate_deptrac_yaml(self, run_id: int) -> str:
         """Generates a deptrac.yaml configuration file based on LayerService outputs."""
@@ -252,10 +218,16 @@ class ArtifactService:
         html_body = re.sub(r'^- (.*?)$', r'<li>\1</li>', html_body, flags=re.MULTILINE)
         html_body = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', html_body)
         html_body = re.sub(r'`(.*?)`', r'<code>\1</code>', html_body)
+        
+        # Format Mermaid blocks for HTML rendering
+        html_body = re.sub(r'```mermaid\n(.*?)\n```', r'<pre class="mermaid">\n\1\n</pre>', html_body, flags=re.DOTALL)
+        
         html_body = html_body.replace('\n\n', '<br><br>')
         
         html = [
-            "<html><head><style>",
+            "<html><head>",
+            "<script type=\"module\">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs'; mermaid.initialize({ startOnLoad: true, theme: 'dark' });</script>",
+            "<style>",
             "body { font-family: 'Inter', sans-serif; background-color: #0e1117; color: #e0e0e0; padding: 40px; }",
             "h1, h2, h3 { color: #58a6ff; }",
             "p, li { line-height: 1.6; }",
