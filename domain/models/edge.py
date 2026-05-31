@@ -5,6 +5,9 @@ from pydantic import BaseModel
 class EdgeType(Enum):
     DECLARES = "declares"  # e.g. File -> Class
     CALLS = "calls"        # e.g. Method -> Method
+    INSTANTIATES = "instantiates" # e.g. Class uses `new` keyword
+    STATIC_CALL = "static_call" # e.g. Class::method()
+    INJECTS = "injects" # e.g. Dependency passed via constructor
     WRITES_TO = "writes_to"
     READS_FROM = "reads_from"
     INHERITS = "inherits"  # Covers extends and implements

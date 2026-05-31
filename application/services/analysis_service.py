@@ -134,11 +134,18 @@ class AnalysisService:
             
             avg_mi = sum(calc_mi(m["loc"], m["complexity"]) for m in file_metrics.values()) / total_files if total_files > 0 else 100
 
+            # Phase 8: Extract Test Coverage
+            from domain.extraction.coverage_parser import CoverageParser
+            coverage_map = CoverageParser.parse(project_path)
+
             # 4. Calculate Phase 2 Structural Metrics
-            STRUCTURAL_EDGES = [EdgeType.CALLS, EdgeType.INHERITS, EdgeType.DEPENDS_ON, EdgeType.DECLARES]
+            STRUCTURAL_EDGES = [
+                EdgeType.CALLS, EdgeType.INHERITS, EdgeType.DEPENDS_ON, 
+                EdgeType.DECLARES, EdgeType.INSTANTIATES, EdgeType.STATIC_CALL, EdgeType.INJECTS
+            ]
             projected = MetricCalculator.project(graph.graph, edge_types=STRUCTURAL_EDGES)
             calculator = MetricCalculator(projected)
-            metrics_matrix = calculator.calculate_all_metrics()
+            metrics_matrix = calculator.calculate_all_metrics(coverage_map=coverage_map)
 
             # 5. Persist
             node_types = {n: data.get('type', 'class') for n, data in graph.graph.nodes(data=True)}

@@ -73,6 +73,7 @@ class RiskService:
                 "is_stateful":     row.is_stateful,
                 "lcom":            row.lcom,
                 "wmc":             row.wmc,
+                "test_coverage":   row.test_coverage,
             })
 
 
@@ -114,6 +115,11 @@ class RiskService:
             elif archetype == "GOD_CLASS":
                 semantic_multiplier = 2.0
                 
+            # Phase 8: Test Coverage Penalty
+            test_coverage = metric.get("test_coverage")
+            if test_coverage is not None and test_coverage < 0.20:
+                semantic_multiplier *= 1.3 # 30% penalty for untested code
+                
             final_risk = risk_score * (1.0 + behavioral_factor) * semantic_multiplier
             final_risk = min(1.0, final_risk)
             
@@ -145,6 +151,7 @@ class RiskService:
                 "is_stateful":       metric.get("is_stateful", False),
                 "lcom":              metric.get("lcom", 0.0),
                 "wmc":               metric.get("wmc", 0),
+                "test_coverage":     test_coverage,
                 "semantic_multiplier": semantic_multiplier,
                 # Risk output
                 "risk_score":        risk_score,

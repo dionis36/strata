@@ -117,7 +117,8 @@ class AnalysisRunRepository:
                 domain_archetype=metrics.get('domain_archetype'),
                 is_stateful=metrics.get('is_stateful', False),
                 lcom=metrics.get('lcom', 0.0),
-                wmc=metrics.get('wmc', 0)
+                wmc=metrics.get('wmc', 0),
+                test_coverage=metrics.get('test_coverage')
             )
             objects.append(cm)
             
@@ -208,6 +209,7 @@ class RiskRepository:
                 lcom=r.get("lcom", 0.0),
                 wmc=r.get("wmc", 0),
                 semantic_multiplier=r.get("semantic_multiplier", 1.0),
+                test_coverage=r.get("test_coverage"),
                 final_risk=r.get("final_risk", r["risk_score"]),
             )
             for r in risk_results

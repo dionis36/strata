@@ -71,15 +71,12 @@ class MetricCalculator:
 
     def calculate_all_metrics(
         self,
-        timeout: int = DEFAULT_TIMEOUT_SECONDS
+        timeout: int = DEFAULT_TIMEOUT_SECONDS,
+        coverage_map: Optional[Dict[str, float]] = None
     ) -> Dict[str, dict]:
-        """Runs all mathematical metrics deterministically.
-
-        Args:
-            timeout: Max seconds to allow; raises RuntimeError if exceeded.
-        """
+        """Runs all mathematical metrics deterministically."""
         with ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(self._compute)
+            future = executor.submit(self._compute, coverage_map)
             try:
                 return future.result(timeout=timeout)
             except FutureTimeoutError:
@@ -88,7 +85,8 @@ class MetricCalculator:
                     "Graph may be too large. Consider reducing scope."
                 )
 
-    def _compute(self) -> Dict[str, dict]:
+    def _compute(self, coverage_map: Optional[Dict[str, float]] = None) -> Dict[str, dict]:
+        coverage_map = coverage_map or {}
         nodes = list(self.graph.nodes())
         metrics_store = {n: {} for n in nodes}
 
@@ -188,9 +186,18 @@ class MetricCalculator:
             if wmc > 50 and lcom > 0.8:
                 domain_archetype = 'GOD_CLASS'
 
+            # Phase 8: Test Coverage mapping
+            class_name = name.split("\\")[-1] if "\\" in name else name
+            test_coverage = coverage_map.get(class_name, coverage_map.get(fqn, None))
+            if test_coverage is None and metadata.get("file_path"):
+                import os
+                file_name = os.path.basename(metadata["file_path"]).lower()
+                test_coverage = coverage_map.get(file_name, None)
+
             metrics_store[node]['is_stateful'] = is_stateful
             metrics_store[node]['lcom'] = lcom
             metrics_store[node]['wmc'] = int(wmc)
             metrics_store[node]['domain_archetype'] = domain_archetype
+            metrics_store[node]['test_coverage'] = test_coverage
 
         return metrics_store

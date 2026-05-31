@@ -45,6 +45,16 @@ class AIAdvisoryService:
         # We cap the batch to 5 items to keep the LLM context focused and fast.
         batch = risk_data[:5]
         
+        playbook_rules = ""
+        playbook_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../domain/explanation/playbook.json"))
+        if os.path.exists(playbook_path):
+            try:
+                with open(playbook_path, "r", encoding="utf-8") as f:
+                    playbook_data = json.load(f)
+                    playbook_rules = json.dumps(playbook_data, indent=2)
+            except Exception as e:
+                logger.warning(f"Failed to load playbook.json: {e}")
+
         prompt = f"""
         You are a Principal PHP Architect analyzing a legacy codebase.
         
@@ -57,9 +67,16 @@ class AIAdvisoryService:
         - `lcom`: Lack of Cohesion of Methods. A score > 0.8 means the class is severely disjointed.
         - `wmc`: Weighted Method Count (Cyclomatic Complexity). > 50 indicates massive logic bloat.
         - `semantic_multiplier`: How the system adjusted the raw graph risk based on semantic rules.
+        - `test_coverage`: Float representing unit test coverage (0.0 to 1.0).
+        
+        CRITICAL PLAYBOOK RULES (MUST FOLLOW):
+        Match the structural anti-patterns found in `dependency_edges` or `domain_archetype` to the rules in this playbook. 
+        If a rule matches, you MUST prioritize its strict recommendation in the `recommended_action` field.
+        {playbook_rules}
         
         If a class is flagged as a GOD_CLASS, explicitly advise breaking it down based on its disjointed LCOM properties. 
         If it's a UTILITY that had its risk slashed, explain why it is structurally safe despite high fan-in.
+        CRITICAL TEST RULE: If `test_coverage` is missing or below 0.20, the FIRST recommended action MUST be "Write Characterization Tests before attempting extraction". Refactoring legacy code without tests is extremely dangerous.
         Cite exact structural anti-patterns and use the `ast_metadata` to point to specific dependencies or line numbers.
         
         CRITICAL: Generate a valid `Mermaid.js` syntax string for the `mermaid_diagram` field. This diagram should be a `graph TD` that visually plots the component, its tightest dependencies, and a proposed architectural extraction boundary to fix the bottleneck. Do not wrap the string in markdown backticks, just the raw mermaid code.

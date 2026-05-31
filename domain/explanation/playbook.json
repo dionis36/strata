@@ -1,0 +1,27 @@
+{
+  "rules": [
+    {
+      "pattern": "STATIC_CALL_DB",
+      "condition": {
+        "edge_type": "STATIC_CALL",
+        "target_name_contains": ["db", "mysql", "query"]
+      },
+      "recommendation": "Adapter Pattern: Wrap the static database call in an interface-backed Adapter. Inject the Adapter into this component to enable unit testing and decouple from the legacy storage mechanism."
+    },
+    {
+      "pattern": "DIRECT_INSTANTIATION",
+      "condition": {
+        "edge_type": "INSTANTIATES"
+      },
+      "recommendation": "Dependency Injection: Avoid directly instantiating dependencies using the 'new' keyword. Extract the dependency into a constructor argument to invert control and improve testability."
+    },
+    {
+      "pattern": "GOD_CLASS_UTILITY",
+      "condition": {
+        "domain_archetype": "GOD_CLASS",
+        "has_state": false
+      },
+      "recommendation": "Facade Pattern: This stateless God Class is acting as a dumping ground for procedural logic. Extract cohesive functions into dedicated Service classes, and convert this class into a Facade if callers still need a unified entry point."
+    }
+  ]
+}

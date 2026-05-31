@@ -117,6 +117,7 @@ class EvidenceBuilder:
                 "is_stateful": getattr(r, 'is_stateful', False),
                 "lcom": getattr(r, 'lcom', 0.0),
                 "wmc": getattr(r, 'wmc', 0),
+                "test_coverage": getattr(r, 'test_coverage', None),
                 "semantic_multiplier": getattr(r, 'semantic_multiplier', 1.0),
                 "ast_metadata": ast_metadata,
                 "dependency_edges": dependencies

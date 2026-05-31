@@ -231,6 +231,23 @@ class MetadataExtractor extends NodeVisitorAbstract
                 'accessed_properties' => [],
                 'globals' => []
             ];
+
+            if ($methodName === '__construct') {
+                foreach ($node->params as $param) {
+                    if ($param->type) {
+                        $paramType = $this->resolveType($param->type);
+                        if ($paramType && (strpos($paramType, '\\') !== false || ctype_upper(substr($paramType, 0, 1)))) {
+                            $this->metadata['calls'][] = [
+                                'type' => 'injection',
+                                'class' => $paramType,
+                                'line' => $node->getLine(),
+                                'source' => $this->currentClass,
+                                'sourceMethod' => '__construct'
+                            ];
+                        }
+                    }
+                }
+            }
         }
 
         // --- Autoloading & Standalone Functions (Requirement B) ---

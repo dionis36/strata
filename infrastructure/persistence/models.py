@@ -66,6 +66,9 @@ class ComponentMetric(Base):
     lcom = Column(Float, default=0.0)
     wmc = Column(Integer, default=0)
     
+    # Phase 8: Test Coverage Awareness
+    test_coverage = Column(Float, nullable=True)
+    
     created_at = Column(DateTime, default=func.now(), nullable=False)
 
 class ComponentBehavior(Base):
@@ -114,6 +117,9 @@ class ComponentRisk(Base):
     lcom = Column(Float, default=0.0)
     wmc = Column(Integer, default=0)
     semantic_multiplier = Column(Float, default=1.0)
+    
+    # Phase 8: Test Coverage Awareness
+    test_coverage = Column(Float, nullable=True)
     
     final_risk        = Column(Float, nullable=False, default=0.0)
 

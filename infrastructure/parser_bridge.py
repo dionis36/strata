@@ -205,24 +205,34 @@ class ParserBridge:
                     m_name = call.get("method", "").lower()
                     target_fqn = f"{c_name}::{m_name}"
                     if target_fqn in symbol_map:
-                        add_edge_safe(symbol_map[target_fqn], EdgeType.CALLS)
+                        add_edge_safe(symbol_map[target_fqn], EdgeType.STATIC_CALL)
                     elif c_name in symbol_map:
-                        add_edge_safe(symbol_map[c_name], EdgeType.CALLS)
+                        add_edge_safe(symbol_map[c_name], EdgeType.STATIC_CALL)
                     else:
                         orig_c = call.get("class")
                         if orig_c:
                             target_id = generate_deterministic_id(orig_c, NodeType.CLASS.value)
-                            add_edge_safe(target_id, EdgeType.CALLS)
+                            add_edge_safe(target_id, EdgeType.STATIC_CALL)
                         
                 elif call_type == "instantiation":
                     c_name = call.get("class", "").lower()
                     if c_name in symbol_map:
-                        add_edge_safe(symbol_map[c_name], EdgeType.CALLS)
+                        add_edge_safe(symbol_map[c_name], EdgeType.INSTANTIATES)
                     else:
                         orig_c = call.get("class")
                         if orig_c:
                             target_id = generate_deterministic_id(orig_c, NodeType.CLASS.value)
-                            add_edge_safe(target_id, EdgeType.CALLS)
+                            add_edge_safe(target_id, EdgeType.INSTANTIATES)
+                            
+                elif call_type == "injection":
+                    c_name = call.get("class", "").lower()
+                    if c_name in symbol_map:
+                        add_edge_safe(symbol_map[c_name], EdgeType.INJECTS)
+                    else:
+                        orig_c = call.get("class")
+                        if orig_c:
+                            target_id = generate_deterministic_id(orig_c, NodeType.CLASS.value)
+                            add_edge_safe(target_id, EdgeType.INJECTS)
                 
                 else:
                     # Fallback for generic calls
