@@ -240,7 +240,7 @@ def show_system_topology():
                   "avoidOverlap": 0.5
                 },
                 "solver": "forceAtlas2Based",
-                "stabilization": { "iterations": 100 }
+                "stabilization": false
               },
               "edges": { "smooth": { "type": "continuous" } }
             }
@@ -319,6 +319,7 @@ def show_system_topology():
                     box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
                     background-color: #0e1117 !important;
                 }
+                #loadingBar { display: none !important; }
             </style>
             """
             html = html.replace("</head>", custom_css + "</head>")

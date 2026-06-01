@@ -170,6 +170,7 @@ def show_boundary_intelligence():
             net.save_graph("/tmp/vendor_graph.html")
             with open("/tmp/vendor_graph.html", "r", encoding="utf-8") as f:
                 html = f.read()
+            html = html.replace("</head>", "<style>#loadingBar { display: none !important; }</style></head>")
             
             components.html(html, height=450)
             st.markdown("---")

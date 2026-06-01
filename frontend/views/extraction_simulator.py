@@ -132,6 +132,7 @@ def show_extraction_simulator():
                     net.save_graph("/tmp/extraction_sim.html")
                     with open("/tmp/extraction_sim.html", "r", encoding="utf-8") as f:
                         html = f.read()
+                    html = html.replace("</head>", "<style>#loadingBar { display: none !important; }</style></head>")
                     components.html(html, height=550)
 
             st.markdown("---")
