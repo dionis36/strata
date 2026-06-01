@@ -394,12 +394,12 @@ def list_runs(db: Session = Depends(get_db)):
                 "status": r.status,
                 "started_at": r.started_at.isoformat(),
                 "completed_at": r.completed_at.isoformat() if r.completed_at else None,
-                "total_files": r.total_files,
-                "total_loc": r.total_loc,
-                "avg_complexity": r.avg_complexity,
-                "avg_maintainability": r.avg_maintainability,
-                "total_classes": r.total_classes,
-                "total_edges": r.total_edges
+                "total_files": r.total_files or 0,
+                "total_loc": r.total_loc or 0,
+                "avg_complexity": r.avg_complexity or 0.0,
+                "avg_maintainability": r.avg_maintainability or 0.0,
+                "total_classes": r.total_classes or 0,
+                "total_edges": r.total_edges or 0
             }
             for r in runs
         ]
@@ -686,6 +686,14 @@ def get_dashboard(project_id: int, db: Session = Depends(get_db)):
             
         legacy = db.query(LegacyMetrics).filter(LegacyMetrics.run_id == latest_run.id).first()
         
+        from infrastructure.persistence.models import ComponentMetric
+        from sqlalchemy.sql import func
+        avg_coverage_result = db.query(func.avg(ComponentMetric.test_coverage)).filter(
+            ComponentMetric.run_id == latest_run.id,
+            ComponentMetric.test_coverage.isnot(None)
+        ).scalar()
+        global_coverage = float(avg_coverage_result) if avg_coverage_result is not None else None
+        
         return {
             "project": {
                 "name": project.name,
@@ -703,7 +711,8 @@ def get_dashboard(project_id: int, db: Session = Depends(get_db)):
                 "total_edges": latest_run.total_edges,
                 "risk_score": legacy.total_modernization_score if legacy else 0.0,
                 "php_era": legacy.php_era if legacy else "Unknown",
-                "framework": legacy.detected_framework if legacy else "Unknown"
+                "framework": legacy.detected_framework if legacy else "Unknown",
+                "test_coverage": global_coverage
             }
         }
     except Exception as e:

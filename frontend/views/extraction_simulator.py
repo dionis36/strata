@@ -83,6 +83,14 @@ def show_extraction_simulator():
             
             with col1:
                 st.markdown("### 📊 Simulation Metrics")
+                
+                # Phase 11: Safety Rails Danger Zone Warning
+                cov = sim.get("target_coverage")
+                if cov is not None and cov < 0.20:
+                    st.error(f"🚨 **DANGER ZONE**: Target component has {cov*100:.1f}% test coverage. Extracting this module without writing Characterization Tests first poses an extreme regression risk.", icon="☠️")
+                elif cov is not None:
+                    st.success(f"✅ **Safe to Extract**: Target component has {cov*100:.1f}% test coverage.", icon="🛡️")
+
                 st.metric("Blast Radius (Downstream)", f"{sim['blast_radius']['count']} files")
                 st.metric("Dependency Payload (Upstream)", f"{sim['dependency_payload']['count']} files")
                 

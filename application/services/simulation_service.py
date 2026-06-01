@@ -116,8 +116,17 @@ class SimulationService:
                 if req.get("type") in ["DB_WRITE", "RAW_SQL", "MYSQL_LEGACY", "DB_READ"]:
                     db_deps.add("Database State")
 
+        # Phase 11: Add target coverage
+        from infrastructure.persistence.models import ComponentMetric
+        target_metric = db.query(ComponentMetric).filter(
+            ComponentMetric.run_id == run_id, 
+            ComponentMetric.component_name == target_fqn
+        ).first()
+        target_coverage = target_metric.test_coverage if target_metric else None
+
         return {
             "target": target_fqn,
+            "target_coverage": target_coverage,
             "blast_radius": {
                 "count": len(blast_radius),
                 "files": list(blast_radius)

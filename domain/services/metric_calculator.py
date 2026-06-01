@@ -6,7 +6,7 @@ from domain.models.node import NodeType
 
 # Performance constraints
 MAX_NODES_FOR_BETWEENNESS = 2000
-DEFAULT_TIMEOUT_SECONDS = 60
+DEFAULT_TIMEOUT_SECONDS = 300
 
 
 class MetricCalculator:
@@ -96,15 +96,15 @@ class MetricCalculator:
         weighted_in = dict(self.graph.in_degree(weight='weight'))
         weighted_out = dict(self.graph.out_degree(weight='weight'))
 
-        # 2. Betweenness Centrality — skip if graph is too large
+        # 2. Betweenness & Closeness Centrality — skip if graph is too large
         if self.graph.number_of_nodes() <= MAX_NODES_FOR_BETWEENNESS:
             betweenness = nx.betweenness_centrality(
                 self.graph, normalized=True, weight=None
             )
+            closeness = nx.closeness_centrality(self.graph)
         else:
             betweenness = {n: -1.0 for n in nodes}  # Signal: skipped
-
-        closeness = nx.closeness_centrality(self.graph)
+            closeness = {n: -1.0 for n in nodes}    # Signal: skipped
 
         # 3. SCC Clusters
         sccs = list(nx.strongly_connected_components(self.graph))

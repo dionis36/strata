@@ -124,11 +124,11 @@ class RiskService:
             final_risk = min(1.0, final_risk)
             
             # Recalculate Risk Level if multiplier changed it
-            if final_risk >= classifier.thresholds["critical"]:
+            if final_risk >= classifier.thresholds["CRITICAL"]:
                 risk_level = "CRITICAL"
-            elif final_risk >= classifier.thresholds["high"]:
+            elif final_risk >= classifier.thresholds["HIGH"]:
                 risk_level = "HIGH"
-            elif final_risk >= classifier.thresholds["medium"]:
+            elif final_risk >= classifier.thresholds["MEDIUM"]:
                 risk_level = "MEDIUM"
             else:
                 risk_level = "LOW"

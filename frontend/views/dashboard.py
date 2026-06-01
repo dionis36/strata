@@ -82,13 +82,17 @@ def show_dashboard():
         # ── KPI Bento Grid ───────────────────────────────────────────────────────
         # --- Primary KPI Row ---
         st.markdown("### 📊 System Vitality")
-        kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
+        kpi1, kpi2, kpi3, kpi4, kpi5, kpi6 = st.columns(6)
         
         kpi1.metric("Total Files", f"{run.get('total_files', 0):,}")
         kpi2.metric("Lines of Code", f"{run.get('total_loc', 0):,}")
         kpi3.metric("Avg Complexity", round(run.get('avg_complexity', 0), 2))
         kpi4.metric("Total Classes", f"{run.get('total_classes', 0):,}")
         kpi5.metric("Connectivity", f"{run.get('total_edges', 0):,}")
+        
+        cov = run.get('test_coverage')
+        cov_str = f"{round(cov * 100, 1)}%" if cov is not None else "N/A"
+        kpi6.metric("Test Coverage", cov_str, help="Overall Code Coverage from Clover/PHPUnit reports.")
 
     else:
         st.info("Select a project or start a new analysis to populate the dashboard.")

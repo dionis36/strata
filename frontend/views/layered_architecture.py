@@ -140,14 +140,31 @@ def show_system_topology():
     st.title("System Topology")
     st.markdown("##### Relational Graph & Connectivity Analysis")
     
-    with st.expander("💡 Reading the Topology", expanded=True):
-        st.markdown("""
-        This graph shows the **Functional Gravity** of your system. 
-        - **Red (🚪)**: Entry / **Cyan (🎮)**: Controllers
-        - **Green (🖼️)**: Views / **Yellow (⚙️)**: Configs
-        - **Purple (⚡)**: Methods / **Orange (📦)**: Functions
-        - **Blue (🧩)**: Classes / **Pink (🌎)**: Globals
-        """)
+    with st.expander("Architectural Blueprint Key", expanded=False):
+        colA, colB, colC = st.columns(3)
+        with colA:
+            st.markdown("""
+            **Node Archetypes (Shapes)**
+            - <span style="color:#ff1744; font-size:1.2em;">★</span> **God Class**: Monolithic bottlenecks with high coupling.
+            - <span style="color:#00d4ff; font-size:1.2em;">◆</span> **Controller**: Routing / Presentation boundaries.
+            - <span style="color:#90a4ae; font-size:1.2em;">■</span> **Utility**: Stateless infrastructure helpers.
+            - <span style="color:#5c6bc0; font-size:1.2em;">●</span> **Entity / Standard**: Standard domain structures.
+            """, unsafe_allow_html=True)
+        with colB:
+            st.markdown("""
+            **Edge Intelligence (Coupling)**
+            - <hr style="border: 2px solid #ff4b4b; width: 20px; display: inline-block; margin: 0; vertical-align: middle;"> **Static Call**: Toxic tight coupling. Hard to mock.
+            - <hr style="border: 2px solid #f9a825; width: 20px; display: inline-block; margin: 0; vertical-align: middle;"> **Instantiates**: Direct `new` usage. Violates DI.
+            - <hr style="border: 2px dashed #00cc96; width: 20px; display: inline-block; margin: 0; vertical-align: middle;"> **Injects**: Clean Dependency Injection.
+            - <hr style="border: 1px solid rgba(150,150,150,0.5); width: 20px; display: inline-block; margin: 0; vertical-align: middle;"> **Calls**: Standard procedural linkage.
+            """, unsafe_allow_html=True)
+        with colC:
+            st.markdown("""
+            **Hover Metrics Explained**
+            - **WMC (Weighted Method Count)**: Total structural complexity. Higher = Harder to maintain.
+            - **LCOM (Lack of Cohesion)**: `> 0.8` means the class has unrelated responsibilities.
+            - **Coverage**: Risk baseline. `< 20%` means unsafe to extract.
+            """, unsafe_allow_html=True)
     st.markdown("---")
 
     run_id = st.session_state.get("active_run_id")
@@ -172,12 +189,13 @@ def show_system_topology():
     try:
         graph_path = f"/data/graph_{run_id}.json"
         if os.path.exists(graph_path):
-            with open(graph_path, "r") as f:
-                graph_data = json.load(f)
-            
-            # 1. Build a lookup for node importance (degree)
-            links = graph_data.get("links", [])
-            node_degree = {}
+            with st.spinner("Re-calculating Force-Directed Physics & Semantic Edges..."):
+                with open(graph_path, "r") as f:
+                    graph_data = json.load(f)
+                
+                # 1. Build a lookup for node importance (degree)
+                links = graph_data.get("links", [])
+                node_degree = {}
             for l in links:
                 node_degree[l["source"]] = node_degree.get(l["source"], 0) + 1
                 node_degree[l["target"]] = node_degree.get(l["target"], 0) + 1
