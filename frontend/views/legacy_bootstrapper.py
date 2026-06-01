@@ -68,7 +68,7 @@ def show_legacy_bootstrapper():
                     
                     # If empty (no namespaces detected), fallback to default template with warning
                     if not psr4:
-                        st.warning("⚠️ No namespaced classes detected. Proposing a default layout template.")
+                        st.warning("No namespaced classes detected. Proposing a default layout template.", icon=":material/warning:")
                         psr4 = {"App\\": "src/"}
                         
                     composer_json = {
@@ -97,7 +97,7 @@ def show_legacy_bootstrapper():
             def generate_html_tree(node, graph, visited=None, depth=0):
                 if visited is None: visited = set()
                 children = graph.get(node, [])
-                label = f"📄 <b>{node}</b>"
+                label = f"<span style='color:#5c6bc0;'>●</span> <b>{node}</b>"
                 
                 if node in visited:
                     return f"<div style='margin-left: 20px; color: #777; font-size: 0.9rem;'>{label} <span style='color: #f87171;'>(circular loop)</span></div>"

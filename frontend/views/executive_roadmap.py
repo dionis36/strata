@@ -88,7 +88,7 @@ def show_executive_roadmap():
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown("##### 🕸️ Graph Database")
+            st.markdown("##### Graph Database")
             st.caption("Neo4j Cypher scripts for structural reachability.")
             if st.button("Generate Cypher"):
                 try:
@@ -100,7 +100,7 @@ def show_executive_roadmap():
                     st.error(f"Error: {e}")
 
         with col2:
-            st.markdown("##### 🧠 AI Metadata")
+            st.markdown("##### AI Metadata")
             st.caption("Vector-ready JSON chunks for LLM interpretation.")
             if st.button("Generate AI Chunks"):
                 try:

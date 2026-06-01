@@ -7,7 +7,7 @@ def show_global_state_intelligence():
     st.title("Runtime & Global State Intelligence")
     st.markdown("##### Superglobal Tracking · Session Flows · Side-Effect Classification")
 
-    with st.expander("💡 About Global State Intelligence", expanded=True):
+    with st.expander("About Global State Intelligence", expanded=True):
         st.markdown("""
         This view exposes how the application **shares data invisibly** across its modules.
         Legacy PHP systems rely heavily on superglobals (`$_SESSION`, `$_POST`, `$_GET`), the
@@ -51,19 +51,19 @@ def show_global_state_intelligence():
 
     # ── Top-level KPI strip ───────────────────────────────────────────────
     k1, k2, k3, k4, k5 = st.columns(5)
-    k1.metric("⚡ Superglobal Hits",     sum(sg_totals.values()))
-    k2.metric("✏️ State Mutations",      len(mutations))
-    k3.metric("🔐 Session Writers",      len(sess_write))
-    k4.metric("☠️ Danger Sinks",         se_totals.get("DANGER", 0))
-    k5.metric("🔑 Weak Hash (MD5/SHA1)", len(legacy_hash))
+    k1.metric("Superglobal Hits",     sum(sg_totals.values()))
+    k2.metric("State Mutations",      len(mutations))
+    k3.metric("Session Writers",      len(sess_write))
+    k4.metric("Danger Sinks",         se_totals.get("DANGER", 0))
+    k5.metric("Weak Hash (MD5/SHA1)", len(legacy_hash))
 
     st.markdown("---")
 
     tabs = st.tabs([
-        "📡 Superglobal Map",
-        "🔐 Session Flows",
-        "☠️ Side-Effect Registry",
-        "🌐 Explicit Globals",
+        "Superglobal Map",
+        "Session Flows",
+        "Side-Effect Registry",
+        "Explicit Globals",
     ])
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -86,14 +86,14 @@ def show_global_state_intelligence():
         if mutations:
             st.dataframe(pd.DataFrame(mutations), hide_index=True, use_container_width=True)
         else:
-            st.success("✅ No direct superglobal mutations detected.")
+            st.success("No direct superglobal mutations detected.", icon=":material/check_circle:")
 
         # ── Insight ──────────────────────────────────────────────────────
         st.markdown("---")
         total_sg = sum(sg_totals.values())
         top_sg   = max(sg_totals, key=sg_totals.get) if sg_totals else None
 
-        st.info("#### ⚡ Superglobal Coupling")
+        st.info("#### Superglobal Coupling")
         st.markdown("**METRIC**: Total superglobal accesses across all modules")
         st.markdown(
             "**INTERPRETATION**: Every access to `$_POST`, `$_GET`, `$_SESSION`, or similar variables "
@@ -128,7 +128,7 @@ def show_global_state_intelligence():
     with tabs[1]:
         c1, c2 = st.columns(2)
         with c1:
-            st.markdown("#### 📝 Session Writers (State Producers)")
+            st.markdown("#### Session Writers (State Producers)")
             st.caption("Files that actively mutate `$_SESSION` — they create or update session state.")
             if sess_write:
                 st.dataframe(pd.DataFrame(sess_write), hide_index=True, use_container_width=True)
@@ -136,7 +136,7 @@ def show_global_state_intelligence():
                 st.info("No session-writing files detected.")
 
         with c2:
-            st.markdown("#### 📖 Session Readers (State Consumers)")
+            st.markdown("#### Session Readers (State Consumers)")
             st.caption("Files that access `$_SESSION` without writing to it — they depend on state set elsewhere.")
             if sess_read:
                 st.dataframe(pd.DataFrame(sess_read), hide_index=True, use_container_width=True)
@@ -145,7 +145,7 @@ def show_global_state_intelligence():
 
         # ── Session Key Flow Table ─────────────────────────────────────────
         st.markdown("---")
-        st.markdown("#### 🔑 Session Key Flow (Write → Read Tracing)")
+        st.markdown("#### Session Key Flow (Write → Read Tracing)")
         st.caption(
             "Key-level tracing: shows exactly which key inside `$_SESSION`, `$_POST`, etc. "
             "is written by which file and read by which file. Requires a re-scan to populate."
@@ -174,7 +174,7 @@ def show_global_state_intelligence():
 
         # ── Insight ──────────────────────────────────────────────────────
         st.markdown("---")
-        st.info("#### 🔐 Session Flow Analysis")
+        st.info("#### Session Flow Analysis")
         st.markdown("**METRIC**: Session Writer/Reader Distribution")
         st.markdown(
             "**INTERPRETATION**: Session state in PHP flows **one-directionally but invisibly** — "
@@ -221,26 +221,26 @@ def show_global_state_intelligence():
         if se_files:
             st.dataframe(pd.DataFrame(se_files), hide_index=True, use_container_width=True)
 
-        st.markdown("#### ☠️ Danger Sink Locations (eval / exec / extract)")
+        st.markdown("#### Danger Sink Locations (eval / exec / extract)")
         st.caption("Functions that execute arbitrary code or inject variables into the current scope from external data.")
         if danger:
             st.dataframe(pd.DataFrame(danger), hide_index=True, use_container_width=True)
         else:
-            st.success("✅ No `eval()` / `exec()` / `extract()` danger sinks detected.")
+            st.success("No `eval()` / `exec()` / `extract()` danger sinks detected.", icon=":material/check_circle:")
 
-        st.markdown("#### 🔑 Weak Cryptography (MD5 / SHA1)")
+        st.markdown("#### Weak Cryptography (MD5 / SHA1)")
         st.caption("Usage of cryptographic functions that are no longer considered secure for password hashing.")
         if legacy_hash:
             st.dataframe(pd.DataFrame(legacy_hash), hide_index=True, use_container_width=True)
         else:
-            st.success("✅ No legacy hashing functions detected.")
+            st.success("No legacy hashing functions detected.", icon=":material/check_circle:")
 
         # ── Insight ──────────────────────────────────────────────────────
         st.markdown("---")
         dominant_effect = max(se_totals, key=se_totals.get) if se_totals else None
         dominant_count  = se_totals.get(dominant_effect, 0) if dominant_effect else 0
 
-        st.info("#### ☠️ Behavioural Complexity Profile")
+        st.info("#### Behavioural Complexity Profile")
         st.markdown("**METRIC**: Side-Effect Classification Distribution")
         st.markdown(
             "**INTERPRETATION**: Side effects classify what the system *does beyond returning values* — "
@@ -280,16 +280,16 @@ def show_global_state_intelligence():
         if explicit_g:
             st.dataframe(pd.DataFrame(explicit_g), hide_index=True, use_container_width=True)
         else:
-            st.success("✅ No explicit `global` keyword usage detected.")
+            st.success("No explicit `global` keyword usage detected.", icon=":material/check_circle:")
 
         # ── Insight ──────────────────────────────────────────────────────
         st.markdown("---")
         unique_vars = list(set(g.get("variable", "") for g in explicit_g))
 
         if explicit_g:
-            st.warning("#### 🌐 Global State Coupling")
+            st.warning("#### Global State Coupling")
         else:
-            st.info("#### 🌐 Global State Coupling")
+            st.info("#### Global State Coupling")
 
         st.markdown("**METRIC**: Explicit Global Variable Injections (`global $var` usage count)")
         st.markdown(

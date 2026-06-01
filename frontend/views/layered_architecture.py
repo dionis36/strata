@@ -10,11 +10,25 @@ def show_layered_architecture():
     st.title("Layered Structure")
     st.markdown("##### Physical Layout & Architectural Classification")
     
-    with st.expander("💡 About the Layered Structure", expanded=True):
-        st.markdown("""
-        This view shows your codebase's **physical organization**. Each file is tagged with its 
-        **Architectural Role** based on naming patterns, location, and structural signatures.
-        """)
+    with st.expander("Layered Structure Blueprint Key", expanded=False):
+        colA, colB = st.columns(2)
+        with colA:
+            st.markdown("""
+            **Directories**
+            - <span style='color:#f9a825;'>▼</span> **Standard Directory**: Normal application folders.
+            - <span style='color:#757575;'>■</span> **Vendor**: External third-party dependencies.
+            - <span style='color:#ff4b4b;'>◆</span> **Entry Point**: Web-accessible script directories.
+            - <span style='color:#00cc96;'>●</span> **Assets**: Public web files (CSS/JS).
+            """, unsafe_allow_html=True)
+        with colB:
+            st.markdown("""
+            **Files & Roles**
+            - <span style='color:#ff4b4b;'>◆</span> **Entry Point**: Direct access scripts.
+            - <span style='color:#00d4ff;'>◆</span> **Controller**: Request handlers.
+            - <span style='color:#00cc96;'>●</span> **View / Asset**: HTML output or UI files.
+            - <span style='color:#ab47bc;'>■</span> **Bootstrap**: Framework initialization.
+            - <span style='color:#ffb300;'>★</span> **Job / God Class**: Heavy logic processing.
+            """, unsafe_allow_html=True)
     st.markdown("---")
 
     FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
@@ -37,7 +51,7 @@ def show_layered_architecture():
         return
 
     st.markdown("#### Directory Hierarchy & Classified Files")
-    st.info("Expand directories below to see classified files. Look for 🎮 Controllers, 🖼️ Views, and 🚪 Entry Points.")
+    st.info("Expand directories below to see classified files. Look for Controllers, Views, and Entry Points.")
     l1 = data.get("layer_1", {})
     
     c1, c2 = st.columns([2, 1])
@@ -59,9 +73,15 @@ def show_layered_architecture():
             html = ""
             # Role Icon Mapping
             role_icons = {
-                "entry_point": "🚪", "bootstrap": "⚡", "controller": "🎮", 
-                "view": "🖼️", "config": "⚙️", "asset": "🎨", "job": "⏰", 
-                "vendor": "📦", "file": "📄"
+                "entry_point": "<span style='color:#ff4b4b;'>◆</span>", 
+                "bootstrap": "<span style='color:#ab47bc;'>■</span>", 
+                "controller": "<span style='color:#00d4ff;'>◆</span>", 
+                "view": "<span style='color:#00cc96;'>●</span>", 
+                "config": "<span style='color:#f9a825;'>■</span>", 
+                "asset": "<span style='color:#00cc96;'>●</span>", 
+                "job": "<span style='color:#ffb300;'>★</span>", 
+                "vendor": "<span style='color:#757575;'>■</span>", 
+                "file": "<span style='color:#90a4ae;'>●</span>"
             }
 
             for name, data in sorted(node.items(), key=lambda x: x[0]):
@@ -70,10 +90,10 @@ def show_layered_architecture():
                 open_attr = "open" if depth < 1 else ""
                 
                 if info:
-                    icon = "📁"
-                    if info["type"] == "vendor": icon = "📦"
-                    elif info["type"] == "entry_point": icon = "🚪"
-                    elif info["type"] == "asset": icon = "🎨"
+                    icon = "<span style='color:#f9a825;'>▼</span>"
+                    if info["type"] == "vendor": icon = "<span style='color:#757575;'>■</span>"
+                    elif info["type"] == "entry_point": icon = "<span style='color:#ff4b4b;'>◆</span>"
+                    elif info["type"] == "asset": icon = "<span style='color:#00cc96;'>●</span>"
                     
                     summary = f"{icon} <b>{name}/</b> <span style='color:#888; font-size:0.8em;'>[{info['type']}]</span>"
                     
@@ -87,12 +107,12 @@ def show_layered_architecture():
                             fname = f_obj
                             frole = "file"
                         
-                        ficon = role_icons.get(frole, "📄")
+                        ficon = role_icons.get(frole, "")
                         files_html += f"<div style='color:#aaa; padding-left: 20px; font-size: 0.85rem;'>{ficon} {fname} <span style='color:#555; font-size:0.75em;'>({frole})</span></div>"
 
                     html += f"<details {open_attr} style='margin-left: 10px; margin-bottom: 5px;'><summary style='cursor: pointer;'>{summary}</summary><div style='border-left: 1px dashed #444; margin-left: 7px; padding-top: 4px;'>{files_html}{children_html}</div></details>"
                 else:
-                    html += f"<details {open_attr} style='margin-left: 10px;'><summary style='cursor: pointer;'>📁 <b>{name}/</b></summary><div style='border-left: 1px dashed #444; margin-left: 7px;'>{children_html}</div></details>"
+                    html += f"<details {open_attr} style='margin-left: 10px;'><summary style='cursor: pointer;'><b>{name}/</b></summary><div style='border-left: 1px dashed #444; margin-left: 7px;'>{children_html}</div></details>"
             return html
 
         st.markdown("<div style='font-family: monospace; background: #111; padding: 15px; border-radius: 8px; border: 1px solid #333; max-height: 800px; overflow-y: auto;'>", unsafe_allow_html=True)
@@ -105,7 +125,7 @@ def show_layered_architecture():
         st.dataframe(pd.DataFrame(list(ftypes.items()), columns=["Ext", "Count"]), hide_index=True, use_container_width=True)
 
         st.markdown("---")
-        st.markdown("### 🧠 Architectural Layer Insight")
+        st.markdown("### Architectural Layer Insight")
         
         # Calculate layer distribution dynamically
         role_counts = {}
@@ -121,7 +141,7 @@ def show_layered_architecture():
         presentation_ratio = (presentation_count / total_files * 100) if total_files > 0 else 0
         top_layer = sorted(role_counts.items(), key=lambda x: x[1], reverse=True)[0] if role_counts else ("none", 0)
 
-        st.info("#### 🏗️ Presentation vs. Logic")
+        st.info("#### Presentation vs. Logic")
         st.markdown("**METRIC**: MVC / Role Distribution Ratio")
         st.markdown("**INTERPRETATION**: This metric assesses whether the codebase maintains a healthy separation of concerns. A high presentation ratio indicates a UI-heavy monolith, whereas a high 'file' ratio indicates unstructured procedural logic.")
         
@@ -307,7 +327,7 @@ def show_system_topology():
             components.html(html, height=770)
             
             st.markdown("---")
-            st.markdown("### 🧠 System Topology Intelligence")
+            st.markdown("### System Topology Intelligence")
             
             # Find the most connected node
             max_degree_node = None
@@ -339,7 +359,7 @@ def show_system_topology():
             
             col1, col2, col3 = st.columns(3)
             with col1:
-                st.info("#### 🕸️ Network Density & Coupling")
+                st.info("#### Network Density & Coupling")
                 st.markdown("**METRIC**: Graph Edge Density")
                 st.markdown("**INTERPRETATION**: Density indicates how intertwined the components are. A 'Spaghetti Code' monolith will have an extremely dense, highly connected graph, whereas a modular system will appear as distinct, lightly-connected clusters.")
                 
@@ -349,7 +369,7 @@ def show_system_topology():
                 st.markdown("**RECOMMENDATION**: If the graph is a dense web, do not attempt to split it immediately. Look for natural fault lines between the colored clusters to identify potential service boundaries.")
 
             with col2:
-                st.success("#### 🎯 Structural Bottlenecks")
+                st.success("#### Structural Bottlenecks")
                 st.markdown("**METRIC**: Component Centrality & Degree")
                 st.markdown("**INTERPRETATION**: The node with the highest number of connections acts as a primary structural bottleneck. These are often core utilities, base controllers, or global configuration files that every other file depends on.")
                 
@@ -368,7 +388,7 @@ def show_system_topology():
                 )
 
             with col3:
-                st.warning("#### 🔄 Circular Dependencies")
+                st.warning("#### Circular Dependencies")
                 st.markdown("**METRIC**: Mutual Back-Edges")
                 st.markdown("**INTERPRETATION**: Circular dependencies (A calls B, and B calls A) create tightly coupled loops that are impossible to extract independently. They are the most severe blockers for microservice modernization.")
                 
@@ -394,7 +414,7 @@ def show_bounded_contexts():
     st.title("Bounded Contexts")
     st.markdown("##### Semantic Domain Inference")
     
-    with st.expander("💡 About Bounded Contexts", expanded=True):
+    with st.expander("About Bounded Contexts", expanded=True):
         st.markdown("""
         We group your code into **Logical Domains** based on directory clustering and coupling density. 
         High **Coupling Ratios** indicate modules that are difficult to extract without refactoring.
@@ -418,7 +438,7 @@ def show_bounded_contexts():
             st.dataframe(df_ctx, use_container_width=True, hide_index=True)
             
             st.markdown("---")
-            st.markdown("### 🧠 Domain Extractability Intelligence")
+            st.markdown("### Domain Extractability Intelligence")
             
             # Find insights
             high_coupling = sorted(contexts, key=lambda x: x["coupling_ratio"], reverse=True)
@@ -429,7 +449,7 @@ def show_bounded_contexts():
 
             col1, col2 = st.columns(2)
             with col1:
-                st.info("#### 🧩 Domain Cohesion Insight")
+                st.info("#### Domain Cohesion Insight")
                 st.markdown("**METRIC**: Global Coupling Ratios & Outliers")
                 st.markdown("**INTERPRETATION**: This metric provides an understanding of how well the legacy system's logic is encapsulated. A system with predominantly high-coupling domains typically represents a 'Big Ball of Mud' architecture, whereas lower coupling ratios suggest that the original developers successfully implemented separation of concerns.")
                 
@@ -440,7 +460,7 @@ def show_bounded_contexts():
                 st.markdown("**RECOMMENDATION**: Use these cohesion insights to map out which areas of the codebase share state. High-coupling areas indicate cross-cutting concerns that should be mapped carefully during the architectural discovery phase.")
 
             with col2:
-                st.success("#### 🏗️ State & Boundary Distribution")
+                st.success("#### State & Boundary Distribution")
                 st.markdown("**METRIC**: Transactional (DB) and Authentication (Auth) Sinks")
                 st.markdown("**INTERPRETATION**: Identifying which domains independently touch database layers or session management reveals the functional layout of the system. Domains that manage their own state are naturally closer to operating as independent bounded contexts, whereas centralized state points to a highly monolithic data tier.")
                 

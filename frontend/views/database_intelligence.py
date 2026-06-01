@@ -7,12 +7,21 @@ def show_database_intelligence():
     st.title("Database Intelligence")
     st.markdown("##### Persistence Layer Analysis")
 
-    with st.expander("💡 About Database Intelligence", expanded=True):
-        st.markdown("""
-        This view analyses every **database interaction** found in the codebase — including raw SQL calls,
-        table ownership, and write patterns. Use it to understand where persistence logic lives before
-        making any extraction decisions.
-        """)
+    with st.expander("Database Intelligence Blueprint Key", expanded=False):
+        colA, colB = st.columns(2)
+        with colA:
+            st.markdown("""
+            **Access Taxonomy**
+            - **Raw SQL**: Hardcoded database queries. Indicates high coupling.
+            - **ORM Abstractions**: Query logic separated from business logic.
+            """)
+        with colB:
+            st.markdown("""
+            **Risk Factors**
+            - **Credential Risks**: Hardcoded usernames/passwords in connection calls.
+            - **Duplicate Queries**: Copy-pasted SQL increasing maintenance overhead.
+            - **Unguarded Writes**: INSERT/UPDATE outside of transaction blocks.
+            """)
     st.markdown("---")
 
     FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
@@ -55,18 +64,18 @@ def show_database_intelligence():
 
     # ── Top-level KPI strip ───────────────────────────────────────────────
     k1, k2, k3, k4 = st.columns(4)
-    k1.metric("🔍 Read Operations",  total_reads)
-    k2.metric("💾 Write Operations", total_writes)
-    k3.metric("📦 ORM Abstractions", total_orm)
-    k4.metric("🚨 Credential Risks", sum(v.get("credentials", 0) for v in taxonomy.values()))
+    k1.metric("Read Operations",  total_reads)
+    k2.metric("Write Operations", total_writes)
+    k3.metric("ORM Abstractions", total_orm)
+    k4.metric("Credential Risks", sum(v.get("credentials", 0) for v in taxonomy.values()))
 
     st.markdown("---")
 
     tabs = st.tabs([
-        "📊 Access Taxonomy (CRUD Patterns)",
-        "🚨 Risk Audit (Security & Integrity)",
-        "📦 Table Ownership (DB-per-Service)",
-        "🗺️ Domain Model (ERD Visualization)",
+        "Access Taxonomy (CRUD Patterns)",
+        "Risk Audit (Security & Integrity)",
+        "Table Ownership (DB-per-Service)",
+        "Domain Model (ERD Visualization)",
     ])
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -96,7 +105,7 @@ def show_database_intelligence():
         raw_pct = f"{(total_raw / (total_raw + total_orm) * 100):.1f}%" if (total_raw + total_orm) > 0 else "N/A"
         top_files = [r["File"] for r in rows[:3]] if rows else []
 
-        st.info("#### 🛡️ Query Abstraction Level")
+        st.info("#### Query Abstraction Level", icon=":material/info:")
         st.markdown("**METRIC**: Raw SQL vs. ORM Usage ratio across the persistence layer")
         st.markdown(
             "**INTERPRETATION**: This metric assesses how the system interacts with its database. "
@@ -134,14 +143,14 @@ def show_database_intelligence():
     # TAB 1 — Risk Audit
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[1]:
-        st.markdown("#### 🔑 Security Risk: Hardcoded Credentials")
+        st.markdown("#### Security Risk: Hardcoded Credentials")
         st.caption("Files where DB credentials appear as literal strings inside connection calls.")
         if creds:
             st.dataframe(pd.DataFrame(creds), hide_index=True, use_container_width=True)
         else:
-            st.success("✅ No hardcoded credentials detected.")
+            st.success("No hardcoded credentials detected.", icon=":material/check_circle:")
 
-        st.markdown("#### 🔁 Performance Risk: Duplicate Queries")
+        st.markdown("#### Performance Risk: Duplicate Queries")
         st.caption("Identical SQL strings copy-pasted across multiple files — increases maintenance surface area.")
         if dups:
             display_dups = []
@@ -152,26 +161,26 @@ def show_database_intelligence():
                 display_dups.append(row)
             st.dataframe(pd.DataFrame(display_dups), hide_index=True, use_container_width=True)
         else:
-            st.success("✅ No duplicated SQL queries detected.")
+            st.success("No duplicated SQL queries detected.", icon=":material/check_circle:")
 
-        st.markdown("#### 🔓 Logic Risk: Unguarded Writes")
+        st.markdown("#### Logic Risk: Unguarded Writes")
         st.caption("Files that execute INSERT/UPDATE/DELETE outside of a transaction block.")
         if no_tx:
             st.dataframe(pd.DataFrame(no_tx), hide_index=True, use_container_width=True)
         else:
-            st.success("✅ Transaction integrity verified across all write operations.")
+            st.success("Transaction integrity verified across all write operations.", icon=":material/check_circle:")
 
         if sprocs:
-            st.markdown("#### ⚙️ Stored Procedures / EXEC Calls")
+            st.markdown("#### Stored Procedures / EXEC Calls")
             st.caption("Direct stored procedure calls — business logic that lives outside the application layer.")
             st.dataframe(pd.DataFrame(sprocs), hide_index=True, use_container_width=True)
 
         # ── Tab-specific Insight ─────────────────────────────────────────
         st.markdown("---")
         if total_risk_items > 0:
-            st.warning("#### 🚨 Persistence Risk Posture")
+            st.warning("#### Persistence Risk Posture", icon=":material/warning:")
         else:
-            st.success("#### 🚨 Persistence Risk Posture")
+            st.success("#### Persistence Risk Posture", icon=":material/check_circle:")
 
         st.markdown("**METRIC**: Composite Persistence Vulnerability Count")
         st.markdown(
@@ -216,7 +225,7 @@ def show_database_intelligence():
                 hide_index=True,
                 use_container_width=True,
                 column_config={
-                    "cross_module_write": st.column_config.CheckboxColumn("⚠️ Cross-Module Conflict"),
+                    "cross_module_write": st.column_config.CheckboxColumn("Cross-Module Conflict"),
                     "total_writes": st.column_config.NumberColumn("Total Writes"),
                 }
             )
@@ -229,9 +238,9 @@ def show_database_intelligence():
         # ── Tab-specific Insight ─────────────────────────────────────────
         st.markdown("---")
         if cross_module:
-            st.warning("#### 🔗 Data Entanglement & Ownership")
+            st.warning("#### Data Entanglement & Ownership", icon=":material/warning:")
         else:
-            st.info("#### 🔗 Data Entanglement & Ownership")
+            st.info("#### Data Entanglement & Ownership", icon=":material/info:")
 
         st.markdown("**METRIC**: Cross-Module Write Operations (Shared Table Access)")
         st.markdown(
@@ -283,7 +292,7 @@ def show_database_intelligence():
             erd_rels = data.get("erd_relationships", [])
             context_labels = list(set(r.get("inferred_via", "") for r in erd_rels if r.get("inferred_via")))
 
-            st.success("#### 🗺️ Domain Cohesion")
+            st.success("#### Domain Cohesion", icon=":material/check_circle:")
             st.markdown("**METRIC**: Inferred Table Relationship Count")
             st.markdown(
                 "**INTERPRETATION**: Each connection in this diagram represents two tables that are "

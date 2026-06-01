@@ -26,8 +26,26 @@ def fetch_ai_advisory(run_id: int):
     return None
 
 def show_modernization_decision_engine():
-    st.markdown("## 🧠 Modernization Decision Engine")
+    st.markdown("## Modernization Decision Engine")
     st.caption("Strategic advisory based on structural risk, domain coupling, and modernization ROI.")
+
+    with st.expander("Decision Engine Blueprint Key", expanded=False):
+        colA, colB = st.columns(2)
+        with colA:
+            st.markdown("""
+            **Modernization Strategies**
+            - **EXTRACT**: Safe to move to a microservice.
+            - **STRANGLER FIG**: Slowly replace piece-by-piece over time.
+            - **REWRITE**: Too complex/coupled. Rewrite from scratch.
+            - **RETAIN**: Code works fine, leave as-is.
+            """)
+        with colB:
+            st.markdown("""
+            **Effort & ROI**
+            - **Migration Effort**: Calculated complexity based on code weight.
+            - **High Value Targets**: Modules where the modernization benefit massively outweighs the effort.
+            """)
+    st.markdown("---")
 
     run_id = st.session_state.get("active_run_id")
     if not run_id:
@@ -62,14 +80,10 @@ def show_modernization_decision_engine():
             help="An estimate of time required based on code complexity and size."
         )
     with col2:
-        strategy_icons = {
-            "REWRITE": "🔴", "STRANGLER FIG": "🟡", "EXTRACT (MICROSERVICE)": "🟢", "REPLATFORM": "🔵", "RETAIN / REHOST": "⚪"
-        }
         strategy_raw = kpis.get("Most Common Strategy", "Unknown")
-        icon = strategy_icons.get(strategy_raw, "")
         st.metric(
             "Primary Modernization Path", 
-            f"{icon} {strategy_raw}",
+            strategy_raw,
             help="The most frequent recommendation. e.g., 'Extract' means moving clean isolated code to a microservice."
         )
     with col3:
@@ -86,7 +100,7 @@ def show_modernization_decision_engine():
         df = pd.DataFrame(recommendations)
         
         # Visualize ROI vs Effort
-        st.markdown("#### 🎯 Modernization ROI Matrix")
+        st.markdown("#### Modernization ROI Matrix")
         # Extract numeric effort for plotting and humanizing
         df['EffortScore'] = df['Migration Effort'].apply(lambda x: int(x.split()[0]))
         
@@ -99,9 +113,9 @@ def show_modernization_decision_engine():
         
         # Add badges to strategies
         strategy_icons_full = {
-            "REWRITE": "🔴 REWRITE", "STRANGLER FIG": "🟡 STRANGLER FIG", 
-            "EXTRACT (MICROSERVICE)": "🟢 EXTRACT", "REPLATFORM": "🔵 REPLATFORM", 
-            "RETAIN / REHOST": "⚪ RETAIN"
+            "REWRITE": "REWRITE", "STRANGLER FIG": "STRANGLER FIG", 
+            "EXTRACT (MICROSERVICE)": "EXTRACT", "REPLATFORM": "REPLATFORM", 
+            "RETAIN / REHOST": "RETAIN"
         }
         df['Strategy'] = df['Recommended Strategy'].apply(lambda x: strategy_icons_full.get(x, x))
         
@@ -126,7 +140,7 @@ def show_modernization_decision_engine():
         fig.update_traces(textposition='top center')
         st.plotly_chart(fig, use_container_width=True)
 
-        st.markdown("#### 📋 Strategic Roadmap Details")
+        st.markdown("#### Strategic Roadmap Details")
         st.dataframe(
             df[["Context", "Strategy", "Modernization ROI", "Estimated Effort", "Primary Blocker"]],
             hide_index=True,
@@ -134,7 +148,7 @@ def show_modernization_decision_engine():
         )
         
         # Deep Dive rationale
-        st.markdown("#### 🔍 Top 10 Strategic Justifications")
+        st.markdown("#### Top 10 Strategic Justifications")
         st.caption("Detailed rationale for the most critical modules to prevent UI overload.")
         top_recommendations = recommendations[:10]
         for rec in top_recommendations:
@@ -144,7 +158,7 @@ def show_modernization_decision_engine():
                 st.markdown(f"**PRIMARY BLOCKER**: {rec['Primary Blocker']}")
                 
                 # Behavioral Insight Protocol (D1 Strategy)
-                st.info("##### 🧐 Advisory Interpretation")
+                st.info("##### Advisory Interpretation", icon=":material/info:")
                 st.markdown(
                     f"The {rec['Context']} module has been assigned a **{rec['Recommended Strategy']}** strategy because its "
                     f"structural profile shows {rec['Primary Blocker']} as the dominant constraint. "
@@ -155,26 +169,26 @@ def show_modernization_decision_engine():
 
     # --- Phase 10: AI Narratives & Mermaid Diagrams ---
     st.markdown("---")
-    st.markdown("### 🤖 Deep AI Architectural Intelligence")
+    st.markdown("### Deep AI Architectural Intelligence")
     st.caption("AI-synthesized modernization paths directly targeting God Classes and structural tight coupling.")
     
     ai_data = fetch_ai_advisory(run_id)
     if ai_data and ai_data.get("findings"):
         findings = ai_data["findings"]
         for f in findings:
-            priority_color = "🔴" if f.get("priority") == "Critical" else "🟠" if f.get("priority") == "High" else "🟡"
+            priority_color = "CRITICAL" if f.get("priority") == "Critical" else "HIGH" if f.get("priority") == "High" else "MEDIUM"
             
-            with st.expander(f"{priority_color} {f.get('observation', 'Architecture Finding')}"):
+            with st.expander(f"[{priority_color}] {f.get('observation', 'Architecture Finding')}"):
                 c1, c2 = st.columns([2, 1])
                 with c1:
                     st.markdown("##### The Assessment")
                     st.markdown(f.get('impact', ''))
                     
                     st.markdown("##### Executive Recommendation")
-                    st.success(f.get('recommended_action', ''))
+                    st.success(f.get('recommended_action', ''), icon=":material/check_circle:")
                     
                     if "Playbook Standard" in f.get('category', ''):
-                        st.info("📖 **Playbook Standard Enforced**: This recommendation follows strict, deterministic modernization rules.")
+                        st.info("**Playbook Standard Enforced**: This recommendation follows strict, deterministic modernization rules.", icon=":material/menu_book:")
                     else:
                         st.caption(f"**Confidence**: {f.get('confidence', 'N/A')} | **Category**: {f.get('category', 'General')}")
                 

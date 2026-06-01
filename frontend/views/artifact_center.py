@@ -9,7 +9,7 @@ def show_artifact_center():
     st.title("Artifact Center")
     st.markdown("##### Download Generated Machine & Human Artifacts")
     
-    with st.expander("💡 About the Artifact Center", expanded=True):
+    with st.expander("About the Artifact Center", expanded=True):
         st.markdown("""
         The Artifact Center is your single source of truth for all exports. 
         - **Human Artifacts** are intended for sharing with project managers, stakeholders, and presentation platforms.
@@ -24,7 +24,7 @@ def show_artifact_center():
         st.warning("No active analysis run detected. Please execute a scan from the Dashboard.")
         return
 
-    st.markdown("### 📦 Workspace Export Bundle")
+    st.markdown("### Workspace Export Bundle")
     st.caption("Download all selected artifacts packaged in a structured ZIP archive.")
     
     with st.form("export_bundle_form"):
@@ -53,7 +53,7 @@ def show_artifact_center():
             res = requests.get(f"{FASTAPI_URL}/artifacts/bundle/{run_id}", params=params)
             if res.status_code == 200:
                 st.download_button(
-                    label="⬇️ Download strata_workspace.zip",
+                    label="Download strata_workspace.zip",
                     data=res.content,
                     file_name=f"strata_workspace_{run_id}.zip",
                     mime="application/zip"
@@ -66,7 +66,7 @@ def show_artifact_center():
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("### 👨‍💼 Human Artifacts")
+        st.markdown("### Human Artifacts")
         st.markdown("For planning, review, and communication.")
         
         # 1. HTML Report
@@ -77,7 +77,7 @@ def show_artifact_center():
                 res = requests.get(f"{FASTAPI_URL}/artifacts/report/{run_id}")
                 if res.status_code == 200:
                     st.download_button(
-                        label="⬇️ Download executive_report.html",
+                        label="Download executive_report.html",
                         data=res.text,
                         file_name="executive_report.html",
                         mime="text/html"
@@ -95,7 +95,7 @@ def show_artifact_center():
                 res = requests.get(f"{FASTAPI_URL}/artifacts/technical/{run_id}")
                 if res.status_code == 200:
                     st.download_button(
-                        label="⬇️ Download technical_assessment.md",
+                        label="Download technical_assessment.md",
                         data=res.text,
                         file_name="technical_assessment.md",
                         mime="text/markdown"
@@ -113,7 +113,7 @@ def show_artifact_center():
                 res = requests.get(f"{FASTAPI_URL}/artifacts/csv/{run_id}")
                 if res.status_code == 200:
                     st.download_button(
-                        label="⬇️ Download risks.csv",
+                        label="Download risks.csv",
                         data=res.text,
                         file_name="risks.csv",
                         mime="text/csv"
@@ -122,7 +122,7 @@ def show_artifact_center():
                     st.error("Failed to generate CSV.")
 
     with col2:
-        st.markdown("### 🤖 Machine Artifacts")
+        st.markdown("### Machine Artifacts")
         st.markdown("For tooling, automation, and integrations.")
         
         # 1. SARIF
@@ -133,7 +133,7 @@ def show_artifact_center():
                 res = requests.get(f"{FASTAPI_URL}/artifacts/sarif/{run_id}")
                 if res.status_code == 200:
                     st.download_button(
-                        label="⬇️ Download results.sarif",
+                        label="Download results.sarif",
                         data=json.dumps(res.json(), indent=2),
                         file_name="results.sarif",
                         mime="application/json"
@@ -150,11 +150,11 @@ def show_artifact_center():
             with st.spinner("Synthesizing custom Rector rules via AI..."):
                 res = requests.get(f"{FASTAPI_URL}/artifacts/rector/{run_id}")
                 if res.status_code == 200:
-                    st.success("✅ Rector Configuration Synthesized")
-                    with st.expander("👁️ View AI-Generated rector.php", expanded=True):
+                    st.success("Rector Configuration Synthesized", icon=":material/check_circle:")
+                    with st.expander("View AI-Generated rector.php", expanded=True):
                         st.code(res.text, language="php")
                     st.download_button(
-                        label="⬇️ Download rector.php",
+                        label="Download rector.php",
                         data=res.text,
                         file_name="rector.php",
                         mime="text/php"
@@ -172,7 +172,7 @@ def show_artifact_center():
                 res = requests.get(f"{FASTAPI_URL}/artifacts/deptrac/{run_id}")
                 if res.status_code == 200:
                     st.download_button(
-                        label="⬇️ Download deptrac.yaml",
+                        label="Download deptrac.yaml",
                         data=res.text,
                         file_name="deptrac.yaml",
                         mime="application/yaml"
@@ -190,7 +190,7 @@ def show_artifact_center():
                 res = requests.get(f"{FASTAPI_URL}/artifacts/json/{run_id}")
                 if res.status_code == 200:
                     st.download_button(
-                        label="⬇️ Download system_dump.json",
+                        label="Download system_dump.json",
                         data=json.dumps(res.json(), indent=2),
                         file_name="system_dump.json",
                         mime="application/json"

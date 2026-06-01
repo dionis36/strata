@@ -81,7 +81,7 @@ def show_dashboard():
         
         # ── KPI Bento Grid ───────────────────────────────────────────────────────
         # --- Primary KPI Row ---
-        st.markdown("### 📊 System Vitality")
+        st.markdown("### System Vitality")
         kpi1, kpi2, kpi3, kpi4, kpi5, kpi6 = st.columns(6)
         
         kpi1.metric("Total Files", f"{run.get('total_files', 0):,}")
@@ -128,23 +128,23 @@ def show_dashboard():
             with st.spinner("Processing AST..."):
                 res = requests.post(f"{FASTAPI_URL}/analyze", json={"project_name": p_name, "project_path": p_path})
                 if res.status_code == 200:
-                    st.success("Analysis Complete!")
+                    st.success("Analysis Complete!", icon=":material/check_circle:")
                     st.rerun()
                 else:
-                    st.error(f"Failed: {res.text}")
+                    st.error(f"Failed: {res.text}", icon=":material/error:")
 
     with c2:
         if dashboard_data and dashboard_data.get("project"):
             st.markdown("#### Project Management")
             st.write(f"Active Root: `{dashboard_data['project']['root_path']}`")
-            if st.button("🚀 Trigger Delta Re-Scan", use_container_width=True):
+            if st.button("Trigger Delta Re-Scan", use_container_width=True):
                 with st.spinner("Analyzing changes..."):
                     res = requests.post(f"{FASTAPI_URL}/analyze", json={
                         "project_name": dashboard_data['project']['name'], 
                         "project_path": dashboard_data['project']['root_path']
                     })
                     if res.status_code == 200:
-                        st.success("Re-scan Successful!")
+                        st.success("Re-scan Successful!", icon=":material/check_circle:")
                         st.rerun()
 
 if __name__ == "__main__":

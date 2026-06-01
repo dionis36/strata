@@ -7,17 +7,22 @@ def show_legacy_intelligence():
     st.title("Legacy PHP Intelligence")
     st.markdown("##### Era Classification · Pattern Detection · Modernization Scoring")
 
-    with st.expander("💡 About Legacy PHP Intelligence", expanded=True):
-        st.markdown("""
-        This view is the **expert-system layer** of the platform. It classifies the codebase's
-        PHP era based on detected code patterns — from PHP 4 procedural roots through PHP 5
-        transitional patterns to modern PHP 7+ architecture.
-
-        Every signal here is derived directly from the AST of your source files.
-        The era classification drives the **migration cost estimate** — a PHP 4 codebase
-        requires a fundamentally different modernization strategy than a PHP 7 one.
-        Use this view before any extraction or migration planning begins.
-        """)
+    with st.expander("Legacy PHP Intelligence Blueprint Key", expanded=False):
+        colA, colB = st.columns(2)
+        with colA:
+            st.markdown("""
+            **PHP Era Diagnostics**
+            - **Era A/B (PHP 4/5)**: Highly procedural, globally coupled.
+            - **Era C (PHP 5 Transitional)**: Mixed OOP, lacking PSR standards.
+            - **Era D (PHP 7+)**: Modern structured code.
+            """)
+        with colB:
+            st.markdown("""
+            **Legacy Anti-Patterns**
+            - **MYSQL_LEGACY**: Unsafe legacy driver calls.
+            - **VARIABLE_VARIABLE**: Untraceable dynamic dispatch (`$$var`).
+            - **INLINE_HTML**: Presentation logic tightly coupled with business logic.
+            """)
     st.markdown("---")
 
     FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
@@ -53,19 +58,19 @@ def show_legacy_intelligence():
 
     # ── Top-level KPI strip ───────────────────────────────────────────────
     k1, k2, k3, k4, k5 = st.columns(5)
-    k1.metric("🏛️ PHP Era",             classified_era.split("(")[0].strip())
-    k2.metric("📊 Modernization Score",  f"{mod_score:.1%}" if mod_score else "N/A")
-    k3.metric("🔄 Procedural Ratio",     f"{proc_ratio:.1%}")
-    k4.metric("🏷️ Namespace Coverage",   f"{ns_ratio:.1%}")
-    k5.metric("⚠️ Era Signals",          len(era_signals))
+    k1.metric("PHP Era",             classified_era.split("(")[0].strip())
+    k2.metric("Modernization Score",  f"{mod_score:.1%}" if mod_score else "N/A")
+    k3.metric("Procedural Ratio",     f"{proc_ratio:.1%}")
+    k4.metric("Namespace Coverage",   f"{ns_ratio:.1%}")
+    k5.metric("Era Signals",          len(era_signals))
 
     st.markdown("---")
 
     tabs = st.tabs([
-        "🏛️ Era Classification",
-        "🔍 Pattern Detection",
-        "📊 Modernization Scorecard",
-        "📁 File Composition",
+        "Era Classification",
+        "Pattern Detection",
+        "Modernization Scorecard",
+        "File Composition",
     ])
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -97,15 +102,15 @@ def show_legacy_intelligence():
         st.markdown("---")
 
         ERA_DESC = {
-            "Era A/B (PHP 4 / Early PHP 5)": ("🔴", "Fully procedural, no namespaces, mysql_* API, inline HTML. Pre-OOP era."),
-            "Era B/C (PHP 5 Transitional)":  ("🟠", "Mixed OOP and procedural. Some namespaces. Still uses legacy DB or auth patterns."),
-            "Era C (PHP 5 Transitional)":    ("🟡", "OOP-dominant but inconsistent. Missing PSR-4, type hints, or framework."),
-            "Era D (PHP 7+)":                ("🟢", "Modern. PSR-4 autoloading, type hints, namespaces, OOP-first."),
-            "Unknown":                       ("⚪", "Insufficient signals to classify."),
+            "Era A/B (PHP 4 / Early PHP 5)": ("", "Fully procedural, no namespaces, mysql_* API, inline HTML. Pre-OOP era."),
+            "Era B/C (PHP 5 Transitional)":  ("", "Mixed OOP and procedural. Some namespaces. Still uses legacy DB or auth patterns."),
+            "Era C (PHP 5 Transitional)":    ("", "OOP-dominant but inconsistent. Missing PSR-4, type hints, or framework."),
+            "Era D (PHP 7+)":                ("", "Modern. PSR-4 autoloading, type hints, namespaces, OOP-first."),
+            "Unknown":                       ("", "Insufficient signals to classify."),
         }
-        icon, desc = ERA_DESC.get(classified_era, ("⚪", classified_era))
+        icon, desc = ERA_DESC.get(classified_era, ("", classified_era))
 
-        st.info(f"#### {icon} Classified Era: {classified_era}")
+        st.info(f"#### Classified Era: {classified_era}", icon=":material/info:")
         st.markdown(f"*{desc}*")
         st.markdown("---")
 
@@ -113,7 +118,7 @@ def show_legacy_intelligence():
         critical = sum(1 for s in era_signals if s["severity"] == "CRITICAL")
         high     = sum(1 for s in era_signals if s["severity"] == "HIGH")
 
-        st.info("#### 🏛️ Era Classification Assessment")
+        st.info("#### Era Classification Assessment", icon=":material/info:")
         st.markdown("**METRIC**: PHP Era Classification based on AST pattern density")
         st.markdown(
             "**INTERPRETATION**: PHP era classification is not based on the `php_version` file — "
@@ -141,14 +146,14 @@ def show_legacy_intelligence():
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[1]:
         PATTERN_META = {
-            "MYSQL_LEGACY":               ("🔴", "mysql_*() Family",          "Removed in PHP 7.0 — will crash on modern PHP"),
-            "HARDCODED_DB_CREDENTIALS":   ("🔴", "Hardcoded DB Credentials",   "mysql_connect/PDO with literal host/user/pass strings"),
-            "REGISTER_GLOBALS_ASSUMPTION":("🔴", "register_globals Assumption","extract() / import_request_variables() usage"),
-            "LEGACY_AUTOLOAD":            ("🟠", "__autoload() Usage",          "Deprecated PHP 7.2, removed PHP 8.0"),
-            "INCLUDE_ROUTING":            ("🟠", "Dynamic Include Routing",    "include($page) used as a routing mechanism"),
-            "INLINE_HTML":                ("🟡", "Inline HTML/PHP Mixing",     "Raw HTML embedded in PHP files — no template layer"),
-            "VARIABLE_VARIABLE":          ("🟡", "Variable Variables ($$var)", "Dynamic binding — untraceable by static analysis"),
-            "CUSTOM_AUTH":                ("🟡", "Custom Session Save Handler","Non-standard auth flow — risky to migrate"),
+            "MYSQL_LEGACY":               ("", "mysql_*() Family",          "Removed in PHP 7.0 — will crash on modern PHP"),
+            "HARDCODED_DB_CREDENTIALS":   ("", "Hardcoded DB Credentials",   "mysql_connect/PDO with literal host/user/pass strings"),
+            "REGISTER_GLOBALS_ASSUMPTION":("", "register_globals Assumption","extract() / import_request_variables() usage"),
+            "LEGACY_AUTOLOAD":            ("", "__autoload() Usage",          "Deprecated PHP 7.2, removed PHP 8.0"),
+            "INCLUDE_ROUTING":            ("", "Dynamic Include Routing",    "include($page) used as a routing mechanism"),
+            "INLINE_HTML":                ("", "Inline HTML/PHP Mixing",     "Raw HTML embedded in PHP files — no template layer"),
+            "VARIABLE_VARIABLE":          ("", "Variable Variables ($$var)", "Dynamic binding — untraceable by static analysis"),
+            "CUSTOM_AUTH":                ("", "Custom Session Save Handler","Non-standard auth flow — risky to migrate"),
         }
 
         st.markdown("#### Legacy Anti-Pattern Inventory")
@@ -156,13 +161,13 @@ def show_legacy_intelligence():
 
         if pattern_totals:
             for ptype, count in sorted(pattern_totals.items(), key=lambda x: -x[1]):
-                icon, label, explanation = PATTERN_META.get(ptype, ("⚪", ptype, ""))
+                icon, label, explanation = PATTERN_META.get(ptype, ("", ptype, ""))
                 with st.expander(f"{icon} **{label}** — {count} occurrence(s)  ·  *{explanation}*", expanded=count > 0):
                     instances = leg_patterns.get(ptype, [])
                     if instances:
                         st.dataframe(pd.DataFrame(instances), hide_index=True, use_container_width=True)
         else:
-            st.success("✅ No legacy anti-patterns detected.")
+            st.success("No legacy anti-patterns detected.", icon=":material/check_circle:")
 
         # ── Insight ──────────────────────────────────────────────────────
         st.markdown("---")
@@ -172,9 +177,9 @@ def show_legacy_intelligence():
         routing_count  = pattern_totals.get("INCLUDE_ROUTING", 0)
 
         if total_patterns > 0:
-            st.warning("#### 🔍 Anti-Pattern Density")
+            st.warning("#### Anti-Pattern Density")
         else:
-            st.success("#### 🔍 Anti-Pattern Density")
+            st.success("#### Anti-Pattern Density")
 
         st.markdown("**METRIC**: Legacy Anti-Pattern Count by Category")
         st.markdown(
@@ -247,10 +252,10 @@ def show_legacy_intelligence():
         # ── Insight ──────────────────────────────────────────────────────
         st.markdown("---")
         if mod_score > 0:
-            bucket = "🟢 Modern (Era D)" if mod_score >= 0.7 else ("🟡 Transitional (Era C)" if mod_score >= 0.4 else "🔴 Legacy (Era A/B)")
-            st.info(f"#### 📊 Overall Modernization Readiness: {bucket}")
+            bucket = "Modern (Era D)" if mod_score >= 0.7 else ("Transitional (Era C)" if mod_score >= 0.4 else "Legacy (Era A/B)")
+            st.info(f"#### Overall Modernization Readiness: {bucket}")
         else:
-            st.info("#### 📊 Overall Modernization Readiness")
+            st.info("#### Overall Modernization Readiness")
 
         st.markdown("**METRIC**: Composite Modernization Score (0.0 — 1.0)")
         st.markdown(
@@ -304,7 +309,7 @@ def show_legacy_intelligence():
         oop_count = data.get("files_with_classes", 0)
         proc_only = data.get("files_procedural_only", 0)
 
-        st.info("#### 📁 Structural Composition Profile")
+        st.info("#### Structural Composition Profile")
         st.markdown("**METRIC**: OOP vs Procedural Distribution")
         st.markdown(
             "**INTERPRETATION**: This table shows the raw structural split of the codebase. "

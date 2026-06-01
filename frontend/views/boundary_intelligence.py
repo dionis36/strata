@@ -22,8 +22,24 @@ def fetch_boundary_intelligence(run_id: int):
 
 def show_boundary_intelligence():
     from views.risk_audit import show_risk_audit
-    st.markdown("## 🌐 Boundary Intelligence")
+    st.markdown("## Boundary Intelligence")
     st.caption("Map the external surface area of the legacy monolith: UI Entanglement, Network Endpoints, and Vendor Dependencies.")
+
+    with st.expander("Boundary Intelligence Blueprint Key", expanded=False):
+        colA, colB = st.columns(2)
+        with colA:
+            st.markdown("""
+            **Presentation Layer Analysis**
+            - **Global UI Entanglement**: Percentage of logic nodes coupled with HTML.
+            - **Fat Views**: Files that query the database AND render HTML.
+            """)
+        with colB:
+            st.markdown("""
+            **API & Vendor Surface**
+            - **Endpoints Detected**: Incoming network connection points.
+            - **Vendor Inventory**: External third-party dependencies mapped.
+            """)
+    st.markdown("---")
 
     active_run_id = st.session_state.get("active_run_id")
     if not active_run_id:
@@ -43,17 +59,17 @@ def show_boundary_intelligence():
 
     # ── Top-level KPI strip ───────────────────────────────────────────────
     k1, k2, k3, k4 = st.columns(4)
-    k1.metric("🖥️ Global UI Entanglement", kpis.get("Global UI Entanglement", "0%"), help="Percentage of total AST nodes that are HTML or echo statements.")
-    k2.metric("🛑 Fat Views (DB-Coupled)", kpis.get("Fat Views (DB-Coupled UI)", 0), delta="Refactor Priority", delta_color="inverse", help="Files with >15% HTML that also write to the database.")
-    k3.metric("🔌 Endpoints Detected", kpis.get("Total Endpoints Detected", 0))
-    k4.metric("📦 Vendor Files Scanned", kpis.get("Vendor Files Scanned", 0))
+    k1.metric("Global UI Entanglement", kpis.get("Global UI Entanglement", "0%"), help="Percentage of total AST nodes that are HTML or echo statements.")
+    k2.metric("Fat Views (DB-Coupled)", kpis.get("Fat Views (DB-Coupled UI)", 0), delta="Refactor Priority", delta_color="inverse", help="Files with >15% HTML that also write to the database.")
+    k3.metric("Endpoints Detected", kpis.get("Total Endpoints Detected", 0))
+    k4.metric("Vendor Files Scanned", kpis.get("Vendor Files Scanned", 0))
 
     st.markdown("---")
 
     tabs = st.tabs([
-        "🖥️ Presentation Layer Coupling",
-        "🔌 Endpoint & API Surface",
-        "📦 Vendor Inventory & Dependency Graph"
+        "Presentation Layer Coupling",
+        "Endpoint & API Surface",
+        "Vendor Inventory & Dependency Graph"
     ])
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -68,7 +84,7 @@ def show_boundary_intelligence():
             st.dataframe(df, hide_index=True, use_container_width=True)
             
             st.markdown("---")
-            st.info("#### 🔬 Presentation Layer Analysis")
+            st.info("#### Presentation Layer Analysis", icon=":material/info:")
             st.markdown("**METRIC**: UI Entanglement Ratio — proportion of HTML/echo output nodes relative to logic nodes per file")
             fat_views = kpis.get("Fat Views (DB-Coupled UI)", 0)
             mvc_files = len(mvc)
@@ -88,7 +104,7 @@ def show_boundary_intelligence():
                 "Study the distribution — are the fat views concentrated in one directory (suggesting a feature module), or scattered across the codebase? "
                 "That pattern is the difference between a targeted refactor and a wholesale rewrite of the presentation tier."
             )
-            if st.button("🚨 Analyze Structural Risk of these Views"):
+            if st.button("Analyze Structural Risk of these Views"):
                 st.switch_page(st.Page(show_risk_audit))
         else:
             st.success("No presentation coupling detected. HTML output is not mixed with backend logic in this scan.")
@@ -105,7 +121,7 @@ def show_boundary_intelligence():
             st.dataframe(df, hide_index=True, use_container_width=True)
             
             st.markdown("---")
-            st.info("#### 🔬 Application Entry Point Analysis")
+            st.info("#### Application Entry Point Analysis", icon=":material/info:")
             st.markdown("**METRIC**: Entry Point Classification — how external requests reach the application")
             pure_scripts = sum(1 for a in api if a.get("Pure Script") == "Yes")
             api_endpoints = sum(1 for a in api if a.get("Type") == "API Endpoint")
@@ -128,7 +144,7 @@ def show_boundary_intelligence():
                 "Before forming any migration strategy, consider: which of these entry points are actively used by real users or clients, and which are dead code? "
                 "That distinction changes the scope of work significantly — a system with 50 entry points but 10 active ones has a much smaller viable extraction surface than the raw count suggests."
             )
-            if st.button("🏗️ Audit Architectural Rot"):
+            if st.button("Audit Architectural Rot"):
                 st.switch_page(st.Page(show_risk_audit))
         else:
             st.warning("No entry points detected. This may indicate the scan covered only a library or internal module, rather than a web-facing application.")
@@ -142,7 +158,7 @@ def show_boundary_intelligence():
         
         vendor_graph = data.get("vendor_graph", {"nodes": [], "edges": []})
         if vendor_graph["nodes"]:
-            st.markdown("##### 🕸️ Shadow IT Dependency Map")
+            st.markdown("##### Shadow IT Dependency Map")
             
             # Use PyVis for graph rendering
             net = Network(height="400px", width="100%", bgcolor="#0e1117", font_color="#e0e0e0")
@@ -158,13 +174,13 @@ def show_boundary_intelligence():
             components.html(html, height=450)
             st.markdown("---")
 
-        st.markdown("##### 📋 Vendor Registry")
+        st.markdown("##### Vendor Registry")
         if vendor:
             df = pd.DataFrame(vendor)
             st.dataframe(df, hide_index=True, use_container_width=True)
             
             st.markdown("---")
-            st.info("#### 🔬 Vendor Dependency Analysis")
+            st.info("#### Vendor Dependency Analysis", icon=":material/info:")
             st.markdown("**METRIC**: Vendor Classification — Composer-managed vs. manually embedded third-party libraries")
             orphans = sum(1 for v in vendor if "ORPHANED RISK" in v.get("Status", ""))
             total_vendor = len(vendor)

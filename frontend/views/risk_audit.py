@@ -9,7 +9,7 @@ def show_risk_audit():
     st.title("Security & Risk Audit")
     st.markdown("##### Maintainability Index · Security Sinks · Architectural Deficits")
 
-    with st.expander("💡 About the Security & Risk Audit", expanded=True):
+    with st.expander("Security & Risk Audit Blueprint Key", expanded=False):
         st.markdown("""
         This view is the **Technical Debt & Security Ledger** of the platform. It translates the 
         structural flaws of the codebase into prioritized, actionable risk registers.
@@ -44,8 +44,8 @@ def show_risk_audit():
     vulns = data.get("vulnerabilities", [])
     rot = data.get("architectural_rot", [])
 
-    # Apply Emojis to Risk Magnitudes
-    LEVEL_ICON = {"CRITICAL": "🔴 CRITICAL", "HIGH": "🟠 HIGH", "MEDIUM": "🟡 MEDIUM", "LOW": "🟢 LOW"}
+    # Text labels for Risk Magnitudes
+    LEVEL_ICON = {"CRITICAL": "CRITICAL", "HIGH": "HIGH", "MEDIUM": "MEDIUM", "LOW": "LOW"}
     
     lvl_counts = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
     for f in file_matrix:
@@ -65,17 +65,17 @@ def show_risk_audit():
 
     # ── Top-level KPI strip ───────────────────────────────────────────────
     k1, k2, k3, k4 = st.columns(4)
-    k1.metric("🔴 Critical Risk Files", lvl_counts["CRITICAL"], delta="Urgent Action", delta_color="inverse", help="Files containing active security sinks or extreme complexity.")
-    k2.metric("🟠 High Risk Files", lvl_counts["HIGH"], delta="Careful Extraction", delta_color="inverse", help="Files with high structural complexity.")
-    k3.metric("🟡 Moderate Risk Files", lvl_counts["MEDIUM"])
-    k4.metric("🟢 Stable Files", lvl_counts["LOW"], delta="Safe Candidate", delta_color="normal")
+    k1.metric("Critical Risk Files", lvl_counts["CRITICAL"], delta="Urgent Action", delta_color="inverse", help="Files containing active security sinks or extreme complexity.")
+    k2.metric("High Risk Files", lvl_counts["HIGH"], delta="Careful Extraction", delta_color="inverse", help="Files with high structural complexity.")
+    k3.metric("Moderate Risk Files", lvl_counts["MEDIUM"])
+    k4.metric("Stable Files", lvl_counts["LOW"], delta="Safe Candidate", delta_color="normal")
 
     st.markdown("---")
 
     tabs = st.tabs([
-        "📋 The File-Level Risk Matrix",
-        "🛡️ Security Vulnerability Log",
-        "🏗️ Architectural Rot & Extensibility",
+        "The File-Level Risk Matrix",
+        "Security Vulnerability Log",
+        "Architectural Rot & Extensibility",
     ])
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -119,7 +119,7 @@ def show_risk_audit():
         avg_mi = kpis.get("Average Maintainability", 0)
         critical_pct = f"{(critical_count / total_files * 100):.1f}" if total_files > 0 else "0"
         st.markdown("---")
-        st.info("#### 📋 File Risk Assessment")
+        st.info("#### File Risk Assessment")
         st.markdown("**METRIC**: Maintainability Index (MI) & Cyclomatic Complexity (CC) — per-file composite scoring")
         st.markdown(
             f"**INTERPRETATION**: This codebase has an average Maintainability Index of **{avg_mi}/100**. "
@@ -158,7 +158,7 @@ def show_risk_audit():
                 }
             )
         else:
-            st.success("✅ No critical security sinks (eval, unsafe includes, etc.) detected.")
+            st.success("No critical security sinks (eval, unsafe includes, etc.) detected.", icon=":material/check_circle:")
 
         # Insight Block
         st.markdown("---")
@@ -166,7 +166,7 @@ def show_risk_audit():
         rce_count = sum(1 for v in vulns if v.get("Vulnerability Type") == "DANGER")
         sqli_count = sum(1 for v in vulns if v.get("Vulnerability Type") == "MYSQL_LEGACY")
         lfi_count = sum(1 for v in vulns if v.get("Vulnerability Type") == "INCLUDE_ROUTING")
-        st.warning("#### 🛡️ Security Assessment") if total_vulns > 0 else st.success("#### 🛡️ Security Assessment")
+        st.warning("#### Security Assessment") if total_vulns > 0 else st.success("#### Security Assessment")
         st.markdown("**METRIC**: AST-detected Security Sinks — functions or patterns that directly enable a known attack class")
         if total_vulns > 0:
             st.markdown(
@@ -211,7 +211,7 @@ def show_risk_audit():
                     st.markdown(f"**Conclusion:** Direct microservice extraction is **{b.get('Blocker Severity', 'High Risk')}**.")
             st.markdown("---")
         else:
-            st.success("✅ No modules detected with High Refactor Risk or Microservice Extraction Blockers.")
+            st.success("No modules detected with High Refactor Risk or Microservice Extraction Blockers.", icon=":material/check_circle:")
             st.markdown("---")
 
         if rot:
@@ -225,7 +225,7 @@ def show_risk_audit():
                 }
             )
         else:
-            st.success("✅ No severe architectural rot detected.")
+            st.success("No severe architectural rot detected.", icon=":material/check_circle:")
 
         # Insight Block
         st.markdown("---")
@@ -234,7 +234,7 @@ def show_risk_audit():
         multi_class = sum(1 for r in rot if r.get("Defect Type") == "Multiple Classes per File")
         dead_code = sum(1 for r in rot if r.get("Defect Type") == "Potential Dead Code")
         blocker_count = sum(1 for r in rot if r.get("Defect Type") in ["High Refactor Risk", "Microservice Extraction Blocker"])
-        st.info("#### 🏗️ Extensibility Assessment")
+        st.info("#### Extensibility Assessment")
         st.markdown("**METRIC**: Composite Structural Anti-Patterns — Global State, Dead Code, and PSR violations")
         st.markdown(
             f"**INTERPRETATION**: This codebase carries **{total_rot} architectural debt instances**. "
@@ -253,7 +253,7 @@ def show_risk_audit():
             "Before any further analysis, ask: do the modules listed as 'High Refactor Risk' correspond to features you intend to extract early? "
             "If so, those files reveal the minimum set of dependencies you must untangle *first* — understanding their structure is the prerequisite for planning extraction in the Strategic Advisory module."
         )
-        if st.button("🌐 Map External Boundaries"):
+        if st.button("Map External Boundaries"):
             st.switch_page(st.Page(show_boundary_intelligence))
 
 if __name__ == "__main__":

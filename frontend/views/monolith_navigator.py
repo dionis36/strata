@@ -7,7 +7,7 @@ def show_monolith_navigator():
     st.title("Monolith Navigator")
     st.markdown("##### The System Inventory & Component Map")
     
-    with st.expander("💡 Why use the Navigator?", expanded=True):
+    with st.expander("Why use the Navigator?", expanded=True):
         st.markdown("""
         The Navigator provides **Technical Determinism**. It classifies every file into a strategic role, 
         helping you separate the 'Display' layer from the 'Business' logic. 
@@ -59,7 +59,7 @@ def show_monolith_navigator():
                 "Role": frole
             })
 
-    st.markdown("### 🏷️ System Composition")
+    st.markdown("### System Composition")
     cols = st.columns(len(role_counts))
     for i, (role, count) in enumerate(role_counts.items()):
         cols[i].metric(role, count)
@@ -69,7 +69,7 @@ def show_monolith_navigator():
     # --- Search & Filter ---
     st.markdown("#### Component Search")
     c1, c2 = st.columns([2, 1])
-    search = c1.text_input("🔍 Search Files", placeholder="e.g. UserController")
+    search = c1.text_input("Search Files", placeholder="e.g. UserController")
     selected_role = c2.selectbox("Filter by Architectural Role", ["ALL"] + sorted(list(role_counts.keys())))
 
     # --- Inventory Table ---
@@ -83,7 +83,7 @@ def show_monolith_navigator():
 
     # --- OOP Manifest (Symbols) ---
     st.markdown("---")
-    st.subheader("🧩 Extracted Intelligence Manifest")
+    st.subheader("Extracted Intelligence Manifest")
     st.info("This manifest lists the physical entities extracted from your code. It identifies potential 'God Objects' and behavioral risks.")
     
     l2 = data.get("layer_2", {})
@@ -104,7 +104,7 @@ def show_monolith_navigator():
         st.dataframe(display_df, use_container_width=True, hide_index=True)
         
         st.markdown("---")
-        st.markdown("### 🧠 Component Density Intelligence")
+        st.markdown("### Component Density Intelligence")
         
         total_entities = len(df_oop)
         high_complexity = len(df_oop[df_oop["Complexity"] == "High"])
@@ -112,14 +112,14 @@ def show_monolith_navigator():
         
         col1, col2 = st.columns(2)
         with col1:
-            st.info("#### 🏛️ Object Encapsulation Insight")
+            st.info("#### Object Encapsulation Insight")
             st.markdown("**METRIC**: High-Complexity Object Concentration")
             st.markdown("**INTERPRETATION**: This metric assesses whether logic is evenly distributed across many single-responsibility classes or concentrated in a few bloated objects. A high number of complex classes indicates a heavy, tightly-coupled OOP architecture.")
             st.markdown(f"**EVIDENCE**: \n1. Total recognized entities: {total_entities}.\n2. Entities flagged with 'High' complexity (> 20 methods): {high_complexity}.")
             st.markdown("**RECOMMENDATION**: Focus refactoring efforts on the 'High' complexity entities. If the system is mostly procedural (few entities), proceed to look at standalone scripts instead of classes.")
 
         with col2:
-            st.success("#### 🪐 Gravity Wells (God Objects)")
+            st.success("#### Gravity Wells (God Objects)")
             st.markdown("**METRIC**: Method Weight & Interaction Gravity")
             st.markdown("**INTERPRETATION**: 'Gravity Wells' are massive God Objects that contain so much logic they attract dependencies from across the entire system. Breaking these apart is mandatory before attempting to split the system into microservices.")
             
