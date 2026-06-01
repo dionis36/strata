@@ -1,7 +1,7 @@
 from typing import List, Dict
 from sqlalchemy.orm import Session
 from infrastructure.persistence.models import ComponentRisk, LegacyMetrics, ComponentMetric, AnalysisRun, Project
-from application.services.publishing.models import CanonicalModel, SystemContext, Module, Finding, Evidence
+from application.services.publishing.models import CanonicalModel, SystemContext, Module, Finding, Evidence, BoundaryIntelligence, LayeredArchitecture, PresentationCoupling, ApiEndpoint, VendorDependency, BoundedContext
 
 class EvidenceBuilder:
     """Pass 1: Evidence Selection & Hydration. Builds the Canonical Model from SQLite."""
@@ -76,15 +76,31 @@ class EvidenceBuilder:
         state_intel = self._extract_global_state_intelligence(run_id)
         full_risk_register = self._extract_full_risk_register(run_id)
         
+        # 7. Hydrate Boundary Intelligence & Layered Architecture
+        boundary_intel = self._extract_boundary_intelligence(run_id)
+        layered_arch = self._extract_layered_architecture(run_id)
+        
+        # 8. AI Executive Summary 
+        import json
+        ai_exec_summary = {}
+        if run and run.ai_executive_summary_json:
+            try:
+                ai_exec_summary = json.loads(run.ai_executive_summary_json)
+            except Exception:
+                pass
+        
         return CanonicalModel(
             system_context=ctx,
             legacy_posture=legacy_posture,
             database_intelligence=db_intel,
             dependency_intelligence=dep_intel,
             global_state_intelligence=state_intel,
+            boundary_intelligence=boundary_intel,
+            layered_architecture=layered_arch,
             modules=modules,
             findings=findings,
-            full_risk_register=full_risk_register
+            full_risk_register=full_risk_register,
+            ai_executive_summary=ai_exec_summary
         )
 
     def _extract_database_intelligence(self, run_id: int):
@@ -250,3 +266,89 @@ class EvidenceBuilder:
             )
             findings.append(f)
         return findings
+
+    def _extract_boundary_intelligence(self, run_id: int):
+        from application.services.boundary_intelligence_service import BoundaryIntelligenceService
+        boundary_service = BoundaryIntelligenceService(self.db)
+        b_data = boundary_service.get_boundary_intelligence(run_id)
+        if not b_data:
+            return None
+            
+        presentation_coupling = []
+        for p in b_data.get("presentation_coupling", []):
+            # Parse entanglement ratio back to float for the model
+            ratio_str = p.get("Entanglement Ratio", "0%")
+            ratio_float = float(ratio_str.replace('%', '')) if '%' in ratio_str else 0.0
+            presentation_coupling.append(PresentationCoupling(
+                file_path=p.get("File", ""),
+                ui_entanglement_ratio=ratio_float,
+                is_fat_view="CRITICAL" in p.get("Severity", ""),
+                db_queries=p.get("DB Operations", 0)
+            ))
+            
+        api_surface = []
+        for a in b_data.get("api_surface", []):
+            api_surface.append(ApiEndpoint(
+                path=a.get("Entry Point", ""),
+                type=a.get("Type", "Unknown"),
+                methods=[]
+            ))
+            
+        vendor_inventory = []
+        for v in b_data.get("vendor_intelligence", []):
+            vendor_inventory.append(VendorDependency(
+                file_path=v.get("File", ""),
+                vendor_type=v.get("Vendor Type", "Unknown"),
+                status=v.get("Status", "Unknown")
+            ))
+            
+        return BoundaryIntelligence(
+            presentation_coupling=presentation_coupling,
+            api_surface=api_surface,
+            vendor_inventory=vendor_inventory,
+            kpis=b_data.get("kpis", {})
+        )
+
+    def _extract_layered_architecture(self, run_id: int):
+        from application.services.layer_service import LayerService
+        layer_service = LayerService(self.db)
+        l_data = layer_service.get_layered_analysis(run_id)
+        if not l_data:
+            return None
+            
+        l1 = l_data.get("layer_1", {})
+        dirs = l1.get("directories", {})
+        
+        # Calculate presentation ratio
+        role_counts = {}
+        total_files = 0
+        for info in dirs.values():
+            for f in info.get("files", []):
+                total_files += 1
+                role = f.get("role", "file") if isinstance(f, dict) else "file"
+                role_counts[role] = role_counts.get(role, 0) + 1
+        
+        presentation_roles = ["view", "controller", "asset"]
+        presentation_count = sum(role_counts.get(r, 0) for r in presentation_roles)
+        presentation_ratio = (presentation_count / total_files * 100) if total_files > 0 else 0.0
+        
+        # Extract bounded contexts
+        contexts = []
+        l3 = l_data.get("layer_3", {})
+        for c in l3.get("bounded_contexts", []):
+            contexts.append(BoundedContext(
+                name=c.get("name", "Unknown"),
+                file_count=c.get("file_count", 0),
+                internal_calls=c.get("internal_calls", 0),
+                external_calls=c.get("external_calls", 0),
+                coupling_ratio=c.get("coupling_ratio", 0.0),
+                db_access=c.get("db_access", False),
+                auth_access=c.get("auth_access", False)
+            ))
+            
+        return LayeredArchitecture(
+            presentation_ratio=presentation_ratio,
+            bounded_contexts=contexts,
+            directory_tree=dirs,
+            file_type_distribution=l1.get("file_types", {})
+        )

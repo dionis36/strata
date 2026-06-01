@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Dict, Any
 
 class Evidence(BaseModel):
     type: Literal["file", "edge", "metric"]
@@ -66,12 +66,52 @@ class LegacyPosture(BaseModel):
     coupling_score: float
     total_score: float
 
+class PresentationCoupling(BaseModel):
+    file_path: str
+    ui_entanglement_ratio: float
+    is_fat_view: bool
+    db_queries: int
+
+class ApiEndpoint(BaseModel):
+    path: str
+    type: Literal["Pure Script", "API Endpoint", "Procedural Router", "Unknown", "Server-Rendered Page"]
+    methods: List[str] = Field(default_factory=list)
+
+class VendorDependency(BaseModel):
+    file_path: str
+    vendor_type: Literal["Composer Vendor", "Manual Library/Plugin", "Unknown"]
+    status: str
+
+class BoundaryIntelligence(BaseModel):
+    presentation_coupling: List[PresentationCoupling] = Field(default_factory=list)
+    api_surface: List[ApiEndpoint] = Field(default_factory=list)
+    vendor_inventory: List[VendorDependency] = Field(default_factory=list)
+    kpis: Dict[str, Any] = Field(default_factory=dict)
+
+class BoundedContext(BaseModel):
+    name: str
+    file_count: int
+    internal_calls: int
+    external_calls: int
+    coupling_ratio: float
+    db_access: bool
+    auth_access: bool
+
+class LayeredArchitecture(BaseModel):
+    presentation_ratio: float
+    bounded_contexts: List[BoundedContext] = Field(default_factory=list)
+    directory_tree: Dict[str, Any] = Field(default_factory=dict)
+    file_type_distribution: Dict[str, Any] = Field(default_factory=dict)
+
 class CanonicalModel(BaseModel):
     system_context: SystemContext
     legacy_posture: Optional[LegacyPosture] = None
     database_intelligence: List[DatabaseIntelligence] = Field(default_factory=list)
     dependency_intelligence: List[DependencyIntelligence] = Field(default_factory=list)
     global_state_intelligence: List[GlobalStateIntelligence] = Field(default_factory=list)
+    boundary_intelligence: Optional[BoundaryIntelligence] = None
+    layered_architecture: Optional[LayeredArchitecture] = None
     modules: List[Module]
     findings: List[Finding]
     full_risk_register: List[Finding] = Field(default_factory=list)
+    ai_executive_summary: Dict[str, Any] = Field(default_factory=dict)

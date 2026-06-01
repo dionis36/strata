@@ -1,0 +1,105 @@
+# Master Intelligence Report: {{ model.system_context.project_name }}
+
+## 1. Executive Command Center
+
+**Global System Meta-Data**
+- **Scale:** {{ model.system_context.total_files }} Files | {{ model.system_context.total_classes }} Classes
+- **Architecture/Era:** {{ model.system_context.framework }} ({{ model.system_context.php_era }})
+- **Modernization Readiness:** {{ model.system_context.overall_readiness }}%
+- **Test Coverage:** {{ model.system_context.test_coverage }}
+- **Lines of Code:** {{ model.system_context.lines_of_code }}
+- **Connectivity:** {{ model.system_context.connectivity }} Edges
+
+**Architectural Footprint**
+{% for key, val in model.system_context.architectural_footprint.items() -%}
+- {{ key }}: {{ val }}
+{% endfor %}
+
+**AI Executive Assessment**
+*Current State:* {{ model.ai_executive_summary.get('current_state', '[Not Available]') }}
+*Critical Risks:* {{ model.ai_executive_summary.get('critical_risks', '[Not Available]') }}
+*Strategic Roadmap:* 
+{{ model.ai_executive_summary.get('strategic_roadmap', '[Not Available]') }}
+
+## 2. Boundary Intelligence & External Surface
+
+{% if model.boundary_intelligence %}
+### Presentation Layer Coupling
+- **Global UI Entanglement:** {{ model.boundary_intelligence.kpis.get('Global UI Entanglement', '0%') }}
+- **Fat Views (DB Coupled):** {{ model.boundary_intelligence.kpis.get('Fat Views (DB-Coupled UI)', 0) }}
+
+| File | Entanglement Ratio | DB Queries | Fat View Risk |
+| :--- | :--- | :--- | :--- |
+{% for p in model.boundary_intelligence.presentation_coupling -%}
+| `{{ p.file_path }}` | {{ p.ui_entanglement_ratio }}% | {{ p.db_queries }} | {{ 'CRITICAL' if p.is_fat_view else 'LOW' }} |
+{% endfor %}
+
+### API & Endpoint Surface
+- **Total Endpoints:** {{ model.boundary_intelligence.kpis.get('Total Endpoints Detected', 0) }}
+
+| Entry Point | Classification |
+| :--- | :--- |
+{% for a in model.boundary_intelligence.api_surface -%}
+| `{{ a.path }}` | {{ a.type }} |
+{% endfor %}
+
+### Vendor & Shadow IT Intelligence
+- **Vendor Files Scanned:** {{ model.boundary_intelligence.kpis.get('Vendor Files Scanned', 0) }}
+
+| File | Vendor Type | Status |
+| :--- | :--- | :--- |
+{% for v in model.boundary_intelligence.vendor_inventory -%}
+| `{{ v.file_path }}` | {{ v.vendor_type }} | {{ v.status }} |
+{% endfor %}
+{% else %}
+*Boundary Intelligence data is unavailable.*
+{% endif %}
+
+## 3. Layered Architecture & Topology
+
+{% if model.layered_architecture %}
+- **Presentation vs. Logic Ratio:** {{ model.layered_architecture.presentation_ratio }}% of classified files are UI/Routing related.
+
+### Bounded Contexts
+| Domain Name | Files | Internal Calls | External Calls | Coupling Ratio | DB Access | Auth Access |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+{% for c in model.layered_architecture.bounded_contexts -%}
+| `{{ c.name }}` | {{ c.file_count }} | {{ c.internal_calls }} | {{ c.external_calls }} | {{ c.coupling_ratio }} | {{ c.db_access }} | {{ c.auth_access }} |
+{% endfor %}
+
+*(Note: The full interactive system topology graph is available in the accompanying `index.html` application or raw `raw_data/graph_{{ run_id }}.json` export).*
+{% else %}
+*Layered Architecture data is unavailable.*
+{% endif %}
+
+## 4. Database & State Intelligence
+
+| Table Name | Write Intensity | Shared Pressure |
+| :--- | :--- | :--- |
+{% for db in model.database_intelligence -%}
+| `{{ db.table_name }}` | {{ db.write_intensity }} | {{ db.shared_table_pressure }} |
+{% else %}
+| *No database sinks found.* | - | - |
+{% endfor %}
+
+## 5. Risk Audit & Remediation
+
+{% for f in model.findings -%}
+### [{{ f.priority }}] {{ f.observation }}
+- **Business Impact:** {{ f.impact }}
+- **Strategic Action:** {{ f.recommended_action }} *(Confidence: {{ f.confidence }})*
+- **Evidence/Metrics:**
+{% for ev in f.evidence -%}
+  - `{{ ev.type }}`: {{ ev.target }} {% if ev.metric_value %}({{ ev.metric_value }}){% endif %}
+{% endfor %}
+
+{% if f.mermaid_diagram %}
+#### Topology Diagram
+```mermaid
+{{ f.mermaid_diagram }}
+```
+{% endif %}
+---
+{% else %}
+*No critical risks identified.*
+{% endfor %}

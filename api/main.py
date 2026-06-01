@@ -813,7 +813,10 @@ def get_dashboard(project_id: int, db: Session = Depends(get_db)):
         
         latest_run = (
             db.query(AnalysisRun)
-            .filter(AnalysisRun.project_id == project_id, AnalysisRun.status.in_(["completed", "analysis_complete", "intelligence_ready"]))
+            .filter(AnalysisRun.project_id == project_id, AnalysisRun.status.in_([
+                "completed", "analysis_complete", "intelligence_ready", "intelligence_failed", 
+                "synthesizing_findings", "synthesizing_summary", "synthesizing_rector"
+            ]))
             .order_by(AnalysisRun.id.desc())
             .first()
         )

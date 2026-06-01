@@ -83,11 +83,11 @@ def show_artifact_center():
     with st.form("export_bundle_form"):
         col_a, col_b = st.columns(2)
         with col_a:
-            export_pdf = st.checkbox("Technical Assessment (PDF)", value=True)
-            export_docx = st.checkbox("Technical Assessment (DOCX)", value=True)
-            export_html = st.checkbox("Executive HTML Report", value=True)
-            export_md = st.checkbox("Raw Markdown Data (.md)", value=False)
-            export_csv = st.checkbox("Risk Summary (CSV)", value=True)
+            export_pdf = st.checkbox("Master Intelligence Report (PDF)", value=True)
+            export_docx = st.checkbox("Master Intelligence Report (DOCX)", value=True)
+            export_html = st.checkbox("Master Navigatable HTML App", value=True)
+            export_md = st.checkbox("Master Intelligence Report (.md)", value=False)
+            export_csv = st.checkbox("Complete Risk Inventory (CSV)", value=True)
         with col_b:
             export_sarif = st.checkbox("SARIF Export", value=True)
             export_rector = st.checkbox("Rector Config", value=True)
@@ -127,7 +127,7 @@ def show_artifact_center():
         st.markdown("For planning, review, and communication.")
         
         # 1. Strategic Modernization Assessment
-        st.markdown("#### 1. Strategic Modernization Assessment")
+        st.markdown("#### 1. Master Intelligence Report")
         st.caption("A comprehensive document covering system scope, KPIs, architectural risks, and dependency intelligence.")
         
         format_options = {
@@ -150,9 +150,9 @@ def show_artifact_center():
                         "md": "text/markdown"
                     }
                     st.download_button(
-                        label=f"Download technical_assessment.{selected_format}",
+                        label=f"Download Master_Intelligence_Report.{selected_format}",
                         data=res.content,
-                        file_name=f"technical_assessment.{selected_format}",
+                        file_name=f"Master_Intelligence_Report.{selected_format}",
                         mime=mime_types[selected_format]
                     )
                 else:
