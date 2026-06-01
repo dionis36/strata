@@ -23,6 +23,9 @@ class NodeType(Enum):
     TABLE = "table"
     API_ROUTE = "api_route"
     GLOBAL_VAR = "global_var"
+    MODEL = "model"
+    SCHEMA = "schema"
+    SITE_VARIANT = "site_variant"
     UNKNOWN = "unknown"
 
 class NodeMetrics(BaseModel):

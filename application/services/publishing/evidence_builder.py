@@ -18,6 +18,33 @@ class EvidenceBuilder:
         legacy = self.db.query(LegacyMetrics).filter(LegacyMetrics.run_id == run_id).first()
         
         # 1. Hydrate System Context
+        from application.services.layer_service import LayerService
+        layer_service = LayerService(self.db)
+        footprint = {}
+        try:
+            l_data = layer_service.get_layered_analysis(run_id)
+            dirs = l_data.get("layer_1", {}).get("directories", {})
+            models = controllers = jobs = schemas = views = vendor = 0
+            for info in dirs.values():
+                for f in info.get("files", []):
+                    role = f.get("role", "file") if isinstance(f, dict) else "file"
+                    if role == "model": models += 1
+                    elif role == "controller": controllers += 1
+                    elif role == "job": jobs += 1
+                    elif role == "schema": schemas += 1
+                    elif role == "view": views += 1
+                    elif role == "vendor": vendor += 1
+            footprint = {
+                "Models": models,
+                "Controllers": controllers,
+                "CLI_Scripts": jobs,
+                "Schemas": schemas,
+                "Views": views,
+                "Vendor_Files": vendor
+            }
+        except Exception:
+            pass
+
         ctx = SystemContext(
             project_name=project.name if project else "Unknown Project",
             total_files=run.total_files or 0,
@@ -28,7 +55,8 @@ class EvidenceBuilder:
             test_coverage="N/A",  # Extracted in Phase 8
             php_era=legacy.php_era if legacy else "Unknown",
             framework=legacy.detected_framework if legacy else "Custom/None",
-            overall_readiness=legacy.total_modernization_score if legacy else 0.0
+            overall_readiness=legacy.total_modernization_score if legacy else 0.0,
+            architectural_footprint=footprint
         )
         
         # 2. Hydrate Database Intelligence

@@ -37,18 +37,28 @@ class FileClassifier:
             return NodeType.BOOTSTRAP
 
         # 6. Controller Detection
-        if filename.endswith("controller.php") or filename.endswith("handler.php"):
+        controller_dirs = ["controller/", "controllers/", "handlers/"]
+        if filename.endswith("controller.php") or filename.endswith("handler.php") or any(cdir in rel_path for cdir in controller_dirs):
             return NodeType.CONTROLLER
 
         # 7. Job/Cron Detection
-        job_dirs = ["cron/", "jobs/", "tasks/", "bin/", "scripts/"]
+        job_dirs = ["cron/", "jobs/", "tasks/", "bin/", "scripts/", "script/", "cli/"]
         if any(jdir in rel_path for jdir in job_dirs):
             return NodeType.JOB
 
+        # 7.5 Model Detection
+        model_dirs = ["model/", "models/", "entities/"]
+        if any(mdir in rel_path for mdir in model_dirs) and ext == ".php":
+            return NodeType.MODEL
+
+        # 7.6 Schema Detection
+        if ext == ".sql" and ("schema" in rel_path or "db/" in rel_path or "migrations/" in rel_path):
+            return NodeType.SCHEMA
+
         # 8. Asset Detection
-        asset_exts = [".css", ".js", ".sql", ".map"]
+        asset_exts = [".css", ".js", ".map"]
         if ext in asset_exts or "assets/" in rel_path or "public/" in rel_path:
-            if ext in [".css", ".js", ".sql"]:
+            if ext in [".css", ".js"]:
                 return NodeType.ASSET
 
         # Default to generic FILE

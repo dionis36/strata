@@ -192,6 +192,7 @@ class AIAdvisoryService:
         - Lines of Code: {system_context.lines_of_code}
         - Framework: {system_context.framework} ({system_context.php_era})
         - Overall Readiness: {system_context.overall_readiness}%
+        - Architectural Footprint: {system_context.architectural_footprint}
         
         Legacy Posture Scores (0.0 to 10.0 scale, where 10 is modern):
         - Version Score: {legacy_posture.version_score if legacy_posture else 'N/A'}
@@ -202,7 +203,7 @@ class AIAdvisoryService:
         - Coupling Score: {legacy_posture.coupling_score if legacy_posture else 'N/A'}
         
         Provide a strategic evaluation in three exact parts:
-        1. current_state: A blunt, 2-sentence assessment of the system's current architectural health.
+        1. current_state: A blunt, 2-sentence assessment of the system's current architectural health. You MUST explicitly list the structural components of the application (e.g. X Models, Y Controllers, Z Schemas) based on the Architectural Footprint provided above to prove deep comprehension.
         2. critical_risks: The biggest systemic danger based on the lowest dimension scores.
         3. strategic_roadmap: A definitive 3-step action plan to modernize the system without halting feature development.
         """

@@ -29,7 +29,8 @@ class LayerService:
         FILE_ROLES = [
             NodeType.FILE.value, NodeType.ENTRY_POINT.value, NodeType.BOOTSTRAP.value,
             NodeType.CONTROLLER.value, NodeType.VIEW.value, NodeType.CONFIG.value,
-            NodeType.ASSET.value, NodeType.JOB.value, NodeType.VENDOR.value
+            NodeType.ASSET.value, NodeType.JOB.value, NodeType.VENDOR.value,
+            NodeType.MODEL.value, NodeType.SCHEMA.value
         ]
         
         for n in nodes:
@@ -104,6 +105,15 @@ class LayerService:
             # Era 1 / File-based mapping
             elif "/" in base_fqn:
                 parts = base_fqn.strip("/").split("/")
+                # Detect Multi-Site Variant
+                if "site/" in base_fqn.lower():
+                    try:
+                        site_idx = [p.lower() for p in parts].index("site")
+                        if site_idx + 1 < len(parts):
+                            return f"Site: {parts[site_idx + 1].capitalize()}"
+                    except ValueError:
+                        pass
+                        
                 if len(parts) >= 2:
                     return parts[-2]
             return "Global"

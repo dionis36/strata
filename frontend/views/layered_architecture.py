@@ -79,8 +79,10 @@ def show_layered_architecture():
                 "view": "<span style='color:#00cc96;'>●</span>", 
                 "config": "<span style='color:#f9a825;'>■</span>", 
                 "asset": "<span style='color:#00cc96;'>●</span>", 
-                "job": "<span style='color:#ffb300;'>★</span>", 
+                "job": "⚙️", 
                 "vendor": "<span style='color:#757575;'>■</span>", 
+                "model": "📦",
+                "schema": "💾",
                 "file": "<span style='color:#90a4ae;'>●</span>"
             }
 

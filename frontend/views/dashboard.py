@@ -94,6 +94,38 @@ def show_dashboard():
         cov_str = f"{round(cov * 100, 1)}%" if cov is not None else "N/A"
         kpi6.metric("Test Coverage", cov_str, help="Overall Code Coverage from Clover/PHPUnit reports.")
 
+        st.markdown("---")
+        st.markdown("### Architectural Footprint")
+        try:
+            layer_res = requests.get(f"{FASTAPI_URL}/layer-analysis/{run['id']}", timeout=5)
+            if layer_res.status_code == 200:
+                l_data = layer_res.json()
+                dirs = l_data.get("layer_1", {}).get("directories", {})
+                
+                models = 0
+                controllers = 0
+                jobs = 0
+                schemas = 0
+                views = 0
+                
+                for info in dirs.values():
+                    for f in info.get("files", []):
+                        role = f.get("role", "file") if isinstance(f, dict) else "file"
+                        if role == "model": models += 1
+                        elif role == "controller": controllers += 1
+                        elif role == "job": jobs += 1
+                        elif role == "schema": schemas += 1
+                        elif role == "view": views += 1
+                
+                af1, af2, af3, af4, af5 = st.columns(5)
+                af1.metric("📦 Models", models)
+                af2.metric("🎛️ Controllers", controllers)
+                af3.metric("🖥️ Views", views)
+                af4.metric("⚙️ CLI Scripts", jobs)
+                af5.metric("💾 Schemas", schemas)
+        except Exception as e:
+            st.warning(f"Could not load architectural footprint: {e}")
+
     else:
         st.info("Select a project or start a new analysis to populate the dashboard.")
 

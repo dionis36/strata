@@ -38,6 +38,7 @@ class SystemContext(BaseModel):
     php_era: str
     framework: str
     overall_readiness: float
+    architectural_footprint: dict = Field(default_factory=dict)
 
 class DatabaseIntelligence(BaseModel):
     table_name: str
