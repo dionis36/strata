@@ -31,6 +31,10 @@ class SystemContext(BaseModel):
     project_name: str
     total_files: int
     total_classes: int
+    lines_of_code: int = 0
+    avg_complexity: float = 0.0
+    connectivity: int = 0
+    test_coverage: str = "N/A"
     php_era: str
     framework: str
     overall_readiness: float

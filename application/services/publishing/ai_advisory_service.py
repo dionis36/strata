@@ -33,7 +33,7 @@ class AIAdvisoryService:
     
     def __init__(self):
         self.api_key = os.getenv("GEMINI_API_KEY", "")
-        self.client = genai.Client() if self.api_key else None
+        self.client = genai.Client(api_key=self.api_key) if self.api_key else None
 
     def synthesize_batch_findings(self, risk_data: List[Dict[str, Any]]) -> List[GeminiFindingResponse]:
         """Calls Gemini to write a bespoke finding narrative for a batch of high-risk components."""
@@ -88,7 +88,39 @@ class AIAdvisoryService:
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
-                    response_schema=GeminiFindingList,
+                    response_schema={
+                        "type": "OBJECT",
+                        "properties": {
+                            "findings": {
+                                "type": "ARRAY",
+                                "items": {
+                                    "type": "OBJECT",
+                                    "properties": {
+                                        "component_name": {"type": "STRING"},
+                                        "category": {
+                                            "type": "STRING",
+                                            "enum": ["Architecture", "Security", "Complexity", "Coupling", "Legacy"]
+                                        },
+                                        "observation": {"type": "STRING"},
+                                        "impact": {"type": "STRING"},
+                                        "reasoning": {"type": "STRING"},
+                                        "recommended_action": {"type": "STRING"},
+                                        "priority": {
+                                            "type": "STRING",
+                                            "enum": ["Critical", "High", "Medium", "Low"]
+                                        },
+                                        "confidence": {
+                                            "type": "STRING",
+                                            "enum": ["Confirmed", "Probable", "Insufficient Evidence"]
+                                        },
+                                        "mermaid_diagram": {"type": "STRING"}
+                                    },
+                                    "required": ["component_name", "category", "observation", "impact", "reasoning", "recommended_action", "priority", "confidence", "mermaid_diagram"]
+                                }
+                            }
+                        },
+                        "required": ["findings"]
+                    },
                 ),
             )
             data = json.loads(response.text)

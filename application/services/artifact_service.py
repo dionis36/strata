@@ -203,39 +203,113 @@ class ArtifactService:
         return output.getvalue()
 
     def generate_human_report(self, run_id: int) -> str:
-        """Generates an Executive Report using the Publishing Pipeline."""
-        from application.services.publishing.pipeline import PublishingPipeline
+        """Generates an Executive Report directly from the Canonical Model with premium HTML/CSS."""
+        from application.services.publishing.evidence_builder import EvidenceBuilder
+        from application.services.publishing.quality_gate import QualityGate
         
-        pipeline = PublishingPipeline(self.db)
-        markdown_content = pipeline.publish_executive_report(run_id)
-        
-        # Simple Markdown to HTML converter to avoid external dependencies
-        import re
-        html_body = markdown_content
-        html_body = re.sub(r'^# (.*?)$', r'<h1>\1</h1>', html_body, flags=re.MULTILINE)
-        html_body = re.sub(r'^## (.*?)$', r'<h2>\1</h2>', html_body, flags=re.MULTILINE)
-        html_body = re.sub(r'^### (.*?)$', r'<h3>\1</h3>', html_body, flags=re.MULTILINE)
-        html_body = re.sub(r'^- (.*?)$', r'<li>\1</li>', html_body, flags=re.MULTILINE)
-        html_body = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', html_body)
-        html_body = re.sub(r'`(.*?)`', r'<code>\1</code>', html_body)
-        
-        # Format Mermaid blocks for HTML rendering
-        html_body = re.sub(r'```mermaid\n(.*?)\n```', r'<pre class="mermaid">\n\1\n</pre>', html_body, flags=re.DOTALL)
-        
-        html_body = html_body.replace('\n\n', '<br><br>')
+        model = EvidenceBuilder(self.db).build(run_id)
+        if not QualityGate().validate(model):
+            return "<html><body><h1>Error: Quality Gate Failed</h1></body></html>"
+            
+        ctx = model.system_context
+        readiness_pct = min(ctx.overall_readiness, 100.0) if ctx.overall_readiness > 1.0 else (ctx.overall_readiness * 100)
         
         html = [
-            "<html><head>",
-            "<script type=\"module\">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs'; mermaid.initialize({ startOnLoad: true, theme: 'dark' });</script>",
-            "<style>",
-            "body { font-family: 'Inter', sans-serif; background-color: #0e1117; color: #e0e0e0; padding: 40px; }",
-            "h1, h2, h3 { color: #58a6ff; }",
-            "p, li { line-height: 1.6; }",
-            "code { background-color: #1f2937; padding: 2px 4px; border-radius: 4px; }",
-            "</style></head><body>",
-            html_body,
-            "</body></html>"
+            "<!DOCTYPE html>",
+            "<html lang='en'>",
+            "<head>",
+            "    <meta charset='UTF-8'>",
+            "    <meta name='viewport' content='width=device-width, initial-scale=1.0'>",
+            "    <title>Executive Modernization Assessment</title>",
+            "    <script src='https://cdn.tailwindcss.com'></script>",
+            "    <script type='module'>",
+            "        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';",
+            "        mermaid.initialize({ startOnLoad: true, theme: 'dark' });",
+            "    </script>",
+            "    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap' rel='stylesheet'>",
+            "    <style>",
+            "        body { font-family: 'Inter', sans-serif; background-color: #0f111a; color: #e2e8f0; }",
+            "        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; }",
+            "        .metric-value { font-size: 2rem; font-weight: 700; color: #38bdf8; }",
+            "        .priority-Critical { color: #f87171; background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.2); }",
+            "        .priority-High { color: #fbbf24; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); }",
+            "        @media print { body { background: #fff; color: #000; } .glass-card { background: none; border: 1px solid #ccc; break-inside: avoid; } .metric-value { color: #000; } .print-hide { display: none !important; } }",
+            "    </style>",
+            "</head>",
+            "<body class='p-8 md:p-16 max-w-6xl mx-auto'>",
+            f"    <header class='mb-12 flex justify-between items-center'>",
+            f"        <div>",
+            f"            <h1 class='text-4xl font-bold text-white mb-2'>Strategic Modernization Assessment</h1>",
+            f"            <p class='text-slate-400 text-lg'>Target System: <span class='text-sky-400 font-semibold'>{ctx.project_name}</span></p>",
+            f"        </div>",
+            f"        <button onclick='window.print()' class='px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg shadow-lg font-medium transition-colors print-hide'>Export to PDF</button>",
+            f"    </header>",
+            "",
+            "    <!-- Readiness Hero -->",
+            "    <div class='glass-card p-8 mb-8 flex items-center justify-between'>",
+            "        <div>",
+            "            <h2 class='text-2xl font-semibold mb-2'>Modernization Readiness</h2>",
+            "            <p class='text-slate-400'>Based on architectural cohesion and decoupling probability.</p>",
+            "        </div>",
+            f"        <div class='text-5xl font-bold text-emerald-400'>{readiness_pct:.1f}%</div>",
+            "    </div>",
+            "",
+            "    <!-- System Vitality Grid -->",
+            "    <h3 class='text-xl font-semibold mb-4 border-b border-slate-700 pb-2'>System Vitality</h3>",
+            "    <div class='grid grid-cols-2 md:grid-cols-5 gap-4 mb-12'>",
+            f"        <div class='glass-card p-6'><p class='text-xs text-slate-400 uppercase tracking-wider mb-1'>Lines of Code</p><p class='metric-value'>{ctx.lines_of_code:,}</p></div>",
+            f"        <div class='glass-card p-6'><p class='text-xs text-slate-400 uppercase tracking-wider mb-1'>Total Classes</p><p class='metric-value'>{ctx.total_classes:,}</p></div>",
+            f"        <div class='glass-card p-6'><p class='text-xs text-slate-400 uppercase tracking-wider mb-1'>Avg Complexity</p><p class='metric-value'>{ctx.avg_complexity:.2f}</p></div>",
+            f"        <div class='glass-card p-6'><p class='text-xs text-slate-400 uppercase tracking-wider mb-1'>Connectivity</p><p class='metric-value'>{ctx.connectivity:,}</p></div>",
+            f"        <div class='glass-card p-6'><p class='text-xs text-slate-400 uppercase tracking-wider mb-1'>Test Coverage</p><p class='metric-value'>{ctx.test_coverage}</p></div>",
+            "    </div>",
+            "",
+            "    <!-- Strategic Insights -->",
+            "    <h3 class='text-xl font-semibold mb-4 border-b border-slate-700 pb-2'>Architectural Intelligence</h3>",
+            "    <div class='glass-card p-6 mb-12'>",
+            f"        <p class='text-slate-300 mb-2'><span class='font-semibold text-white'>Framework Detection:</span> {ctx.framework} ({ctx.php_era})</p>",
+            f"        <p class='text-slate-300'>",
         ]
+        
+        if readiness_pct >= 70:
+            html.append("The system is structurally sound. Proceed with incremental in-place upgrades.")
+        elif readiness_pct >= 40:
+            html.append("The system contains mixed legacy patterns. A Strangler Fig facade is recommended to isolate stable modules from legacy technical debt.")
+        else:
+            html.append("The system exhibits critical architectural decay. Feature development should be frozen while core domains are extracted or rewritten.")
+            
+        html.append("</p>")
+        html.append("    </div>")
+        
+        html.append("    <!-- Risk Register -->")
+        html.append("    <h3 class='text-xl font-semibold mb-4 border-b border-slate-700 pb-2'>Top Modernization Blockers</h3>")
+        
+        top_findings = [f for f in model.findings if f.priority in ["Critical", "High"]][:5]
+        if not top_findings:
+            html.append("    <p class='text-slate-400 italic'>No Critical or High priority blockers identified in this scan.</p>")
+        else:
+            for f in top_findings:
+                html.append(f"    <div class='glass-card p-6 mb-6'>")
+                html.append(f"        <div class='flex items-center gap-3 mb-4'>")
+                html.append(f"            <span class='px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider priority-{f.priority}'>{f.priority}</span>")
+                html.append(f"            <h4 class='text-lg font-semibold text-white'>{f.observation}</h4>")
+                html.append(f"        </div>")
+                html.append(f"        <div class='grid grid-cols-1 md:grid-cols-2 gap-6 mb-4 text-sm text-slate-300'>")
+                html.append(f"            <div><span class='block text-slate-500 mb-1 uppercase tracking-wider text-xs'>Business Impact</span>{f.impact}</div>")
+                html.append(f"            <div><span class='block text-slate-500 mb-1 uppercase tracking-wider text-xs'>Strategic Action</span>{f.recommended_action}</div>")
+                html.append(f"        </div>")
+                
+                # Mermaid Diagram
+                if f.mermaid_diagram:
+                    html.append(f"        <div class='mt-6 p-4 bg-slate-900/50 rounded-lg'>")
+                    html.append(f"            <p class='text-xs text-slate-500 uppercase tracking-wider mb-2'>Architecture Topology</p>")
+                    html.append(f"            <pre class='mermaid flex justify-center'>\n{f.mermaid_diagram}\n            </pre>")
+                    html.append(f"        </div>")
+                html.append(f"    </div>")
+                
+        html.append("</body>")
+        html.append("</html>")
+        
         return "\n".join(html)
 
     def generate_workspace_bundle(
@@ -261,7 +335,7 @@ class ArtifactService:
             if rector:
                 zf.writestr("machine/rector.php", self.generate_rector_config(run_id))
             if deptrac:
-                zf.writestr("machine/deptrac.yaml", self.generate_deptrac_config(run_id))
+                zf.writestr("machine/deptrac.yaml", self.generate_deptrac_yaml(run_id))
                 
         return zip_buffer.getvalue()
 

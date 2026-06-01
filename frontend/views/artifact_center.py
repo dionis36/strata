@@ -85,6 +85,14 @@ def show_artifact_center():
                 else:
                     st.error("Failed to generate report.")
                     
+        if st.button("Preview HTML Report in Browser"):
+            with st.spinner("Fetching and rendering report..."):
+                res = requests.get(f"{FASTAPI_URL}/artifacts/report/{run_id}")
+                if res.status_code == 200:
+                    st.components.v1.html(res.text, height=800, scrolling=True)
+                else:
+                    st.error("Failed to fetch report for preview.")
+                    
         st.markdown("---")
         
         # 2. Technical Assessment Report

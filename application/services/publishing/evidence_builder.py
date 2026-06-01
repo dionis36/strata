@@ -22,6 +22,10 @@ class EvidenceBuilder:
             project_name=project.name if project else "Unknown Project",
             total_files=run.total_files or 0,
             total_classes=run.total_classes or 0,
+            lines_of_code=run.total_loc or 0,
+            avg_complexity=round(run.avg_complexity, 2) if run.avg_complexity else 0.0,
+            connectivity=run.total_edges or 0,
+            test_coverage="N/A",  # Extracted in Phase 8
             php_era=legacy.php_era if legacy else "Unknown",
             framework=legacy.detected_framework if legacy else "Custom/None",
             overall_readiness=legacy.total_modernization_score if legacy else 0.0
