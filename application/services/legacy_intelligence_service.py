@@ -84,7 +84,8 @@ class LegacyIntelligenceService:
 
         for n in nodes:
             ntype = n.get("type", "")
-            if ntype != "file":
+            valid_types = ["file", "class", "entry_point", "bootstrap", "controller", "view", "config", "asset", "job", "model", "schema", "NodeType.FILE", "NodeType.CLASS", "NodeType.ENTRY_POINT", "NodeType.BOOTSTRAP", "NodeType.CONTROLLER", "NodeType.VIEW", "NodeType.CONFIG", "NodeType.ASSET", "NodeType.JOB", "NodeType.MODEL", "NodeType.SCHEMA"]
+            if ntype not in valid_types:
                 continue
             fqn = n.get("fqn", "")
             if "vendor" in fqn or "doctrine" in fqn.lower():

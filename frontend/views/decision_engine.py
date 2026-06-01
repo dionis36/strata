@@ -30,21 +30,22 @@ def show_modernization_decision_engine():
     st.caption("Strategic advisory based on structural risk, domain coupling, and modernization ROI.")
 
     with st.expander("Decision Engine Blueprint Key", expanded=False):
-        colA, colB = st.columns(2)
-        with colA:
-            st.markdown("""
-            **Modernization Strategies**
-            - **EXTRACT**: Safe to move to a microservice.
-            - **STRANGLER FIG**: Slowly replace piece-by-piece over time.
-            - **REWRITE**: Too complex/coupled. Rewrite from scratch.
-            - **RETAIN**: Code works fine, leave as-is.
-            """)
-        with colB:
-            st.markdown("""
-            **Effort & ROI**
-            - **Migration Effort**: Calculated complexity based on code weight.
-            - **High Value Targets**: Modules where the modernization benefit massively outweighs the effort.
-            """)
+        st.markdown("""
+        ### Understanding the Modernization ROI Graph
+        The scatter plot visualizes the cost-benefit analysis of modernizing each architectural module.
+        * **X-Axis (Migration Effort)**: How difficult the module is to modernize (measured in Logic Points). Modules further to the right are highly complex, deeply coupled, and will take months to untangle.
+        * **Y-Axis (Modernization ROI)**: The Return on Investment (0-100 score). A high ROI means the module carries high structural risk or high business value, meaning modernizing it provides immense immediate benefit.
+        * **Bubble Size & Color**: Represents the size of the module and its assigned modernization strategy.
+        * **The Goal**: Target the **top-left quadrant** first. These are "Quick Wins"—high ROI but relatively low effort. Avoid the bottom-right quadrant (low ROI, massive effort).
+        
+        ### The 5 Modernization Strategies
+        The engine assigns one of five industry-standard strategies based on the module's structural signature:
+        * **EXTRACT (Microservice)**: The module is highly cohesive and decoupled. It is safe to rip out of the monolith and deploy as an independent microservice immediately.
+        * **STRANGLER FIG**: The module is valuable but heavily entangled. Do not rewrite it all at once. Instead, wrap it in an API facade and slowly strangle the legacy code piece-by-piece over time.
+        * **REWRITE**: The module suffers from critical logical rot. It is so structurally compromised (low maintainability, extreme complexity) that untangling it is mathematically more expensive than throwing it away and rewriting from scratch.
+        * **REPLATFORM**: The module works but relies heavily on deprecated or dangerous infrastructure (e.g., legacy database calls, raw execution sinks). Move it to a modern framework without fundamentally changing its business logic.
+        * **RETAIN / REHOST**: The module is stable, works fine, and has low risk. Leave it in the monolith for now so engineering resources can focus on the high-risk targets.
+        """)
     st.markdown("---")
 
     run_id = st.session_state.get("active_run_id")

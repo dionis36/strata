@@ -12,11 +12,17 @@ def show_risk_audit():
     with st.expander("Security & Risk Audit Blueprint Key", expanded=False):
         st.markdown("""
         This view is the **Technical Debt & Security Ledger** of the platform. It translates the 
-        structural flaws of the codebase into prioritized, actionable risk registers.
+        structural flaws of the codebase into prioritized, actionable risk registers using a **Deterministic Threshold Engine**.
         
-        It utilizes a **Deterministic Threshold Engine**: raw metrics extracted from the Abstract Syntax Tree (AST) 
-        are compared against industry-standard limits (e.g., maximum Cyclomatic Complexity, minimum Maintainability Index) 
-        to mathematically prove the Risk Magnitude (CRITICAL / HIGH / MEDIUM).
+        ### Risk Matrix Metric Glossary
+        * **Test Coverage**: The percentage of the file's logic executed during automated testing. **Note:** In legacy systems, this often displays as `N/A`, indicating the complete absence of unit tests for the module.
+        * **Maintainability Index (MI)**: A composite score (0-100) calculating how difficult the file is to support based on volume and logic. Below 65 is dangerous; below 25 is unmaintainable.
+        * **Cyclomatic Complexity (CC)**: The count of distinct logical branches (if, else, loops). A CC over 15 indicates a module that is extremely difficult to test and risky to modify.
+        * **Max Nesting Depth**: How deeply logic is indented. Deep nesting (e.g., > 4) exponentially increases developer cognitive load.
+        * **Max Method LOC**: The Lines of Code in the single largest function. Massive functions hide business logic and block independent extraction.
+        * **Fan-Out**: The number of external modules this file depends on. High fan-out equals high coupling—you cannot easily extract this file without breaking things.
+        * **Security Sinks**: Dangerous execution vectors (e.g., `eval`, raw SQL, dynamic includes) found in the AST. 
+        * **Global Accesses**: Reliance on global runtime state. This explicitly prevents safe containerization and makes unit testing impossible without heavy mocking.
         """)
     st.markdown("---")
 

@@ -22,7 +22,7 @@ class BoundaryIntelligenceService:
             n.get("file_path") or n.get("fqn") or n.get("name") 
             for n in nodes 
             if (n.get("file_path") or n.get("fqn") or n.get("name")) 
-            and (n.get("type") in ["file", "NodeType.FILE"])
+            and (n.get("type") in ["file", "NodeType.FILE", "entry_point", "bootstrap", "controller", "view", "config", "asset", "job", "vendor", "model", "schema"])
             and not ("/vendor/" in (n.get("file_path") or n.get("fqn") or n.get("name", "")).lower())
         )))
         
@@ -37,7 +37,15 @@ class BoundaryIntelligenceService:
         
         for n in nodes:
             node_type = n.get("type") or n.get("node_type")
-            if node_type in ["file", "NodeType.FILE"]:
+            valid_types = [
+                "file", "NodeType.FILE", "entry_point", "NodeType.ENTRY_POINT",
+                "bootstrap", "NodeType.BOOTSTRAP", "controller", "NodeType.CONTROLLER",
+                "view", "NodeType.VIEW", "config", "NodeType.CONFIG",
+                "asset", "NodeType.ASSET", "job", "NodeType.JOB",
+                "vendor", "NodeType.VENDOR", "model", "NodeType.MODEL",
+                "schema", "NodeType.SCHEMA"
+            ]
+            if node_type in valid_types:
                 fqn = n.get("fqn") or n.get("name")
                 meta = n.get("metadata", {})
                 
@@ -54,7 +62,7 @@ class BoundaryIntelligenceService:
                     db_writes = 0
                     if isinstance(meta.get("requirements"), list):
                         for req in meta.get("requirements", []):
-                            if req.get("type") in ["DB_WRITE", "MYSQL_LEGACY", "RAW_SQL"]:
+                            if req.get("type") in ["DB_WRITE", "MYSQL_LEGACY", "RAW_SQL", "ORM_READ", "ORM_WRITE"]:
                                 db_writes += 1
                                 
                     ratio = (ui_entanglement / (complexity + ui_entanglement)) * 100 if (complexity + ui_entanglement) > 0 else 0

@@ -107,6 +107,7 @@ def show_dashboard():
                 jobs = 0
                 schemas = 0
                 views = 0
+                vendors = 0
                 
                 for info in dirs.values():
                     for f in info.get("files", []):
@@ -116,13 +117,19 @@ def show_dashboard():
                         elif role == "job": jobs += 1
                         elif role == "schema": schemas += 1
                         elif role == "view": views += 1
+                        elif role == "vendor": vendors += 1
+                        
+                contexts = l_data.get("layer_3", {}).get("bounded_contexts", [])
+                site_variants = len([c for c in contexts if c["name"].startswith("Site:")])
                 
-                af1, af2, af3, af4, af5 = st.columns(5)
+                af1, af2, af3, af4, af5, af6, af7 = st.columns(7)
                 af1.metric("📦 Models", models)
                 af2.metric("🎛️ Controllers", controllers)
                 af3.metric("🖥️ Views", views)
                 af4.metric("⚙️ CLI Scripts", jobs)
                 af5.metric("💾 Schemas", schemas)
+                af6.metric("🧩 Libraries", vendors)
+                af7.metric("🌍 Site Variants", site_variants)
         except Exception as e:
             st.warning(f"Could not load architectural footprint: {e}")
 

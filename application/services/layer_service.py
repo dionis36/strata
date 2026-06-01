@@ -129,7 +129,8 @@ class LayerService:
             node_to_context[n["id"]] = ctx
             
             # Count the 'Physical' size of the domain
-            if n.get("type") in ["file", "class", "interface", "trait", "entry_point", "config"]:
+            valid_types = ["file", "class", "interface", "trait", "entry_point", "config", "view", "controller", "model", "schema", "job", "asset", "NodeType.VIEW", "NodeType.CONTROLLER", "NodeType.MODEL", "NodeType.SCHEMA", "NodeType.JOB", "NodeType.ASSET", "NodeType.FILE", "NodeType.CLASS", "NodeType.INTERFACE", "NodeType.TRAIT", "NodeType.ENTRY_POINT", "NodeType.CONFIG"]
+            if n.get("type") in valid_types:
                 contexts[ctx]["files"].add(n["id"])
                 
         id_to_fqn = {n["id"]: str(n.get("fqn", "")).lower() for n in nodes}

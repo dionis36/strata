@@ -15,6 +15,7 @@ def show_legacy_intelligence():
             - **Era A/B (PHP 4/5)**: Highly procedural, globally coupled.
             - **Era C (PHP 5 Transitional)**: Mixed OOP, lacking PSR standards.
             - **Era D (PHP 7+)**: Modern structured code.
+            - **Bespoke / Custom Era**: Proprietary or in-house framework built without modern standard libraries.
             """)
         with colB:
             st.markdown("""
@@ -106,6 +107,7 @@ def show_legacy_intelligence():
             "Era B/C (PHP 5 Transitional)":  ("", "Mixed OOP and procedural. Some namespaces. Still uses legacy DB or auth patterns."),
             "Era C (PHP 5 Transitional)":    ("", "OOP-dominant but inconsistent. Missing PSR-4, type hints, or framework."),
             "Era D (PHP 7+)":                ("", "Modern. PSR-4 autoloading, type hints, namespaces, OOP-first."),
+            "Bespoke / Custom Era":          ("🛠️", "A proprietary or custom-built framework. The system relies on internal conventions rather than standard open-source framework patterns (like Laravel or Symfony)."),
             "Unknown":                       ("", "Insufficient signals to classify."),
         }
         icon, desc = ERA_DESC.get(classified_era, ("", classified_era))

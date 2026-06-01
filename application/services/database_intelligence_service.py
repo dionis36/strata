@@ -43,12 +43,28 @@ class DatabaseIntelligenceService:
 
         def get_context(node):
             fqn = node.get("fqn", "")
-            parts = fqn.strip("/").split("/")
-            return parts[-2] if len(parts) >= 2 else "Root"
+            if not fqn: return "Global"
+            base_fqn = fqn.split("::")[0]
+            if "\\" in base_fqn:
+                parts = base_fqn.split("\\")
+                return parts[0] if parts[0] else "Global"
+            elif "/" in base_fqn:
+                parts = base_fqn.strip("/").split("/")
+                if "site/" in base_fqn.lower():
+                    try:
+                        site_idx = [p.lower() for p in parts].index("site")
+                        if site_idx + 1 < len(parts):
+                            return f"Site: {parts[site_idx + 1].capitalize()}"
+                    except ValueError:
+                        pass
+                if len(parts) >= 2:
+                    return parts[-2]
+            return "Global"
 
         node_to_context = {}
+        valid_types = ["file", "class", "entry_point", "bootstrap", "controller", "view", "config", "asset", "job", "model", "schema", "NodeType.FILE", "NodeType.CLASS", "NodeType.ENTRY_POINT", "NodeType.BOOTSTRAP", "NodeType.CONTROLLER", "NodeType.VIEW", "NodeType.CONFIG", "NodeType.ASSET", "NodeType.JOB", "NodeType.MODEL", "NodeType.SCHEMA"]
         for n in nodes:
-            if n.get("type") in ("file", "class") and "vendor" not in n.get("fqn", ""):
+            if n.get("type") in valid_types and "vendor" not in n.get("fqn", ""):
                 node_to_context[n["id"]] = get_context(n)
 
         table_ownership: dict = defaultdict(lambda: {"contexts": defaultdict(int), "total_writes": 0})
@@ -104,7 +120,7 @@ class DatabaseIntelligenceService:
         all_queries: dict = defaultdict(list)
         for n in nodes:
             # We look at file nodes (or classes if that's where requirements are stored)
-            if n.get("type") not in ("file", "class"):
+            if n.get("type") not in valid_types:
                 continue
             fqn = n.get("fqn", n.get("file_path", ""))
             src_name = os.path.basename(fqn) if fqn else n.get("name", "unknown")

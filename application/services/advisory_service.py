@@ -53,14 +53,15 @@ class AdvisoryService:
 
     def _group_by_context(self, nodes: List[Dict]) -> Dict[str, List[Dict]]:
         groups = {}
+        valid_types = ["file", "class", "entry_point", "bootstrap", "controller", "view", "config", "asset", "job", "model", "schema", "NodeType.FILE", "NodeType.CLASS", "NodeType.ENTRY_POINT", "NodeType.BOOTSTRAP", "NodeType.CONTROLLER", "NodeType.VIEW", "NodeType.CONFIG", "NodeType.ASSET", "NodeType.JOB", "NodeType.MODEL", "NodeType.SCHEMA"]
         # Identify the most common root prefix to find project root
-        all_paths = [n.get("fqn", "") for n in nodes if n.get("type") in ["file", "NodeType.FILE"]]
+        all_paths = [n.get("fqn", "") for n in nodes if n.get("type") in valid_types]
         if not all_paths: return {}
         
         # Simple heuristic: split by '/' and find the first part that varies across files
         # but is below the /data/ProjectRoot level
         for n in nodes:
-            if n.get("type") not in ["file", "NodeType.FILE"]: continue
+            if n.get("type") not in valid_types: continue
             fqn = n.get("fqn") or n.get("name", "unknown")
             parts = fqn.strip("/").split("/")
             
@@ -190,7 +191,8 @@ class AdvisoryService:
         nodes = data.get("nodes", [])
         
         # 1. Determine project root path dynamically
-        file_paths = [n.get("fqn", "") for n in nodes if n.get("type") in ["file", "NodeType.FILE"]]
+        valid_types = ["file", "class", "entry_point", "bootstrap", "controller", "view", "config", "asset", "job", "model", "schema", "NodeType.FILE", "NodeType.CLASS", "NodeType.ENTRY_POINT", "NodeType.BOOTSTRAP", "NodeType.CONTROLLER", "NodeType.VIEW", "NodeType.CONFIG", "NodeType.ASSET", "NodeType.JOB", "NodeType.MODEL", "NodeType.SCHEMA"]
+        file_paths = [n.get("fqn", "") for n in nodes if n.get("type") in valid_types]
         if not file_paths:
             project_root = "/data"
         else:

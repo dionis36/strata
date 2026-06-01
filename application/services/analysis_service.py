@@ -100,7 +100,7 @@ class AnalysisService:
                 node_path = getattr(node, "file_path", None)
                 is_php    = node_path and node_path.endswith(".php")
 
-                if node_type in (NodeType.CLASS, NodeType.FILE) and is_php and node_path not in seen_behavior_paths:
+                if node_type in (NodeType.CLASS, NodeType.FILE, NodeType.CONTROLLER, NodeType.VIEW, NodeType.MODEL, NodeType.JOB, NodeType.ENTRY_POINT, NodeType.BOOTSTRAP, NodeType.SCHEMA) and is_php and node_path not in seen_behavior_paths:
                     seen_behavior_paths.add(node_path)
                     try:
                         with open(node_path, 'r', encoding='utf-8') as f:

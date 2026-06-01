@@ -21,7 +21,7 @@ class FileClassifier:
 
         # 3. View/Template Detection
         view_exts = [".tpl", ".twig", ".blade.php", ".html", ".htm"]
-        view_dirs = ["templates/", "views/", "themes/", "layouts/"]
+        view_dirs = ["templates/", "views/", "view/", "themes/", "layouts/"]
         if ext in view_exts or any(vdir in rel_path for vdir in view_dirs):
             return NodeType.VIEW
 
