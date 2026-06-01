@@ -68,8 +68,20 @@ class DocumentGenerator:
             lines.append(f"- **{m.name}** ({len(m.files)} files) - Boundary Confidence: {m.boundary_confidence}")
             
         lines.append("")
-        lines.append("## Risk Register")
-        for f in model.findings:
+        lines.append("## Dependency Intelligence (Hotspots)")
+        for d in model.dependency_intelligence:
+            if d.is_hotspot:
+                lines.append(f"- **{d.component_name}** | In: {d.in_degree} | Out: {d.out_degree} | SCC Size: {d.scc_size}")
+                
+        lines.append("")
+        lines.append("## Global State Intelligence")
+        for g in model.global_state_intelligence:
+            lines.append(f"- **{g.variable_name}** | Mutations: {g.mutation_count} | Reads: {g.read_count}")
+
+        lines.append("")
+        lines.append("## Full Risk Register")
+        # Ensure we use full_risk_register instead of findings (which is top 5)
+        for f in model.full_risk_register:
             lines.append(f"### [{f.priority}] {f.observation}")
             lines.append(f"**Category:** {f.category} | **Confidence:** {f.confidence}")
             lines.append(f"**Reasoning:** {f.reasoning}")

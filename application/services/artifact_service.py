@@ -393,12 +393,15 @@ class ArtifactService:
     def generate_workspace_bundle(
         self, run_id: int, 
         html: bool = True, md: bool = True, csv: bool = True,
-        sarif: bool = True, rector: bool = True, deptrac: bool = True
+        sarif: bool = True, rector: bool = True, deptrac: bool = True,
+        pdf: bool = True, docx: bool = True
     ) -> bytes:
         """Generates an in-memory ZIP archive of selected artifacts."""
         import zipfile
         import io
         import json
+        import tempfile
+        import os
         
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zf:
@@ -414,8 +417,33 @@ class ArtifactService:
                 zf.writestr("machine/rector.php", self.generate_rector_config(run_id))
             if deptrac:
                 zf.writestr("machine/deptrac.yaml", self.generate_deptrac_yaml(run_id))
+            
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                if pdf:
+                    pdf_path = os.path.join(tmpdirname, "technical_assessment.pdf")
+                    if self.generate_pdf_report(run_id, pdf_path):
+                        with open(pdf_path, "rb") as f:
+                            zf.writestr("reports/technical_assessment.pdf", f.read())
+                
+                if docx:
+                    docx_path = os.path.join(tmpdirname, "technical_assessment.docx")
+                    if self.generate_docx_report(run_id, docx_path):
+                        with open(docx_path, "rb") as f:
+                            zf.writestr("reports/technical_assessment.docx", f.read())
                 
         return zip_buffer.getvalue()
+
+    def generate_pdf_report(self, run_id: int, output_path: str) -> str:
+        """Generates a PDF report using WeasyPrint."""
+        md_content = self.generate_technical_report(run_id)
+        from application.services.publishing.renderers.pdf_renderer import PdfRenderer
+        return PdfRenderer().render(md_content, output_path)
+
+    def generate_docx_report(self, run_id: int, output_path: str) -> str:
+        """Generates a DOCX report using python-docx."""
+        md_content = self.generate_technical_report(run_id)
+        from application.services.publishing.renderers.docx_renderer import DocxRenderer
+        return DocxRenderer().render(md_content, output_path)
 
     def generate_technical_report(self, run_id: int) -> str:
         """Generates a deep Technical Assessment Report."""

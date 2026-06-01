@@ -43,12 +43,20 @@ class EvidenceBuilder:
         # 5. Hydrate Findings (From Risks)
         findings = self._extract_findings(run_id)
         
+        # 6. Hydrate Extended Intelligence
+        dep_intel = self._extract_dependency_intelligence(run_id)
+        state_intel = self._extract_global_state_intelligence(run_id)
+        full_risk_register = self._extract_full_risk_register(run_id)
+        
         return CanonicalModel(
             system_context=ctx,
             legacy_posture=legacy_posture,
             database_intelligence=db_intel,
+            dependency_intelligence=dep_intel,
+            global_state_intelligence=state_intel,
             modules=modules,
-            findings=findings
+            findings=findings,
+            full_risk_register=full_risk_register
         )
 
     def _extract_database_intelligence(self, run_id: int):
@@ -191,4 +199,52 @@ class EvidenceBuilder:
             )
             findings.append(f)
             
+        return findings
+
+    def _extract_dependency_intelligence(self, run_id: int):
+        from application.services.publishing.models import DependencyIntelligence
+        metrics = self.db.query(ComponentMetric).filter(
+            ComponentMetric.run_id == run_id
+        ).order_by(ComponentMetric.betweenness.desc()).limit(20).all()
+        
+        return [DependencyIntelligence(
+            component_name=m.component_name,
+            in_degree=m.in_degree,
+            out_degree=m.out_degree,
+            scc_size=m.scc_size,
+            is_hotspot=m.betweenness > 0.1
+        ) for m in metrics]
+
+    def _extract_global_state_intelligence(self, run_id: int):
+        from application.services.publishing.models import GlobalStateIntelligence
+        # Currently a placeholder until GlobalState extractor is fully implemented in the db schema.
+        # We simulate it for now.
+        return [GlobalStateIntelligence(
+            variable_name="*Placeholder Global State*",
+            mutation_count=0,
+            read_count=0
+        )]
+
+    def _extract_full_risk_register(self, run_id: int) -> List[Finding]:
+        risks = self.db.query(ComponentRisk).filter(ComponentRisk.run_id == run_id).order_by(ComponentRisk.final_risk.desc()).all()
+        findings = []
+        for r in risks:
+            evidence = [
+                Evidence(type="file", target=r.component_name),
+                Evidence(type="metric", target="risk_score", metric_value=r.risk_score),
+                Evidence(type="metric", target="coupling_pressure", metric_value=r.coupling_pressure)
+            ]
+            f = Finding(
+                id=f"FND-{r.id}",
+                category="Architecture",
+                observation=f"Structural risk detected in {r.component_name}",
+                evidence=evidence,
+                impact="Potential architectural bottleneck and high blast radius.",
+                reasoning=f"High coupling ({r.coupling_pressure:.2f}) and instability ({r.instability:.2f}).",
+                recommended_action="Isolate and refactor.",
+                priority=r.risk_level,
+                confidence="Confirmed",
+                mermaid_diagram=None
+            )
+            findings.append(f)
         return findings

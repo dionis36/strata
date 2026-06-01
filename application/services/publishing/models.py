@@ -44,6 +44,18 @@ class DatabaseIntelligence(BaseModel):
     write_intensity: float
     shared_table_pressure: float
 
+class DependencyIntelligence(BaseModel):
+    component_name: str
+    in_degree: int
+    out_degree: int
+    scc_size: int
+    is_hotspot: bool
+
+class GlobalStateIntelligence(BaseModel):
+    variable_name: str
+    mutation_count: int
+    read_count: int
+
 class LegacyPosture(BaseModel):
     version_score: float
     namespace_score: float
@@ -57,5 +69,8 @@ class CanonicalModel(BaseModel):
     system_context: SystemContext
     legacy_posture: Optional[LegacyPosture] = None
     database_intelligence: List[DatabaseIntelligence] = Field(default_factory=list)
+    dependency_intelligence: List[DependencyIntelligence] = Field(default_factory=list)
+    global_state_intelligence: List[GlobalStateIntelligence] = Field(default_factory=list)
     modules: List[Module]
     findings: List[Finding]
+    full_risk_register: List[Finding] = Field(default_factory=list)

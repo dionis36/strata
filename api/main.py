@@ -750,23 +750,38 @@ def get_csv_export(run_id: int, db: Session = Depends(get_db)):
     from fastapi.responses import PlainTextResponse
     return PlainTextResponse(ArtifactService(db).generate_csv_export(run_id))
 
-@app.get("/artifacts/report/{run_id}", tags=["Artifacts"], summary="Generate Executive HTML Report")
-def get_html_report(run_id: int, db: Session = Depends(get_db)):
+@app.get("/artifacts/human/{run_id}", tags=["Artifacts"], summary="Generate Human-Readable Assessment")
+def get_human_assessment(run_id: int, format: str = "html", db: Session = Depends(get_db)):
     from application.services.artifact_service import ArtifactService
-    from fastapi.responses import HTMLResponse
-    return HTMLResponse(ArtifactService(db).generate_human_report(run_id))
-
-@app.get("/artifacts/technical/{run_id}", tags=["Artifacts"], summary="Generate Technical Assessment")
-def get_technical_report(run_id: int, db: Session = Depends(get_db)):
-    from application.services.artifact_service import ArtifactService
-    from fastapi.responses import PlainTextResponse
-    return PlainTextResponse(ArtifactService(db).generate_technical_report(run_id))
+    from fastapi.responses import HTMLResponse, PlainTextResponse, FileResponse
+    import os
+    import tempfile
+    
+    service = ArtifactService(db)
+    
+    if format == "html":
+        return HTMLResponse(service.generate_human_report(run_id))
+    elif format == "md":
+        return PlainTextResponse(service.generate_technical_report(run_id))
+    elif format == "pdf":
+        tmp_dir = tempfile.mkdtemp()
+        pdf_path = os.path.join(tmp_dir, f"technical_assessment_{run_id}.pdf")
+        service.generate_pdf_report(run_id, pdf_path)
+        return FileResponse(pdf_path, media_type="application/pdf", filename="technical_assessment.pdf")
+    elif format == "docx":
+        tmp_dir = tempfile.mkdtemp()
+        docx_path = os.path.join(tmp_dir, f"technical_assessment_{run_id}.docx")
+        service.generate_docx_report(run_id, docx_path)
+        return FileResponse(docx_path, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document", filename="technical_assessment.docx")
+    else:
+        raise HTTPException(status_code=400, detail="Invalid format selected")
 
 @app.get("/artifacts/bundle/{run_id}", tags=["Artifacts"], summary="Download Full Workspace Bundle")
 def get_artifact_bundle(
     run_id: int, 
     html: bool = True, md: bool = True, csv: bool = True,
     sarif: bool = True, rector: bool = True, deptrac: bool = True,
+    pdf: bool = True, docx: bool = True,
     db: Session = Depends(get_db)
 ):
     from application.services.artifact_service import ArtifactService
@@ -774,7 +789,7 @@ def get_artifact_bundle(
     import io
     
     zip_bytes = ArtifactService(db).generate_workspace_bundle(
-        run_id, html=html, md=md, csv=csv, sarif=sarif, rector=rector, deptrac=deptrac
+        run_id, html=html, md=md, csv=csv, sarif=sarif, rector=rector, deptrac=deptrac, pdf=pdf, docx=docx
     )
     return StreamingResponse(
         io.BytesIO(zip_bytes), 

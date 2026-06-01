@@ -14,6 +14,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     php-xml \
     php-mbstring \
     unzip \
+    libcairo2 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf-2.0-0 \
+    libffi-dev \
+    shared-mime-info \
     && rm -rf /var/lib/apt/lists/*
 
 # 2. Builder stage: High-performance dependency installation
@@ -31,6 +37,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Install Python dependencies using uv cache
 COPY requirements.txt .
+ENV UV_LINK_MODE=copy
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install -r requirements.txt
 
