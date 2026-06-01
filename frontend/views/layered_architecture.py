@@ -10,7 +10,7 @@ def show_layered_architecture():
     st.title("Layered Structure")
     st.markdown("##### Physical Layout & Architectural Classification")
     
-    with st.expander("Layered Structure Blueprint Key", expanded=False):
+    with st.expander("Layered Structure Blueprint Key", expanded=True):
         colA, colB = st.columns(2)
         with colA:
             st.markdown("""
@@ -160,7 +160,7 @@ def show_system_topology():
     st.title("System Topology")
     st.markdown("##### Relational Graph & Connectivity Analysis")
     
-    with st.expander("Architectural Blueprint Key", expanded=False):
+    with st.expander("Architectural Blueprint Key", expanded=True):
         colA, colB, colC = st.columns(3)
         with colA:
             st.markdown("""
