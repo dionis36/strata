@@ -111,10 +111,21 @@ def show_extraction_simulator():
             with col2:
                 st.markdown("### Extraction Blast Radius")
                 total_nodes = len(sim["blast_radius"]["files"]) + len(sim["dependency_payload"]["files"])
-                if total_nodes > 150:
+                if total_nodes > 500:
                     st.warning(f"Graph too large for interactive rendering ({total_nodes} nodes). Please rely on the metrics panel.", icon=":material/warning:")
                 else:
                     net = Network(height="500px", width="100%", bgcolor="#0e1117", font_color="#e0e0e0", directed=True)
+                    net.toggle_physics(True)
+                    net.set_options("""
+                    {
+                      "physics": {
+                        "forceAtlas2Based": { "gravitationalConstant": -50, "springLength": 100, "avoidOverlap": 0.5 },
+                        "solver": "forceAtlas2Based",
+                        "stabilization": false
+                      },
+                      "edges": { "smooth": { "type": "continuous" } }
+                    }
+                    """)
                     net.add_node(sim["target"], label=os.path.basename(sim["target"]), color="#f85149", size=25, title=f"Target: {sim['target']}")
                     
                     for f in sim["blast_radius"]["files"]:
@@ -132,8 +143,22 @@ def show_extraction_simulator():
                     net.save_graph("/tmp/extraction_sim.html")
                     with open("/tmp/extraction_sim.html", "r", encoding="utf-8") as f:
                         html = f.read()
-                    html = html.replace("</head>", "<style>#loadingBar { display: none !important; }</style></head>")
-                    components.html(html, height=550)
+                        
+                    custom_css = """
+                    <style>
+                        body { margin: 0 !important; padding: 0 !important; background-color: #0e1117 !important; }
+                        #mynetwork { 
+                            border: 1px solid #1e2430 !important; 
+                            border-radius: 12px !important; 
+                            box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
+                            background-color: #0e1117 !important;
+                        }
+                        #loadingBar { display: none !important; }
+                    </style>
+                    """
+                    html = html.replace("</head>", custom_css + "</head>")
+                    html = html.replace('border: 1px solid lightgray;', 'border: none;')
+                    components.html(html, height=520)
 
             st.markdown("---")
             st.markdown("#### Simulation Findings")
@@ -179,6 +204,17 @@ def show_extraction_simulator():
                     
                     # PyVis configuration for Ghost Graph
                     net_g = Network(height="500px", width="100%", bgcolor="#0e1117", font_color="#e0e0e0", directed=True)
+                    net_g.toggle_physics(True)
+                    net_g.set_options("""
+                    {
+                      "physics": {
+                        "forceAtlas2Based": { "gravitationalConstant": -50, "springLength": 100, "avoidOverlap": 0.5 },
+                        "solver": "forceAtlas2Based",
+                        "stabilization": false
+                      },
+                      "edges": { "smooth": { "type": "continuous" } }
+                    }
+                    """)
                     
                     # Add nodes
                     for n in ghost["nodes"]:
@@ -207,7 +243,22 @@ def show_extraction_simulator():
                     net_g.save_graph("/tmp/ghost_sim.html")
                     with open("/tmp/ghost_sim.html", "r", encoding="utf-8") as f:
                         html_g = f.read()
-                    components.html(html_g, height=550)
+                        
+                    custom_css = """
+                    <style>
+                        body { margin: 0 !important; padding: 0 !important; background-color: #0e1117 !important; }
+                        #mynetwork { 
+                            border: 1px solid #1e2430 !important; 
+                            border-radius: 12px !important; 
+                            box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
+                            background-color: #0e1117 !important;
+                        }
+                        #loadingBar { display: none !important; }
+                    </style>
+                    """
+                    html_g = html_g.replace("</head>", custom_css + "</head>")
+                    html_g = html_g.replace('border: 1px solid lightgray;', 'border: none;')
+                    components.html(html_g, height=520)
                     
                 st.markdown("---")
                 st.markdown("#### Architecture Export & Documentation")
