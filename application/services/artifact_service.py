@@ -219,9 +219,9 @@ class ArtifactService:
                 
         if not exec_summary:
             exec_summary = {
-                "current_state": "The system contains significant technical debt.",
-                "critical_risks": "High architectural coupling and low test coverage make modifications dangerous.",
-                "strategic_roadmap": "1. Introduce static analysis. 2. Add characterization tests. 3. Incrementally decouple."
+                "current_state": "[AI SYNTHESIS UNAVAILABLE] Showing raw base metrics only.",
+                "critical_risks": "[AI SYNTHESIS UNAVAILABLE]",
+                "strategic_roadmap": "[AI SYNTHESIS UNAVAILABLE]"
             }
         
         html = [
@@ -279,7 +279,8 @@ class ArtifactService:
             "    </div>",
             "",
             "    <!-- System Vitality Grid -->",
-            "    <h3 class='text-xl font-semibold mb-4 border-b border-slate-700 pb-2'>System Vitality</h3>",
+            "    <h3 class='text-xl font-semibold mb-4 border-b border-slate-700 pb-2'>2. System Health Metrics (The Data Dashboard)</h3>",
+            "    <p class='text-slate-400 mb-6'>The following metrics dictate the true cost of ownership and the risk of catastrophic failure during refactoring.</p>",
             "    <div class='grid grid-cols-2 md:grid-cols-5 gap-4 mb-12'>",
             f"        <div class='glass-card p-6'><p class='text-xs text-slate-400 uppercase tracking-wider mb-1'>Lines of Code</p><p class='metric-value'>{ctx.lines_of_code:,}</p></div>",
             f"        <div class='glass-card p-6'><p class='text-xs text-slate-400 uppercase tracking-wider mb-1'>Total Classes</p><p class='metric-value'>{ctx.total_classes:,}</p></div>",
@@ -289,7 +290,8 @@ class ArtifactService:
             "    </div>",
             "",
             "    <!-- Database Intelligence -->",
-            "    <h3 class='text-xl font-semibold mb-4 border-b border-slate-700 pb-2'>Database & State Intelligence</h3>",
+            "    <h3 class='text-xl font-semibold mb-4 border-b border-slate-700 pb-2'>3. Database & State Intelligence</h3>",
+            "    <p class='text-slate-400 mb-6'>Stateful dependencies form the anchor of the monolith. High-pressure tables are critical bottlenecks.</p>",
             "    <div class='glass-card p-6 mb-12 overflow-x-auto'>",
             "        <table class='w-full text-left text-sm text-slate-300'>",
             "            <thead class='text-xs text-slate-400 uppercase bg-slate-800/50'>",
@@ -317,7 +319,8 @@ class ArtifactService:
         html.append("    </div>")
         
         html.append("    <!-- Risk Register -->")
-        html.append("    <h3 class='text-xl font-semibold mb-4 border-b border-slate-700 pb-2'>Top Modernization Blockers</h3>")
+        html.append("    <h3 class='text-xl font-semibold mb-4 border-b border-slate-700 pb-2'>4. Top Architectural Blockers (AI Synthesis)</h3>")
+        html.append("    <p class='text-slate-400 mb-6'>The AI engine has isolated the top 5 most dangerous 'God Classes' in the system. Fixing these resolves the vast majority of structural entanglement.</p>")
         
         top_findings = [f for f in model.findings if f.priority in ["Critical", "High"]][:5]
         if not top_findings:
@@ -342,6 +345,19 @@ class ArtifactService:
                     html.append(f"        </div>")
                 html.append(f"    </div>")
                 
+        # Artifact Index
+        html.append("    <!-- Artifact Index -->")
+        html.append("    <h3 class='text-xl font-semibold mb-4 border-b border-slate-700 pb-2 mt-12'>5. The Artifact Index (Navigating the Workspace Bundle)</h3>")
+        html.append("    <p class='text-slate-300 mb-4'>This Executive Report is only the <strong>Hub</strong>. The accompanying <code>.zip</code> bundle contains the definitive, raw data (the <strong>Spokes</strong>) required for engineering execution:</p>")
+        html.append("    <div class='glass-card p-6 mb-12'>")
+        html.append("        <ul class='list-disc list-inside text-slate-300 space-y-3'>")
+        html.append("            <li><strong class='text-sky-300'>remediation_backlog.csv:</strong> The complete, raw risk inventory detailing the complexity and coupling scores for all 7,800+ files.</li>")
+        html.append("            <li><strong class='text-sky-300'>rector.php:</strong> The automated refactoring rules generated specifically for this codebase.</li>")
+        html.append("            <li><strong class='text-sky-300'>deptrac.yaml:</strong> Architectural boundary definitions to enforce layer isolation.</li>")
+        html.append("            <li><strong class='text-sky-300'>security_findings.sarif:</strong> CI/CD compatible format for importing security vulnerabilities into GitHub or SonarQube.</li>")
+        html.append("        </ul>")
+        html.append("    </div>")
+        
         # Chart.js initialization script
         if model.legacy_posture:
             labels = ["Version", "Namespaces", "DB Layer", "Security", "Testability", "Coupling"]

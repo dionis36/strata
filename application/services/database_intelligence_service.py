@@ -144,7 +144,25 @@ class DatabaseIntelligenceService:
                     normalized = re.sub(r"\s+", " ", normalized).strip()
                     if normalized:
                         all_queries[normalized].append(fqn)
-                        
+
+                elif req_type == "ORM_READ":
+                    # PHP-ActiveRecord read (User::find(), Product::count(), etc.)
+                    taxonomy[src_name]["orm"] += 1
+                    taxonomy[src_name]["reads"] += 1
+                    files_with_sql.add(fqn)
+
+                elif req_type == "ORM_WRITE":
+                    # PHP-ActiveRecord write (User::create(), $u->save(), etc.)
+                    taxonomy[src_name]["orm"] += 1
+                    taxonomy[src_name]["writes"] += 1
+                    files_with_sql.add(fqn)
+                    table_name = req.get("inferred_table", "")
+                    if table_name:
+                        ctx = node_to_context.get(n.get("id"), get_context(n))
+                        table_ownership[table_name]["contexts"][ctx] += 1
+                        table_ownership[table_name]["total_writes"] += 1
+                        file_to_tables[ctx].add(table_name)
+
                 elif req_type == "STORED_PROCEDURE":
                     taxonomy[src_name]["stored_procs"] += 1
                     stored_procs_list.append({"file": fqn, "line": req.get("line"), "snippet": req.get("snippet", "stored procedure call")})

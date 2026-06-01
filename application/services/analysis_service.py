@@ -89,13 +89,21 @@ class AnalysisService:
             
             # 3. Build graph
             graph = GraphModel()
+            seen_behavior_paths = set()
             for node in nodes:
                 graph.add_node(node)
                 
                 # 3.5 Phase 4 Behavioral Extraction
-                if getattr(node, "node_type", None) == NodeType.CLASS and getattr(node, "file_path", None):
+                # Run on CLASS nodes (primary) AND on PHP FILE nodes (fallback for
+                # procedural scripts and files whose class nodes share the same path).
+                node_type = getattr(node, "node_type", None)
+                node_path = getattr(node, "file_path", None)
+                is_php    = node_path and node_path.endswith(".php")
+
+                if node_type in (NodeType.CLASS, NodeType.FILE) and is_php and node_path not in seen_behavior_paths:
+                    seen_behavior_paths.add(node_path)
                     try:
-                        with open(node.file_path, 'r', encoding='utf-8') as f:
+                        with open(node_path, 'r', encoding='utf-8') as f:
                             code_content = f.read()
                         behavior_res = WriteAnalyzer.analyze_file(code_content)
                         for table_name in behavior_res.get("tables", []):

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Executive Modernization Assessment</title>
+    <script src='https://cdn.tailwindcss.com'></script>
+    <script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
+    <script type='module'>
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    </script>
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap' rel='stylesheet'>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f111a; color: #e2e8f0; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; }
+        .metric-value { font-size: 2rem; font-weight: 700; color: #38bdf8; }
+        .priority-Critical { color: #f87171; background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.2); }
+        .priority-High { color: #fbbf24; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); }
+        @media print { body { background: #fff; color: #000; } .glass-card { background: none; border: 1px solid #ccc; break-inside: avoid; } .metric-value { color: #000; } .print-hide { display: none !important; } }
+    </style>
+</head>
+<body class='p-8 md:p-16 max-w-6xl mx-auto'>
+    <header class='mb-12 flex justify-between items-center'>
+        <div>
+            <h1 class='text-4xl font-bold text-white mb-2'>Strategic Modernization Assessment</h1>
+            <p class='text-slate-400 text-lg'>Target System: <span class='text-sky-400 font-semibold'>marcel_master</span></p>
+        </div>
+        <button onclick='window.print()' class='px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg shadow-lg font-medium transition-colors print-hide'>Export to PDF</button>
+    </header>
+
+    <!-- Section 1: Executive Summary -->
+    <div class='glass-card p-8 mb-8 grid grid-cols-1 md:grid-cols-2 gap-8'>
+        <div>
+            <h2 class='text-2xl font-semibold mb-4 text-white border-b border-slate-700 pb-2'>Executive Summary</h2>
+           <h3 class='text-lg font-medium text-sky-300 mb-2'>Current State</h3>
+           <p class='text-slate-300 mb-4'>The Strata Analysis system is a highly coupled, custom PHP 5 legacy monolith severely crippled by a complete lack of modern namespaces and zero testability. While superficial database and security wrappers exist, the global-scope execution model makes any ongoing feature development highly fragile and prone to regressions.</p>
+           <h3 class='text-lg font-medium text-red-400 mb-2'>Critical Risks</h3>
+           <p class='text-slate-300 mb-4'>The complete absence of namespaces (0.0) and unit testability (0.0) represents a catastrophic systemic risk. Any development effort or PHP upgrade will likely trigger silent, cascading failures across the global runtime environment due to unchecked class collisions and lack of regression protection.</p>
+           <h3 class='text-lg font-medium text-emerald-400 mb-2'>Strategic Roadmap</h3>
+           <p class='text-slate-300'>1. Establish PSR-4 autoloading via Composer to gradually namespace legacy classes without breaking existing global includes. 2. Wrap critical business logic with integration/smoke tests using PHPUnit to create a safety net for ongoing updates. 3. Progressively migrate legacy procedural scripts into modern PHP 8+ compatible services using the Strangler Fig pattern.</p>
+        </div>
+        <div class='flex flex-col items-center justify-center'>
+            <div class='text-center mb-4'>
+                <div class='text-5xl font-bold text-emerald-400'>57.0%</div>
+                <div class='text-sm text-slate-400 uppercase tracking-wider mt-1'>Modernization Readiness</div>
+            </div>
+            <div class='w-full max-w-xs'>
+                <canvas id='radarChart'></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Vitality Grid -->
+    <h3 class='text-xl font-semibold mb-4 border-b border-slate-700 pb-2'>2. System Health Metrics (The Data Dashboard)</h3>
+    <p class='text-slate-400 mb-6'>The following metrics dictate the true cost of ownership and the risk of catastrophic failure during refactoring.</p>
+    <div class='grid grid-cols-2 md:grid-cols-5 gap-4 mb-12'>
+        <div class='glass-card p-6'><p class='text-xs text-slate-400 uppercase tracking-wider mb-1'>Lines of Code</p><p class='metric-value'>16,081</p></div>
+        <div class='glass-card p-6'><p class='text-xs text-slate-400 uppercase tracking-wider mb-1'>Total Classes</p><p class='metric-value'>24</p></div>
+        <div class='glass-card p-6'><p class='text-xs text-slate-400 uppercase tracking-wider mb-1'>Avg Complexity</p><p class='metric-value'>0.77</p></div>
+        <div class='glass-card p-6'><p class='text-xs text-slate-400 uppercase tracking-wider mb-1'>Connectivity</p><p class='metric-value'>635</p></div>
+        <div class='glass-card p-6'><p class='text-xs text-slate-400 uppercase tracking-wider mb-1'>Test Coverage</p><p class='metric-value'>N/A</p></div>
+    </div>
+
+    <!-- Database Intelligence -->
+    <h3 class='text-xl font-semibold mb-4 border-b border-slate-700 pb-2'>3. Database & State Intelligence</h3>
+    <p class='text-slate-400 mb-6'>Stateful dependencies form the anchor of the monolith. High-pressure tables are critical bottlenecks.</p>
+    <div class='glass-card p-6 mb-12 overflow-x-auto'>
+        <table class='w-full text-left text-sm text-slate-300'>
+            <thead class='text-xs text-slate-400 uppercase bg-slate-800/50'>
+                <tr>
+                    <th class='px-4 py-3 rounded-tl-lg'>Database Table / Stateful Component</th>
+                    <th class='px-4 py-3'>Write Intensity</th>
+                    <th class='px-4 py-3 rounded-tr-lg'>Shared Table Pressure</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan='3' class='px-4 py-3 text-center text-slate-500 italic'>No high-pressure database tables detected.</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <!-- Risk Register -->
+    <h3 class='text-xl font-semibold mb-4 border-b border-slate-700 pb-2'>4. Top Architectural Blockers (AI Synthesis)</h3>
+    <p class='text-slate-400 mb-6'>The AI engine has isolated the top 5 most dangerous 'God Classes' in the system. Fixing these resolves the vast majority of structural entanglement.</p>
+    <div class='glass-card p-6 mb-6'>
+        <div class='flex items-center gap-3 mb-4'>
+            <span class='px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider priority-Critical'>Critical</span>
+            <h4 class='text-lg font-semibold text-white'>Class is identified as a stateful GOD_CLASS containing massive logic bloat with a Weighted Method Count (WMC) of 193 and an extremely low cohesion level (LCOM of 0.87). It directly exposes and manages raw state transitions.</h4>
+        </div>
+        <div class='grid grid-cols-1 md:grid-cols-2 gap-6 mb-4 text-sm text-slate-300'>
+            <div><span class='block text-slate-500 mb-1 uppercase tracking-wider text-xs'>Business Impact</span>High cognitive load, high maintenance cost, and high risk of regression when modifying parser features due to a blast radius of 56.3% and zero test coverage.</div>
+            <div><span class='block text-slate-500 mb-1 uppercase tracking-wider text-xs'>Strategic Action</span>Write Characterization Tests before attempting extraction. As a stateful God Class with severe logic bloat (WMC: 193) and high LCOM (0.87), this class must be broken down by grouping methods that share state variables. Extract the node traversal and query methods (e.g., getElementsByTagName, has_child) into separate Strategy or Traversal classes.</div>
+        </div>
+        <div class='mt-6 p-4 bg-slate-900/50 rounded-lg'>
+            <p class='text-xs text-slate-500 uppercase tracking-wider mb-2'>Architecture Topology</p>
+            <pre class='mermaid flex justify-center'>
+graph TD\nSHDN[simple_html_dom_node] -->|accesses| DOM[DOM Object State]\nSHDN -->|calls| RN[restore_noise]\nSHDN -->|calls| D[dump]\nsubgraph Extraction Boundary\nSHDN_Writer[NodeWriter / Serializer]\nSHDN_Query[NodeQuery / Traversal]\nend
+            </pre>
+        </div>
+    </div>
+    <div class='glass-card p-6 mb-6'>
+        <div class='flex items-center gap-3 mb-4'>
+            <span class='px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider priority-Critical'>Critical</span>
+            <h4 class='text-lg font-semibold text-white'>Identified as a stateful GOD_CLASS with an LCOM of 0.89 and WMC of 130. It couples HTML processing, tokenization, and node instantiation, resulting in a blast radius of 90.3%.</h4>
+        </div>
+        <div class='grid grid-cols-1 md:grid-cols-2 gap-6 mb-4 text-sm text-slate-300'>
+            <div><span class='block text-slate-500 mb-1 uppercase tracking-wider text-xs'>Business Impact</span>Any change to the HTML parsing logic triggers massive risk across the entire DOM tree lifecycle because the class directly instantiates simple_html_dom_node.</div>
+            <div><span class='block text-slate-500 mb-1 uppercase tracking-wider text-xs'>Strategic Action</span>Write Characterization Tests before attempting extraction. Dependency Injection: Avoid directly instantiating dependencies using the 'new' keyword. Extract the dependency into a constructor argument to invert control and improve testability. Additionally, break down this stateful God Class based on its high LCOM (0.89) by extracting the HTML parsing logic into a separate Parser Engine and utilizing a Factory pattern to construct simple_html_dom_node instances.</div>
+        </div>
+        <div class='mt-6 p-4 bg-slate-900/50 rounded-lg'>
+            <p class='text-xs text-slate-500 uppercase tracking-wider mb-2'>Architecture Topology</p>
+            <pre class='mermaid flex justify-center'>
+graph TD\nSHD[simple_html_dom] -->|instantiates| SHDN[simple_html_dom_node]\nSHD -->|calls| CUN[copy_until_char]\nSHD -->|calls| PA[parse_attr]\nsubgraph Decoupled Boundary\nSHDF[simple_html_dom_factory]\nParser[HTMLParserEngine]\nend\nSHDF -->|creates| SHD
+            </pre>
+        </div>
+    </div>
+    <div class='glass-card p-6 mb-6'>
+        <div class='flex items-center gap-3 mb-4'>
+            <span class='px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider priority-High'>High</span>
+            <h4 class='text-lg font-semibold text-white'>Stateless/stateful hybrid base class demonstrating a high LCOM of 0.92, indicating a severe separation of concerns issue where utility operations and API config state are tightly coupled.</h4>
+        </div>
+        <div class='grid grid-cols-1 md:grid-cols-2 gap-6 mb-4 text-sm text-slate-300'>
+            <div><span class='block text-slate-500 mb-1 uppercase tracking-wider text-xs'>Business Impact</span>Violates OOP inheritance guidelines by utilizing a base class as a container for static parser utilities (createXML, createArray) and API credentials concurrently, impeding test isolation.</div>
+            <div><span class='block text-slate-500 mb-1 uppercase tracking-wider text-xs'>Strategic Action</span>Write Characterization Tests before attempting extraction. Given the high LCOM (0.92) of this stateful base class, separate the payload serialization from the client request logic. Extract the XML and Array generation helpers into dedicated Serializer services, passing them as dependencies to the client class.</div>
+        </div>
+        <div class='mt-6 p-4 bg-slate-900/50 rounded-lg'>
+            <p class='text-xs text-slate-500 uppercase tracking-wider mb-2'>Architecture Topology</p>
+            <pre class='mermaid flex justify-center'>
+graph TD\nUB[USPSBase] -->|static_call| CXML[createXML]\nUB -->|static_call| CAR[createArray]\nsubgraph Proposed Boundary\nUSPSClient[USPSClient]\nXMLSerializer[XMLSerializer]\nArrayConverter[ArrayConverter]\nend
+            </pre>
+        </div>
+    </div>
+    <div class='glass-card p-6 mb-6'>
+        <div class='flex items-center gap-3 mb-4'>
+            <span class='px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider priority-High'>High</span>
+            <h4 class='text-lg font-semibold text-white'>Method is coupled directly to the global variable state 'debugObject' and performs complex string-based rendering transformations in isolation.</h4>
+        </div>
+        <div class='grid grid-cols-1 md:grid-cols-2 gap-6 mb-4 text-sm text-slate-300'>
+            <div><span class='block text-slate-500 mb-1 uppercase tracking-wider text-xs'>Business Impact</span>Tight coupling to global state prevents concurrent processing, makes thread-safe testing impossible, and introduces side effects that are hard to debug.</div>
+            <div><span class='block text-slate-500 mb-1 uppercase tracking-wider text-xs'>Strategic Action</span>Write Characterization Tests before attempting extraction. Eliminate the hard dependency on the global variable 'debugObject' by passing a Logger or Debugger interface via constructor/method dependency injection. Extract the rendering logic into a decoupled NodeRenderer service.</div>
+        </div>
+        <div class='mt-6 p-4 bg-slate-900/50 rounded-lg'>
+            <p class='text-xs text-slate-500 uppercase tracking-wider mb-2'>Architecture Topology</p>
+            <pre class='mermaid flex justify-center'>
+graph TD\nOT[outertext] -->|depends on| DO[global_var:debugObject]\nOT -->|calls| IN[innertext]\nOT -->|calls| RN[restore_noise]\nsubgraph Proposed Boundary\nRenderer[NodeRenderer Service]\nend
+            </pre>
+        </div>
+    </div>
+    <div class='glass-card p-6 mb-6'>
+        <div class='flex items-center gap-3 mb-4'>
+            <span class='px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider priority-High'>High</span>
+            <h4 class='text-lg font-semibold text-white'>Monolithic email parser with a high blast radius (97.1%) and medium complexity (WMC 38) that directly performs file system IO operations and instantiates its own attachments.</h4>
+        </div>
+        <div class='grid grid-cols-1 md:grid-cols-2 gap-6 mb-4 text-sm text-slate-300'>
+            <div><span class='block text-slate-500 mb-1 uppercase tracking-wider text-xs'>Business Impact</span>Impedes testability and risks memory exhaustion during large stream parsing since dependencies are hard-coded directly in the class implementation.</div>
+            <div><span class='block text-slate-500 mb-1 uppercase tracking-wider text-xs'>Strategic Action</span>Write Characterization Tests before attempting extraction. Dependency Injection: Avoid directly instantiating dependencies using the 'new' keyword. Extract the dependency into a constructor argument to invert control and improve testability. Create a factory wrapper for 'MimeMailParser_attachment' to abstract the direct instantiation and decouple the parser from concrete attachment classes.</div>
+        </div>
+        <div class='mt-6 p-4 bg-slate-900/50 rounded-lg'>
+            <p class='text-xs text-slate-500 uppercase tracking-wider mb-2'>Architecture Topology</p>
+            <pre class='mermaid flex justify-center'>
+graph TD\nMMP[MimeMailParser] -->|instantiates| MMA[MimeMailParser_attachment]\nMMP -->|side effects| IO[IO / Stream Resource]\nsubgraph Proposed Boundary\nMMP_Service[MimeMailParser]\nAtt_Factory[AttachmentFactory]\nend\nAtt_Factory -->|creates| MMA
+            </pre>
+        </div>
+    </div>
+    <!-- Artifact Index -->
+    <h3 class='text-xl font-semibold mb-4 border-b border-slate-700 pb-2 mt-12'>5. The Artifact Index (Navigating the Workspace Bundle)</h3>
+    <p class='text-slate-300 mb-4'>This Executive Report is only the <strong>Hub</strong>. The accompanying <code>.zip</code> bundle contains the definitive, raw data (the <strong>Spokes</strong>) required for engineering execution:</p>
+    <div class='glass-card p-6 mb-12'>
+        <ul class='list-disc list-inside text-slate-300 space-y-3'>
+            <li><strong class='text-sky-300'>remediation_backlog.csv:</strong> The complete, raw risk inventory detailing the complexity and coupling scores for all 7,800+ files.</li>
+            <li><strong class='text-sky-300'>rector.php:</strong> The automated refactoring rules generated specifically for this codebase.</li>
+            <li><strong class='text-sky-300'>deptrac.yaml:</strong> Architectural boundary definitions to enforce layer isolation.</li>
+            <li><strong class='text-sky-300'>security_findings.sarif:</strong> CI/CD compatible format for importing security vulnerabilities into GitHub or SonarQube.</li>
+        </ul>
+    </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var ctx = document.getElementById('radarChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: ["Version", "Namespaces", "DB Layer", "Security", "Testability", "Coupling"],
+                datasets: [{
+                    label: 'Modernization Posture (0-10)',
+                    data: [50.0, 0.0, 150.0, 200.0, 0.0, 149.5],
+                    backgroundColor: 'rgba(56, 189, 248, 0.2)',
+                    borderColor: 'rgba(56, 189, 248, 1)',
+                    pointBackgroundColor: 'rgba(56, 189, 248, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(56, 189, 248, 1)'
+                }]
+            },
+            options: {
+                scales: {
+                    r: {
+                        angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        pointLabels: { color: '#94a3b8', font: { family: 'Inter' } },
+                        ticks: { display: false, min: 0, max: 10 }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    });
+    </script>
+</body>
+</html>

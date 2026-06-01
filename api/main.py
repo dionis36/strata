@@ -248,15 +248,72 @@ def background_synthesize_intelligence(run_id: int):
     try:
         run = db.query(AnalysisRun).filter(AnalysisRun.id == run_id).first()
         if not run: return
-        
         # 1. Synthesize batch findings
+        run.status = "synthesizing_findings"
+        db.commit()
         risks = db.query(ComponentRisk).filter(ComponentRisk.run_id == run_id).order_by(ComponentRisk.final_risk.desc()).limit(5).all()
-        risk_data = [{"component_name": r.component_name, "risk_score": r.risk_score, "blast_radius": r.norm_blast_radius} for r in risks]
+        from infrastructure.persistence.models import GraphNode, GraphEdge
+        
+        risk_data = []
+        for r in risks:
+            node = db.query(GraphNode).filter(
+                GraphNode.run_id == run_id, 
+                GraphNode.fqn == r.component_name
+            ).first()
+            
+            ast_metadata = {}
+            if node and node.metadata_json:
+                try:
+                    ast_metadata = json.loads(node.metadata_json)
+                except Exception:
+                    pass
+                    
+            dependencies = []
+            if node:
+                edges = db.query(GraphEdge).filter(
+                    GraphEdge.run_id == run_id,
+                    GraphEdge.source_id == node.id
+                ).all()
+                for e in edges:
+                    target = db.query(GraphNode).filter(
+                        GraphNode.run_id == run_id,
+                        GraphNode.id == e.target_id
+                    ).first()
+                    if target:
+                        dependencies.append(f"{e.edge_type} -> {target.node_type}:{target.name}")
+                        
+            if len(dependencies) > 20:
+                dependencies = dependencies[:20]
+                
+            # Keep token size small for free tier
+            ast_metadata_str = json.dumps(ast_metadata)
+            if len(ast_metadata_str) > 1000:
+                ast_metadata = {"note": "truncated for token limits", "preview": ast_metadata_str[:1000]}
+            risk_data.append({
+                "component_name": r.component_name,
+                "risk_score": r.risk_score,
+                "coupling_pressure": r.coupling_pressure,
+                "blast_radius": r.norm_blast_radius,
+                "domain_archetype": getattr(r, 'domain_archetype', 'UNKNOWN'),
+                "is_stateful": getattr(r, 'is_stateful', False),
+                "lcom": getattr(r, 'lcom', 0.0),
+                "wmc": getattr(r, 'wmc', 0),
+                "test_coverage": getattr(r, 'test_coverage', None),
+                "semantic_multiplier": getattr(r, 'semantic_multiplier', 1.0),
+                "ast_metadata": ast_metadata,
+                "dependency_edges": dependencies
+            })
         
         ai_service = AIAdvisoryService()
         findings = ai_service.synthesize_batch_findings(risk_data)
         
+        import time
+        logger.info("Rate limiting: sleeping 20s to avoid 429 quota errors on free tier.")
+        time.sleep(20)
+        
         # 2. Synthesize exec summary
+        run.status = "synthesizing_summary"
+        db.commit()
         class DummyCtx:
             project_name = "Strata Analysis"
             total_files = run.total_files
@@ -274,8 +331,14 @@ def background_synthesize_intelligence(run_id: int):
             
         summary = ai_service.synthesize_executive_summary(ctx, legacy)
         
+        logger.info("Rate limiting: sleeping 20s to avoid 429 quota errors on free tier.")
+        time.sleep(20)
+        
         # 3. Rector
-        rector = ai_service.synthesize_rector_config(ctx.framework, ctx.php_era, "High coupling and legacy patterns detected.")
+        run.status = "synthesizing_rector"
+        db.commit()
+        ast_summary = " | ".join([f.observation for f in findings[:10]]) if findings else "High coupling and legacy patterns detected."
+        rector = ai_service.synthesize_rector_config(ctx.framework, ctx.php_era, ast_summary)
         
         # 4. Save to DB
         run.ai_findings_json = json.dumps([f.model_dump() for f in findings])
@@ -286,8 +349,26 @@ def background_synthesize_intelligence(run_id: int):
         db.commit()
     except Exception as e:
         logger.error(f"Background AI synthesis failed: {e}")
+        run.status = "intelligence_failed"
+        db.commit()
     finally:
         db.close()
+
+@app.post("/runs/{run_id}/retry_intelligence",
+          tags=["Reporting & Visuals"],
+          summary="Retry failed AI synthesis")
+def retry_intelligence(run_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    """Triggers the background intelligence synthesis for a run that failed."""
+    from infrastructure.persistence.models import AnalysisRun
+    run = db.query(AnalysisRun).filter(AnalysisRun.id == run_id).first()
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+        
+    run.status = "analysis_complete"
+    db.commit()
+    
+    background_tasks.add_task(background_synthesize_intelligence, run_id)
+    return {"message": "AI Synthesis retry queued.", "run_id": run_id}
 
 @app.post("/analyze", 
           response_model=AnalyzeResponse, 
@@ -308,13 +389,16 @@ def analyze_project(req: AnalyzeRequest, background_tasks: BackgroundTasks, db: 
         service = AnalysisService(db)
         result = service.run_analysis(project.id, req.project_path)
         
+        # result might be a dict or a Pydantic model
+        run_id = result.get("run_id") if isinstance(result, dict) else result.run_id
+        
         from infrastructure.persistence.models import AnalysisRun
-        run = db.query(AnalysisRun).filter(AnalysisRun.id == result.run_id).first()
+        run = db.query(AnalysisRun).filter(AnalysisRun.id == run_id).first()
         if run:
             run.status = "analysis_complete"
             db.commit()
             
-        background_tasks.add_task(background_synthesize_intelligence, result.run_id)
+        background_tasks.add_task(background_synthesize_intelligence, run_id)
         
         return result
     except Exception as e:
@@ -729,7 +813,7 @@ def get_dashboard(project_id: int, db: Session = Depends(get_db)):
         
         latest_run = (
             db.query(AnalysisRun)
-            .filter(AnalysisRun.project_id == project_id, AnalysisRun.status == "completed")
+            .filter(AnalysisRun.project_id == project_id, AnalysisRun.status.in_(["completed", "analysis_complete", "intelligence_ready"]))
             .order_by(AnalysisRun.id.desc())
             .first()
         )

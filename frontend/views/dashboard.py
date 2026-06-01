@@ -128,6 +128,8 @@ def show_dashboard():
             with st.spinner("Processing AST..."):
                 res = requests.post(f"{FASTAPI_URL}/analyze", json={"project_name": p_name, "project_path": p_path})
                 if res.status_code == 200:
+                    data = res.json()
+                    st.session_state["active_run_id"] = data.get("run_id")
                     st.success("Analysis Complete!", icon=":material/check_circle:")
                     st.rerun()
                 else:
@@ -144,6 +146,8 @@ def show_dashboard():
                         "project_path": dashboard_data['project']['root_path']
                     })
                     if res.status_code == 200:
+                        data = res.json()
+                        st.session_state["active_run_id"] = data.get("run_id")
                         st.success("Re-scan Successful!", icon=":material/check_circle:")
                         st.rerun()
 

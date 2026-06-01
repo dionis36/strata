@@ -35,12 +35,30 @@ class AIAdvisoryService:
         self.api_key = os.getenv("GEMINI_API_KEY", "")
         self.client = genai.Client(api_key=self.api_key) if self.api_key else None
 
+    def _invoke_with_retry(self, generate_func, max_retries=3, base_delay=30):
+        """Executes a Gemini API call with exponential backoff for 429 and 503 errors."""
+        import time
+        for attempt in range(max_retries):
+            try:
+                return generate_func()
+            except Exception as e:
+                error_msg = str(e)
+                if "429" in error_msg or "503" in error_msg or "RESOURCE_EXHAUSTED" in error_msg or "UNAVAILABLE" in error_msg:
+                    if attempt < max_retries - 1:
+                        delay = base_delay * (2 ** attempt)
+                        logger.warning(f"Gemini API rate limit or overload hit (Attempt {attempt+1}/{max_retries}). Sleeping for {delay} seconds before retrying...")
+                        time.sleep(delay)
+                    else:
+                        logger.error(f"Gemini API failed after {max_retries} attempts: {e}")
+                        raise
+                else:
+                    raise
+
     def synthesize_batch_findings(self, risk_data: List[Dict[str, Any]]) -> List[GeminiFindingResponse]:
         """Calls Gemini to write a bespoke finding narrative for a batch of high-risk components."""
         
         if not self.client:
-            logger.warning("No GEMINI_API_KEY found. Falling back to static strings.")
-            return self._generate_batch_fallback(risk_data)
+            raise ValueError("No GEMINI_API_KEY found. AI Synthesis unavailable.")
             
         # We cap the batch to 5 items to keep the LLM context focused and fast.
         batch = risk_data[:5]
@@ -83,51 +101,53 @@ class AIAdvisoryService:
         """
         
         try:
-            response = self.client.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema={
-                        "type": "OBJECT",
-                        "properties": {
-                            "findings": {
-                                "type": "ARRAY",
-                                "items": {
-                                    "type": "OBJECT",
-                                    "properties": {
-                                        "component_name": {"type": "STRING"},
-                                        "category": {
-                                            "type": "STRING",
-                                            "enum": ["Architecture", "Security", "Complexity", "Coupling", "Legacy"]
+            def _call_api():
+                return self.client.models.generate_content(
+                    model='gemini-flash-latest',
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema={
+                            "type": "OBJECT",
+                            "properties": {
+                                "findings": {
+                                    "type": "ARRAY",
+                                    "items": {
+                                        "type": "OBJECT",
+                                        "properties": {
+                                            "component_name": {"type": "STRING"},
+                                            "category": {
+                                                "type": "STRING",
+                                                "enum": ["Architecture", "Security", "Complexity", "Coupling", "Legacy"]
+                                            },
+                                            "observation": {"type": "STRING"},
+                                            "impact": {"type": "STRING"},
+                                            "reasoning": {"type": "STRING"},
+                                            "recommended_action": {"type": "STRING"},
+                                            "priority": {
+                                                "type": "STRING",
+                                                "enum": ["Critical", "High", "Medium", "Low"]
+                                            },
+                                            "confidence": {
+                                                "type": "STRING",
+                                                "enum": ["Confirmed", "Probable", "Insufficient Evidence"]
+                                            },
+                                            "mermaid_diagram": {"type": "STRING"}
                                         },
-                                        "observation": {"type": "STRING"},
-                                        "impact": {"type": "STRING"},
-                                        "reasoning": {"type": "STRING"},
-                                        "recommended_action": {"type": "STRING"},
-                                        "priority": {
-                                            "type": "STRING",
-                                            "enum": ["Critical", "High", "Medium", "Low"]
-                                        },
-                                        "confidence": {
-                                            "type": "STRING",
-                                            "enum": ["Confirmed", "Probable", "Insufficient Evidence"]
-                                        },
-                                        "mermaid_diagram": {"type": "STRING"}
-                                    },
-                                    "required": ["component_name", "category", "observation", "impact", "reasoning", "recommended_action", "priority", "confidence", "mermaid_diagram"]
+                                        "required": ["component_name", "category", "observation", "impact", "reasoning", "recommended_action", "priority", "confidence", "mermaid_diagram"]
+                                    }
                                 }
-                            }
+                            },
+                            "required": ["findings"]
                         },
-                        "required": ["findings"]
-                    },
-                ),
-            )
+                    ),
+                )
+            response = self._invoke_with_retry(_call_api)
             data = json.loads(response.text)
             return [GeminiFindingResponse(**f) for f in data.get("findings", [])]
         except Exception as e:
             logger.error(f"Gemini API Error: {e}")
-            return self._generate_batch_fallback(batch)
+            raise
 
     def _generate_batch_fallback(self, risk_data: List[Dict[str, Any]]) -> List[GeminiFindingResponse]:
         results = []
@@ -160,8 +180,7 @@ class AIAdvisoryService:
     def synthesize_executive_summary(self, system_context: Any, legacy_posture: Any) -> Dict[str, str]:
         """Calls Gemini to write a high-level strategic executive summary."""
         if not self.client:
-            logger.warning("No GEMINI_API_KEY found. Falling back to static summary.")
-            return self._generate_summary_fallback(system_context)
+            raise ValueError("No GEMINI_API_KEY found. AI Synthesis unavailable.")
             
         prompt = f"""
         You are a Principal PHP Modernization Architect consulting for a C-level executive.
@@ -189,27 +208,29 @@ class AIAdvisoryService:
         """
         
         try:
-            response = self.client.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema={
-                        "type": "OBJECT",
-                        "properties": {
-                            "current_state": {"type": "STRING"},
-                            "critical_risks": {"type": "STRING"},
-                            "strategic_roadmap": {"type": "STRING"}
+            def _call_api():
+                return self.client.models.generate_content(
+                    model='gemini-flash-latest',
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema={
+                            "type": "OBJECT",
+                            "properties": {
+                                "current_state": {"type": "STRING"},
+                                "critical_risks": {"type": "STRING"},
+                                "strategic_roadmap": {"type": "STRING"}
+                            },
+                            "required": ["current_state", "critical_risks", "strategic_roadmap"]
                         },
-                        "required": ["current_state", "critical_risks", "strategic_roadmap"]
-                    },
-                ),
-            )
+                    ),
+                )
+            response = self._invoke_with_retry(_call_api)
             data = json.loads(response.text)
             return data
         except Exception as e:
             logger.error(f"Gemini API Error (Summary): {e}")
-            return self._generate_summary_fallback(system_context)
+            raise
 
     def _generate_summary_fallback(self, system_context: Any) -> Dict[str, str]:
         return {
@@ -221,8 +242,7 @@ class AIAdvisoryService:
     def synthesize_rector_config(self, system_framework: str, php_era: str, ast_metrics: str) -> RectorArtifact:
         """Calls Gemini to write a bespoke, actionable rector.php script."""
         if not self.client:
-            logger.warning("No GEMINI_API_KEY found. Falling back to static rector config.")
-            return self._generate_rector_fallback()
+            raise ValueError("No GEMINI_API_KEY found. AI Synthesis unavailable.")
             
         prompt = f"""
         You are an expert PHP modernization tool. 
@@ -238,19 +258,21 @@ class AIAdvisoryService:
         """
         
         try:
-            response = self.client.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=RectorArtifact,
-                ),
-            )
+            def _call_api():
+                return self.client.models.generate_content(
+                    model='gemini-flash-latest',
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=RectorArtifact,
+                    ),
+                )
+            response = self._invoke_with_retry(_call_api)
             data = json.loads(response.text)
             return RectorArtifact(**data)
         except Exception as e:
             logger.error(f"Gemini API Error (Rector): {e}")
-            return self._generate_rector_fallback()
+            raise
             
     def _generate_rector_fallback(self) -> RectorArtifact:
         fallback_code = "<?php\n\nuse Rector\\Config\\RectorConfig;\nuse Rector\\Set\\ValueObject\\LevelSetList;\n\nreturn static function (RectorConfig $rectorConfig): void {\n    $rectorConfig->sets([\n        LevelSetList::UP_TO_PHP_82\n    ]);\n};\n"

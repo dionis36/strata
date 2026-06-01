@@ -33,17 +33,23 @@ def show_artifact_center():
         if current_run:
             run_status = current_run.get("status", "unknown")
             
-    if run_status == "analysis_complete":
-        st.markdown(
-            "<div style='padding:1rem;background-color:rgba(14, 165, 233, 0.1);border-left:4px solid #0ea5e9;border-radius:4px;color:#e2e8f0;'>"
-            "<strong>System intelligence synthesis in progress. Finalizing strategic advisory reports...</strong>"
-            "</div>", 
-            unsafe_allow_html=True
-        )
-        st.write("")
-        if st.button("Refresh Status"):
-            st.rerun()
-        st.stop()
+    synthesis_statuses = ["analysis_complete", "synthesizing_findings", "synthesizing_summary", "synthesizing_rector"]
+    
+    if run_status in synthesis_statuses:
+        import time
+        with st.status("Synthesizing System Intelligence...", expanded=True) as status:
+            if run_status == "analysis_complete" or run_status == "synthesizing_findings":
+                st.write("🤖 Synthesizing deep architectural findings...")
+            elif run_status == "synthesizing_summary":
+                st.write("✅ Architectural findings synthesized.")
+                st.write("📝 Writing executive roadmap and summary...")
+            elif run_status == "synthesizing_rector":
+                st.write("✅ Executive summary complete.")
+                st.write("⚙️ Generating targeted Rector.php refactoring rules...")
+                
+            st.write("*(This process spaces out API calls to respect rate limits. Please wait...)*")
+            time.sleep(3)
+        st.rerun()
     elif run_status == "analyzing":
         st.markdown(
             "<div style='padding:1rem;background-color:rgba(14, 165, 233, 0.1);border-left:4px solid #0ea5e9;border-radius:4px;color:#e2e8f0;'>"
@@ -55,6 +61,20 @@ def show_artifact_center():
         if st.button("Refresh Status"):
             st.rerun()
         st.stop()
+    elif run_status == "intelligence_failed":
+        st.markdown(
+            "<div style='padding:1rem;background-color:rgba(239, 68, 68, 0.1);border-left:4px solid #ef4444;border-radius:4px;color:#e2e8f0;margin-bottom:1rem;'>"
+            "<strong>AI Intelligence Synthesis Failed.</strong> The AI engine is currently experiencing high demand. Base metrics are available, but deep synthesis failed."
+            "</div>", 
+            unsafe_allow_html=True
+        )
+        if st.button("Retry AI Synthesis", type="primary"):
+            res = requests.post(f"{FASTAPI_URL}/runs/{run_id}/retry_intelligence")
+            if res.status_code == 200:
+                st.success("Retry queued! Processing in background...")
+                st.rerun()
+            else:
+                st.error("Failed to queue retry.")
 
 
     st.markdown("### Workspace Export Bundle")

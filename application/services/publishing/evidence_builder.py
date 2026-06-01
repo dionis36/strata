@@ -162,11 +162,11 @@ class EvidenceBuilder:
                 f = Finding(
                     id=f"FND-{r.id}",
                     category="Architecture",
-                    observation=f"Component '{r.component_name}' identified as an architectural bottleneck.",
+                    observation=f"[AI SYNTHESIS UNAVAILABLE - SHOWING BASE METRICS] High Risk Component '{r.component_name}'",
                     evidence=evidence,
-                    impact="Modifications to this component carry a high blast radius.",
-                    reasoning="High structural coupling pressure indicates entanglement.",
-                    recommended_action="Isolate dependencies behind an interface.",
+                    impact="[AI SYNTHESIS UNAVAILABLE]",
+                    reasoning=f"High structural coupling pressure ({r.coupling_pressure:.2f}) and Risk Score ({r.risk_score:.2f}).",
+                    recommended_action="[AI SYNTHESIS UNAVAILABLE]",
                     priority="Critical" if r.risk_score > 0.8 else "High",
                     confidence="Confirmed" if r.risk_score > 0.8 else "Probable",
                     mermaid_diagram=None
@@ -216,7 +216,7 @@ class EvidenceBuilder:
                 impact="Potential architectural bottleneck and high blast radius.",
                 reasoning=f"High coupling ({r.coupling_pressure:.2f}) and instability ({r.instability:.2f}).",
                 recommended_action="Isolate and refactor.",
-                priority=r.risk_level,
+                priority=r.risk_level.capitalize(),
                 confidence="Confirmed",
                 mermaid_diagram=None
             )

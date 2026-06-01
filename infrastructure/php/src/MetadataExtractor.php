@@ -186,6 +186,13 @@ class MetadataExtractor extends NodeVisitorAbstract
                         'isStatic' => $node->isStatic(),
                         'visibility' => $node->isPublic() ? 'public' : ($node->isProtected() ? 'protected' : 'private')
                     ];
+
+                    // PHP-ActiveRecord: capture explicit table name declaration
+                    // e.g. static $table_name = 'users';
+                    if ($node->isStatic() && (string) $prop->name === 'table_name'
+                        && $prop->default instanceof Node\Scalar\String_) {
+                        $this->metadata['classes'][$this->currentClass]['table_name'] = $prop->default->value;
+                    }
                 }
             }
         }
@@ -537,7 +544,19 @@ class MetadataExtractor extends NodeVisitorAbstract
                     'line' => $node->getLine()
                 ];
             }
-            
+
+            // PHP-ActiveRecord instance-level ORM write detection
+            // e.g. $user->save(), $record->update_attributes([...]), $item->destroy()
+            $ormInstanceWrites = ['save', 'update_attributes', 'update_attribute', 'destroy'];
+            if (in_array($methodName, $ormInstanceWrites)) {
+                $this->metadata['requirements'][] = [
+                    'type'       => 'ORM_WRITE',
+                    'orm_class'  => $this->currentClass ?? 'Unknown',
+                    'method'     => (string) $node->name,
+                    'line'       => $node->getLine(),
+                ];
+            }
+
             $this->metadata['calls'][] = [
                 'type' => 'method_call',
                 'method' => (string) $node->name,
@@ -559,6 +578,37 @@ class MetadataExtractor extends NodeVisitorAbstract
                             'line' => $node->getLine()
                         ];
                     }
+                }
+
+                // PHP-ActiveRecord static ORM read/write detection
+                $methodLower = strtolower((string) $node->name);
+                $ormReads  = ['find', 'find_by_id', 'find_by_sql', 'find_all_by_sql',
+                              'count', 'first', 'last', 'all', 'exists'];
+                $ormWrites = ['create', 'delete_all', 'update_all', 'create_or_update'];
+
+                $inferredTable = self::inferTableName($class);
+
+                // Look up explicit $table_name if the class is known
+                if (isset($this->metadata['classes'][$class]['table_name'])) {
+                    $inferredTable = $this->metadata['classes'][$class]['table_name'];
+                }
+
+                if (in_array($methodLower, $ormReads)) {
+                    $this->metadata['requirements'][] = [
+                        'type'           => 'ORM_READ',
+                        'orm_class'      => $class,
+                        'inferred_table' => $inferredTable,
+                        'method'         => (string) $node->name,
+                        'line'           => $node->getLine(),
+                    ];
+                } elseif (in_array($methodLower, $ormWrites)) {
+                    $this->metadata['requirements'][] = [
+                        'type'           => 'ORM_WRITE',
+                        'orm_class'      => $class,
+                        'inferred_table' => $inferredTable,
+                        'method'         => (string) $node->name,
+                        'line'           => $node->getLine(),
+                    ];
                 }
 
                 $this->metadata['calls'][] = [
@@ -680,6 +730,35 @@ class MetadataExtractor extends NodeVisitorAbstract
                 'line' => $line
             ];
         }
+    }
+
+    /**
+     * Infer database table name from a PHP-ActiveRecord class name.
+     * Follows the convention: ClassName -> snake_case -> pluralised.
+     * e.g. User -> users, UserPermission -> user_permissions, Cart -> carts.
+     * Note: Classes with explicit $table_name static props override this.
+     */
+    private static function inferTableName(string $className): string
+    {
+        // Underscored class names (e.g. User_Permission) are already snake_case
+        if (strpos($className, '_') !== false) {
+            $snake = strtolower($className);
+        } else {
+            // Convert CamelCase to snake_case
+            $snake = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $className));
+        }
+
+        // Simple English pluralisation sufficient for ActiveRecord table naming
+        if (substr($snake, -1) === 's' || substr($snake, -2) === 'sh' ||
+            substr($snake, -2) === 'ch' || substr($snake, -1) === 'x' ||
+            substr($snake, -1) === 'z') {
+            return $snake . 'es';
+        }
+        if (substr($snake, -1) === 'y' &&
+            !in_array(substr($snake, -2, 1), ['a', 'e', 'i', 'o', 'u'])) {
+            return substr($snake, 0, -1) . 'ies';
+        }
+        return $snake . 's';
     }
 
     public function leaveNode(Node $node)

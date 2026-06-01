@@ -104,7 +104,8 @@ with st.sidebar:
         runs_res = requests.get(f"{FASTAPI_URL}/runs", timeout=2)
         if runs_res.status_code == 200:
             available_runs = runs_res.json()
-            run_options = {f"Run {r['id']} ({r['started_at'][:10]})": r['id'] for r in available_runs if r['status'].upper() == 'COMPLETED'}
+            valid_statuses = ['COMPLETED', 'ANALYSIS_COMPLETE', 'INTELLIGENCE_READY', 'INTELLIGENCE_FAILED', 'SYNTHESIZING_FINDINGS', 'SYNTHESIZING_SUMMARY', 'SYNTHESIZING_RECTOR']
+            run_options = {f"Run {r['id']} ({r['started_at'][:10]})": r['id'] for r in available_runs if r['status'].upper() in valid_statuses}
             if run_options:
                 current_run_id = st.session_state.get("active_run_id")
                 # Find current index or default to 0

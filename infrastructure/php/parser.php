@@ -3,18 +3,19 @@
 require __DIR__ . '/vendor/autoload.php';
 
 use PhpParser\ParserFactory;
+use PhpParser\PhpVersion;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use Strata\Parser\MetadataExtractor;
 
-// Initialize Parser
-
-
-// Initialize Parser with Legacy Support
-// PHP-Parser v5.x uses a new factory pattern. 
-// We use the newest supported version to ensure maximum compatibility with both 
-// modern and legacy (PHP 5.x/7.x) syntax.
-$parser = (new ParserFactory())->createForNewestSupportedVersion();
+// ── Parser Initialisation ────────────────────────────────────────────────────
+// We target PHP 7.4 via the Emulative lexer.  This gives us:
+//   • Full PHP 7.x syntax support
+//   • Emulation of deprecated PHP 5/7 constructs (e.g. short-open-tags after
+//     our pre-processor normalises them, curly-brace string indices, etc.)
+//   • Widest compatibility with legacy PHP 5-era monolith code without
+//     needing a second PHP 5 parser binary.
+$parser = (new ParserFactory())->createForVersion(PhpVersion::fromString('7.4'));
 
 while ($path = fgets(STDIN)) {
     $path = trim($path);
@@ -27,12 +28,36 @@ while ($path = fgets(STDIN)) {
 
     try {
         $code = file_get_contents($path);
+
+        // ── Normalise PHP short-open-tags (<?) ─────────────────────────────────
+        // PHP-Parser v5 does not support <? because PHP 7+ dropped short_open_tag.
+        // Legacy PHP 5 codebases use it everywhere. Rewriting to <?php is safe.
+        // Negative lookahead leaves <?php, <?=, and <?xml untouched.
+        $code = preg_replace('/<\?(?!php\b|xml\b|=)/', '<?php', $code);
+
+        // ── Normalise deprecated curly-brace string-index syntax ($s{n}) ───────
+        // $str{0} was deprecated in PHP 7.4 and removed in PHP 8.0.
+        // The Emulative lexer (PHP 7.4 target) still chokes on it inside the AST.
+        // We rewrite to the equivalent bracket syntax before parsing.
+        $code = preg_replace('/(\$[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*)\{(\d+)\}/', '$1[$2]', $code);
+
         $loc = substr_count($code, "\n") + 1;
         $stmts = $parser->parse($code);
 
+        if ($stmts === null) {
+            echo json_encode([
+                'status'  => 'error',
+                'path'    => $path,
+                'message' => 'Parser returned null (empty file or unrecoverable error)',
+            ]) . "\n";
+            continue;
+        }
+
         $extractor = new MetadataExtractor();
         $traverser = new NodeTraverser();
-        $traverser->addVisitor(new NameResolver()); // Resolve FQNs first
+        // NameResolver with lenient mode: do not throw on forward-declared or
+        // globally-scoped class names that are unresolvable (common in PHP 5 code).
+        $traverser->addVisitor(new NameResolver(null, ['throwOnUnresolvableNames' => false]));
         $traverser->addVisitor($extractor);
         $traverser->traverse($stmts);
 
@@ -40,16 +65,16 @@ while ($path = fgets(STDIN)) {
         $metadata['loc'] = $loc;
 
         echo json_encode([
-            'status' => 'success',
-            'path' => $path,
-            'metadata' => $metadata
+            'status'   => 'success',
+            'path'     => $path,
+            'metadata' => $metadata,
         ]) . "\n";
 
     } catch (PhpParser\Error $error) {
         echo json_encode([
-            'status' => 'error', 
-            'path' => $path, 
-            'message' => "Parse error: {$error->getMessage()}"
+            'status'  => 'error',
+            'path'    => $path,
+            'message' => "Parse error: {$error->getMessage()}",
         ]) . "\n";
     }
 }
