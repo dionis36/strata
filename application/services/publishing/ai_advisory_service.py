@@ -157,6 +157,67 @@ class AIAdvisoryService:
             ))
         return results
 
+    def synthesize_executive_summary(self, system_context: Any, legacy_posture: Any) -> Dict[str, str]:
+        """Calls Gemini to write a high-level strategic executive summary."""
+        if not self.client:
+            logger.warning("No GEMINI_API_KEY found. Falling back to static summary.")
+            return self._generate_summary_fallback(system_context)
+            
+        prompt = f"""
+        You are a Principal PHP Modernization Architect consulting for a C-level executive.
+        
+        Analyze the overall health and structure of this legacy system:
+        System Context:
+        - Project: {system_context.project_name}
+        - Total Files: {system_context.total_files}
+        - Lines of Code: {system_context.lines_of_code}
+        - Framework: {system_context.framework} ({system_context.php_era})
+        - Overall Readiness: {system_context.overall_readiness}%
+        
+        Legacy Posture Scores (0.0 to 10.0 scale, where 10 is modern):
+        - Version Score: {legacy_posture.version_score if legacy_posture else 'N/A'}
+        - Namespace Score: {legacy_posture.namespace_score if legacy_posture else 'N/A'}
+        - Database Layer Score: {legacy_posture.db_layer_score if legacy_posture else 'N/A'}
+        - Security Score: {legacy_posture.security_score if legacy_posture else 'N/A'}
+        - Testability Score: {legacy_posture.testability_score if legacy_posture else 'N/A'}
+        - Coupling Score: {legacy_posture.coupling_score if legacy_posture else 'N/A'}
+        
+        Provide a strategic evaluation in three exact parts:
+        1. current_state: A blunt, 2-sentence assessment of the system's current architectural health.
+        2. critical_risks: The biggest systemic danger based on the lowest dimension scores.
+        3. strategic_roadmap: A definitive 3-step action plan to modernize the system without halting feature development.
+        """
+        
+        try:
+            response = self.client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema={
+                        "type": "OBJECT",
+                        "properties": {
+                            "current_state": {"type": "STRING"},
+                            "critical_risks": {"type": "STRING"},
+                            "strategic_roadmap": {"type": "STRING"}
+                        },
+                        "required": ["current_state", "critical_risks", "strategic_roadmap"]
+                    },
+                ),
+            )
+            data = json.loads(response.text)
+            return data
+        except Exception as e:
+            logger.error(f"Gemini API Error (Summary): {e}")
+            return self._generate_summary_fallback(system_context)
+
+    def _generate_summary_fallback(self, system_context: Any) -> Dict[str, str]:
+        return {
+            "current_state": f"The {system_context.framework} system contains significant technical debt.",
+            "critical_risks": "High architectural coupling and low test coverage make modifications dangerous.",
+            "strategic_roadmap": "1. Introduce static analysis. 2. Add characterization tests. 3. Incrementally decouple the database layer."
+        }
+
     def synthesize_rector_config(self, system_framework: str, php_era: str, ast_metrics: str) -> RectorArtifact:
         """Calls Gemini to write a bespoke, actionable rector.php script."""
         if not self.client:

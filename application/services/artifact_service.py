@@ -206,6 +206,8 @@ class ArtifactService:
         """Generates an Executive Report directly from the Canonical Model with premium HTML/CSS."""
         from application.services.publishing.evidence_builder import EvidenceBuilder
         from application.services.publishing.quality_gate import QualityGate
+        from application.services.publishing.ai_advisory_service import AIAdvisoryService
+        import json
         
         model = EvidenceBuilder(self.db).build(run_id)
         if not QualityGate().validate(model):
@@ -213,6 +215,10 @@ class ArtifactService:
             
         ctx = model.system_context
         readiness_pct = min(ctx.overall_readiness, 100.0) if ctx.overall_readiness > 1.0 else (ctx.overall_readiness * 100)
+        
+        # Phase 2: Get LLM Executive Summary
+        ai_service = AIAdvisoryService()
+        exec_summary = ai_service.synthesize_executive_summary(ctx, model.legacy_posture)
         
         html = [
             "<!DOCTYPE html>",
@@ -222,6 +228,7 @@ class ArtifactService:
             "    <meta name='viewport' content='width=device-width, initial-scale=1.0'>",
             "    <title>Executive Modernization Assessment</title>",
             "    <script src='https://cdn.tailwindcss.com'></script>",
+            "    <script src='https://cdn.jsdelivr.net/npm/chart.js'></script>",
             "    <script type='module'>",
             "        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';",
             "        mermaid.initialize({ startOnLoad: true, theme: 'dark' });",
@@ -245,13 +252,26 @@ class ArtifactService:
             f"        <button onclick='window.print()' class='px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg shadow-lg font-medium transition-colors print-hide'>Export to PDF</button>",
             f"    </header>",
             "",
-            "    <!-- Readiness Hero -->",
-            "    <div class='glass-card p-8 mb-8 flex items-center justify-between'>",
+            "    <!-- Section 1: Executive Summary -->",
+            "    <div class='glass-card p-8 mb-8 grid grid-cols-1 md:grid-cols-2 gap-8'>",
             "        <div>",
-            "            <h2 class='text-2xl font-semibold mb-2'>Modernization Readiness</h2>",
-            "            <p class='text-slate-400'>Based on architectural cohesion and decoupling probability.</p>",
+            "            <h2 class='text-2xl font-semibold mb-4 text-white border-b border-slate-700 pb-2'>Executive Summary</h2>",
+            f"           <h3 class='text-lg font-medium text-sky-300 mb-2'>Current State</h3>",
+            f"           <p class='text-slate-300 mb-4'>{exec_summary.get('current_state', '')}</p>",
+            f"           <h3 class='text-lg font-medium text-red-400 mb-2'>Critical Risks</h3>",
+            f"           <p class='text-slate-300 mb-4'>{exec_summary.get('critical_risks', '')}</p>",
+            f"           <h3 class='text-lg font-medium text-emerald-400 mb-2'>Strategic Roadmap</h3>",
+            f"           <p class='text-slate-300'>{exec_summary.get('strategic_roadmap', '').replace(chr(10), '<br>')}</p>",
             "        </div>",
-            f"        <div class='text-5xl font-bold text-emerald-400'>{readiness_pct:.1f}%</div>",
+            "        <div class='flex flex-col items-center justify-center'>",
+            "            <div class='text-center mb-4'>",
+            "                <div class='text-5xl font-bold text-emerald-400'>{0:.1f}%</div>".format(readiness_pct),
+            "                <div class='text-sm text-slate-400 uppercase tracking-wider mt-1'>Modernization Readiness</div>",
+            "            </div>",
+            "            <div class='w-full max-w-xs'>",
+            "                <canvas id='radarChart'></canvas>",
+            "            </div>",
+            "        </div>",
             "    </div>",
             "",
             "    <!-- System Vitality Grid -->",
@@ -264,21 +284,32 @@ class ArtifactService:
             f"        <div class='glass-card p-6'><p class='text-xs text-slate-400 uppercase tracking-wider mb-1'>Test Coverage</p><p class='metric-value'>{ctx.test_coverage}</p></div>",
             "    </div>",
             "",
-            "    <!-- Strategic Insights -->",
-            "    <h3 class='text-xl font-semibold mb-4 border-b border-slate-700 pb-2'>Architectural Intelligence</h3>",
-            "    <div class='glass-card p-6 mb-12'>",
-            f"        <p class='text-slate-300 mb-2'><span class='font-semibold text-white'>Framework Detection:</span> {ctx.framework} ({ctx.php_era})</p>",
-            f"        <p class='text-slate-300'>",
+            "    <!-- Database Intelligence -->",
+            "    <h3 class='text-xl font-semibold mb-4 border-b border-slate-700 pb-2'>Database & State Intelligence</h3>",
+            "    <div class='glass-card p-6 mb-12 overflow-x-auto'>",
+            "        <table class='w-full text-left text-sm text-slate-300'>",
+            "            <thead class='text-xs text-slate-400 uppercase bg-slate-800/50'>",
+            "                <tr>",
+            "                    <th class='px-4 py-3 rounded-tl-lg'>Database Table / Stateful Component</th>",
+            "                    <th class='px-4 py-3'>Write Intensity</th>",
+            "                    <th class='px-4 py-3 rounded-tr-lg'>Shared Table Pressure</th>",
+            "                </tr>",
+            "            </thead>",
+            "            <tbody>",
         ]
         
-        if readiness_pct >= 70:
-            html.append("The system is structurally sound. Proceed with incremental in-place upgrades.")
-        elif readiness_pct >= 40:
-            html.append("The system contains mixed legacy patterns. A Strangler Fig facade is recommended to isolate stable modules from legacy technical debt.")
-        else:
-            html.append("The system exhibits critical architectural decay. Feature development should be frozen while core domains are extracted or rewritten.")
+        for db in model.database_intelligence:
+            html.append("                <tr class='border-b border-slate-700/50 hover:bg-slate-800/30 transition-colors'>")
+            html.append(f"                    <td class='px-4 py-3 font-medium text-sky-300'>{db.table_name}</td>")
+            html.append(f"                    <td class='px-4 py-3'>{db.write_intensity:.2f}</td>")
+            html.append(f"                    <td class='px-4 py-3 text-red-300 font-bold'>{db.shared_table_pressure:.2f}</td>")
+            html.append("                </tr>")
             
-        html.append("</p>")
+        if not model.database_intelligence:
+            html.append("                <tr><td colspan='3' class='px-4 py-3 text-center text-slate-500 italic'>No high-pressure database tables detected.</td></tr>")
+            
+        html.append("            </tbody>")
+        html.append("        </table>")
         html.append("    </div>")
         
         html.append("    <!-- Risk Register -->")
@@ -307,6 +338,53 @@ class ArtifactService:
                     html.append(f"        </div>")
                 html.append(f"    </div>")
                 
+        # Chart.js initialization script
+        if model.legacy_posture:
+            labels = ["Version", "Namespaces", "DB Layer", "Security", "Testability", "Coupling"]
+            data = [
+                model.legacy_posture.version_score * 10,
+                model.legacy_posture.namespace_score * 10,
+                model.legacy_posture.db_layer_score * 10,
+                model.legacy_posture.security_score * 10,
+                model.legacy_posture.testability_score * 10,
+                model.legacy_posture.coupling_score * 10
+            ]
+            
+            html.append("    <script>")
+            html.append("    document.addEventListener('DOMContentLoaded', function() {")
+            html.append("        var ctx = document.getElementById('radarChart').getContext('2d');")
+            html.append("        new Chart(ctx, {")
+            html.append("            type: 'radar',")
+            html.append("            data: {")
+            html.append(f"                labels: {json.dumps(labels)},")
+            html.append("                datasets: [{")
+            html.append("                    label: 'Modernization Posture (0-10)',")
+            html.append(f"                    data: {json.dumps(data)},")
+            html.append("                    backgroundColor: 'rgba(56, 189, 248, 0.2)',")
+            html.append("                    borderColor: 'rgba(56, 189, 248, 1)',")
+            html.append("                    pointBackgroundColor: 'rgba(56, 189, 248, 1)',")
+            html.append("                    pointBorderColor: '#fff',")
+            html.append("                    pointHoverBackgroundColor: '#fff',")
+            html.append("                    pointHoverBorderColor: 'rgba(56, 189, 248, 1)'")
+            html.append("                }]")
+            html.append("            },")
+            html.append("            options: {")
+            html.append("                scales: {")
+            html.append("                    r: {")
+            html.append("                        angleLines: { color: 'rgba(255, 255, 255, 0.1)' },")
+            html.append("                        grid: { color: 'rgba(255, 255, 255, 0.1)' },")
+            html.append("                        pointLabels: { color: '#94a3b8', font: { family: 'Inter' } },")
+            html.append("                        ticks: { display: false, min: 0, max: 10 }")
+            html.append("                    }")
+            html.append("                },")
+            html.append("                plugins: {")
+            html.append("                    legend: { display: false }")
+            html.append("                }")
+            html.append("            }")
+            html.append("        });")
+            html.append("    });")
+            html.append("    </script>")
+            
         html.append("</body>")
         html.append("</html>")
         

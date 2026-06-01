@@ -31,18 +31,52 @@ class EvidenceBuilder:
             overall_readiness=legacy.total_modernization_score if legacy else 0.0
         )
         
-        # 2. Hydrate Modules (Inferred from metrics for now)
-        # Note: A true module clustering algorithm would go here.
-        # For MVP of the pipeline, we map top-level directories as modules.
+        # 2. Hydrate Database Intelligence
+        db_intel = self._extract_database_intelligence(run_id)
+        
+        # 3. Hydrate Legacy Posture
+        legacy_posture = self._extract_legacy_posture(legacy)
+
+        # 4. Hydrate Modules (Inferred from metrics for now)
         modules = self._infer_modules(run_id)
         
-        # 3. Hydrate Findings (From Risks)
+        # 5. Hydrate Findings (From Risks)
         findings = self._extract_findings(run_id)
         
         return CanonicalModel(
             system_context=ctx,
+            legacy_posture=legacy_posture,
+            database_intelligence=db_intel,
             modules=modules,
             findings=findings
+        )
+
+    def _extract_database_intelligence(self, run_id: int):
+        from infrastructure.persistence.models import ComponentBehavior
+        from application.services.publishing.models import DatabaseIntelligence
+        behaviors = self.db.query(ComponentBehavior).filter(
+            ComponentBehavior.run_id == run_id,
+            ComponentBehavior.shared_table_pressure > 0
+        ).order_by(ComponentBehavior.shared_table_pressure.desc()).limit(10).all()
+        
+        return [DatabaseIntelligence(
+            table_name=b.component_name,
+            write_intensity=b.write_intensity,
+            shared_table_pressure=b.shared_table_pressure
+        ) for b in behaviors]
+
+    def _extract_legacy_posture(self, legacy):
+        from application.services.publishing.models import LegacyPosture
+        if not legacy:
+            return None
+        return LegacyPosture(
+            version_score=legacy.version_score,
+            namespace_score=legacy.namespace_score,
+            db_layer_score=legacy.db_layer_score,
+            security_score=legacy.security_score,
+            testability_score=legacy.testability_score,
+            coupling_score=legacy.coupling_score,
+            total_score=legacy.total_modernization_score
         )
 
     def _infer_modules(self, run_id: int) -> List[Module]:

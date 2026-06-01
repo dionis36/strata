@@ -39,7 +39,23 @@ class SystemContext(BaseModel):
     framework: str
     overall_readiness: float
 
+class DatabaseIntelligence(BaseModel):
+    table_name: str
+    write_intensity: float
+    shared_table_pressure: float
+
+class LegacyPosture(BaseModel):
+    version_score: float
+    namespace_score: float
+    db_layer_score: float
+    security_score: float
+    testability_score: float
+    coupling_score: float
+    total_score: float
+
 class CanonicalModel(BaseModel):
     system_context: SystemContext
+    legacy_posture: Optional[LegacyPosture] = None
+    database_intelligence: List[DatabaseIntelligence] = Field(default_factory=list)
     modules: List[Module]
     findings: List[Finding]
