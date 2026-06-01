@@ -24,6 +24,39 @@ def show_artifact_center():
         st.warning("No active analysis run detected. Please execute a scan from the Dashboard.")
         return
 
+    # Check Run Status
+    runs_res = requests.get(f"{FASTAPI_URL}/runs")
+    run_status = "unknown"
+    if runs_res.status_code == 200:
+        runs = runs_res.json()
+        current_run = next((r for r in runs if r["id"] == run_id), None)
+        if current_run:
+            run_status = current_run.get("status", "unknown")
+            
+    if run_status == "analysis_complete":
+        st.markdown(
+            "<div style='padding:1rem;background-color:rgba(14, 165, 233, 0.1);border-left:4px solid #0ea5e9;border-radius:4px;color:#e2e8f0;'>"
+            "<strong>System intelligence synthesis in progress. Finalizing strategic advisory reports...</strong>"
+            "</div>", 
+            unsafe_allow_html=True
+        )
+        st.write("")
+        if st.button("Refresh Status"):
+            st.rerun()
+        st.stop()
+    elif run_status == "analyzing":
+        st.markdown(
+            "<div style='padding:1rem;background-color:rgba(14, 165, 233, 0.1);border-left:4px solid #0ea5e9;border-radius:4px;color:#e2e8f0;'>"
+            "<strong>Core analysis is currently running. Please wait for completion.</strong>"
+            "</div>", 
+            unsafe_allow_html=True
+        )
+        st.write("")
+        if st.button("Refresh Status"):
+            st.rerun()
+        st.stop()
+
+
     st.markdown("### Workspace Export Bundle")
     st.caption("Download all selected artifacts packaged in a structured ZIP archive.")
     
@@ -152,7 +185,7 @@ def show_artifact_center():
             with st.spinner("Synthesizing custom Rector rules via AI..."):
                 res = requests.get(f"{FASTAPI_URL}/artifacts/rector/{run_id}")
                 if res.status_code == 200:
-                    st.success("Rector Configuration Synthesized", icon=":material/check_circle:")
+                    st.success("Rector Configuration Synthesized")
                     with st.expander("View AI-Generated rector.php", expanded=True):
                         st.code(res.text, language="php")
                     st.download_button(

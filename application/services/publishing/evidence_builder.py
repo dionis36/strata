@@ -114,8 +114,8 @@ class EvidenceBuilder:
         return mods
 
     def _extract_findings(self, run_id: int) -> List[Finding]:
-        from application.services.publishing.ai_advisory_service import AIAdvisoryService
-        
+        import json
+        run = self.db.query(AnalysisRun).filter(AnalysisRun.id == run_id).first()
         risks = self.db.query(ComponentRisk).filter(ComponentRisk.run_id == run_id).order_by(ComponentRisk.final_risk.desc()).limit(50).all()
         findings = []
         
@@ -123,80 +123,54 @@ class EvidenceBuilder:
         if not top_risks:
             return findings
             
-        from infrastructure.persistence.models import GraphNode, GraphEdge
-        import json
-        
-        risk_data = []
-        for r in top_risks:
-            node = self.db.query(GraphNode).filter(
-                GraphNode.run_id == run_id, 
-                GraphNode.fqn == r.component_name
-            ).first()
-            
-            ast_metadata = {}
-            if node and node.metadata_json:
-                try:
-                    ast_metadata = json.loads(node.metadata_json)
-                except:
-                    pass
-                    
-            dependencies = []
-            if node:
-                edges = self.db.query(GraphEdge).filter(
-                    GraphEdge.run_id == run_id,
-                    GraphEdge.source_id == node.id
-                ).all()
-                for e in edges:
-                    target = self.db.query(GraphNode).filter(
-                        GraphNode.run_id == run_id,
-                        GraphNode.id == e.target_id
-                    ).first()
-                    if target:
-                        dependencies.append(f"{e.edge_type} -> {target.node_type}:{target.name}")
-                        
-            risk_data.append({
-                "component_name": r.component_name,
-                "risk_score": r.risk_score,
-                "coupling_pressure": r.coupling_pressure,
-                "blast_radius": r.norm_blast_radius,
-                "domain_archetype": getattr(r, 'domain_archetype', 'UNKNOWN'),
-                "is_stateful": getattr(r, 'is_stateful', False),
-                "lcom": getattr(r, 'lcom', 0.0),
-                "wmc": getattr(r, 'wmc', 0),
-                "test_coverage": getattr(r, 'test_coverage', None),
-                "semantic_multiplier": getattr(r, 'semantic_multiplier', 1.0),
-                "ast_metadata": ast_metadata,
-                "dependency_edges": dependencies
-            })
-        
-        ai_service = AIAdvisoryService()
-        ai_findings = ai_service.synthesize_batch_findings(risk_data)
+        ai_findings = []
+        if run and run.ai_findings_json:
+            try:
+                ai_data = json.loads(run.ai_findings_json)
+                from application.services.publishing.ai_advisory_service import GeminiFindingResponse
+                ai_findings = [GeminiFindingResponse(**f) for f in ai_data]
+            except Exception:
+                pass
+                
         ai_map = {f.component_name: f for f in ai_findings}
         
         for r in top_risks:
             ai_f = ai_map.get(r.component_name)
-            if not ai_f:
-                continue
-                
+            
             evidence = [
                 Evidence(type="file", target=r.component_name),
                 Evidence(type="metric", target="risk_score", metric_value=r.risk_score),
                 Evidence(type="metric", target="coupling_pressure", metric_value=r.coupling_pressure)
             ]
             
-            # Map strict LLM response to our canonical schema
-            f = Finding(
-                id=f"FND-{r.id}",
-                category=ai_f.category,
-                observation=ai_f.observation,
-                evidence=evidence,
-                impact=ai_f.impact,
-                reasoning=ai_f.reasoning,
-                recommended_action=ai_f.recommended_action,
-                priority=ai_f.priority,
-                confidence=ai_f.confidence,
-                mermaid_diagram=ai_f.mermaid_diagram
-            )
+            if ai_f:
+                # Map cached LLM response to our canonical schema
+                f = Finding(
+                    id=f"FND-{r.id}",
+                    category=ai_f.category,
+                    observation=ai_f.observation,
+                    evidence=evidence,
+                    impact=ai_f.impact,
+                    reasoning=ai_f.reasoning,
+                    recommended_action=ai_f.recommended_action,
+                    priority=ai_f.priority,
+                    confidence=ai_f.confidence,
+                    mermaid_diagram=ai_f.mermaid_diagram
+                )
+            else:
+                # Fallback if cache is empty or AI failed
+                f = Finding(
+                    id=f"FND-{r.id}",
+                    category="Architecture",
+                    observation=f"Component '{r.component_name}' identified as an architectural bottleneck.",
+                    evidence=evidence,
+                    impact="Modifications to this component carry a high blast radius.",
+                    reasoning="High structural coupling pressure indicates entanglement.",
+                    recommended_action="Isolate dependencies behind an interface.",
+                    priority="Critical" if r.risk_score > 0.8 else "High",
+                    confidence="Confirmed" if r.risk_score > 0.8 else "Probable",
+                    mermaid_diagram=None
+                )
             findings.append(f)
             
         return findings

@@ -32,6 +32,11 @@ class AnalysisRun(Base):
     total_edges = Column(Integer, nullable=True)
     error_message = Column(String, nullable=True)
 
+    # Phase 6: AI Cache
+    ai_executive_summary_json = Column(String, nullable=True)
+    ai_findings_json = Column(String, nullable=True)
+    ai_rector_config_json = Column(String, nullable=True)
+
 class SchemaVersion(Base):
     __tablename__ = "schema_version"
 

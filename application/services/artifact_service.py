@@ -79,24 +79,17 @@ class ArtifactService:
         return sarif
 
     def generate_rector_config(self, run_id: int) -> str:
-        """Generates a rector.php configuration file string using Gemini."""
-        from application.services.publishing.evidence_builder import EvidenceBuilder
-        from application.services.publishing.ai_advisory_service import AIAdvisoryService
-        
-        # Build canonical model for context
-        model = EvidenceBuilder(self.db).build(run_id)
-        
-        # We need a summary of the worst AST issues
-        ast_summary = " | ".join([f.observation for f in model.findings[:10]])
-        
-        ai_service = AIAdvisoryService()
-        rector_artifact = ai_service.synthesize_rector_config(
-            system_framework=model.system_context.framework,
-            php_era=model.system_context.php_era,
-            ast_metrics=ast_summary
-        )
-        
-        return rector_artifact.rector_php_code
+        """Generates a rector.php configuration file string from cache."""
+        run = self.db.query(AnalysisRun).filter(AnalysisRun.id == run_id).first()
+        if run and run.ai_rector_config_json:
+            try:
+                data = json.loads(run.ai_rector_config_json)
+                return data.get("rector_php_code", "<?php\n// Rector config not found\n")
+            except Exception:
+                pass
+                
+        # Fallback
+        return "<?php\n\nuse Rector\\Config\\RectorConfig;\nuse Rector\\Set\\ValueObject\\LevelSetList;\n\nreturn static function (RectorConfig $rectorConfig): void {\n    $rectorConfig->sets([\n        LevelSetList::UP_TO_PHP_82\n    ]);\n};\n"
 
     def generate_deptrac_yaml(self, run_id: int) -> str:
         """Generates a deptrac.yaml configuration file based on LayerService outputs."""
@@ -206,7 +199,6 @@ class ArtifactService:
         """Generates an Executive Report directly from the Canonical Model with premium HTML/CSS."""
         from application.services.publishing.evidence_builder import EvidenceBuilder
         from application.services.publishing.quality_gate import QualityGate
-        from application.services.publishing.ai_advisory_service import AIAdvisoryService
         import json
         
         model = EvidenceBuilder(self.db).build(run_id)
@@ -216,9 +208,21 @@ class ArtifactService:
         ctx = model.system_context
         readiness_pct = min(ctx.overall_readiness, 100.0) if ctx.overall_readiness > 1.0 else (ctx.overall_readiness * 100)
         
-        # Phase 2: Get LLM Executive Summary
-        ai_service = AIAdvisoryService()
-        exec_summary = ai_service.synthesize_executive_summary(ctx, model.legacy_posture)
+        # Get cached LLM Executive Summary
+        run = self.db.query(AnalysisRun).filter(AnalysisRun.id == run_id).first()
+        exec_summary = {}
+        if run and run.ai_executive_summary_json:
+            try:
+                exec_summary = json.loads(run.ai_executive_summary_json)
+            except Exception:
+                pass
+                
+        if not exec_summary:
+            exec_summary = {
+                "current_state": "The system contains significant technical debt.",
+                "critical_risks": "High architectural coupling and low test coverage make modifications dangerous.",
+                "strategic_roadmap": "1. Introduce static analysis. 2. Add characterization tests. 3. Incrementally decouple."
+            }
         
         html = [
             "<!DOCTYPE html>",

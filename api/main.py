@@ -1,7 +1,7 @@
 import logging
 import datetime
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from pydantic import BaseModel
@@ -238,11 +238,62 @@ def health_check(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Database connection failed")
 
 
+def background_synthesize_intelligence(run_id: int):
+    from infrastructure.persistence.database import SessionLocal
+    from infrastructure.persistence.models import AnalysisRun, ComponentRisk, LegacyMetrics
+    from application.services.publishing.ai_advisory_service import AIAdvisoryService
+    import json
+    
+    db = SessionLocal()
+    try:
+        run = db.query(AnalysisRun).filter(AnalysisRun.id == run_id).first()
+        if not run: return
+        
+        # 1. Synthesize batch findings
+        risks = db.query(ComponentRisk).filter(ComponentRisk.run_id == run_id).order_by(ComponentRisk.final_risk.desc()).limit(5).all()
+        risk_data = [{"component_name": r.component_name, "risk_score": r.risk_score, "blast_radius": r.norm_blast_radius} for r in risks]
+        
+        ai_service = AIAdvisoryService()
+        findings = ai_service.synthesize_batch_findings(risk_data)
+        
+        # 2. Synthesize exec summary
+        class DummyCtx:
+            project_name = "Strata Analysis"
+            total_files = run.total_files
+            lines_of_code = run.total_loc
+            framework = "Unknown"
+            php_era = "Unknown"
+            overall_readiness = 50.0
+            
+        ctx = DummyCtx()
+        legacy = db.query(LegacyMetrics).filter(LegacyMetrics.run_id == run_id).first()
+        if legacy:
+            ctx.framework = legacy.detected_framework or "Unknown"
+            ctx.php_era = legacy.php_era or "Unknown"
+            ctx.overall_readiness = legacy.total_modernization_score * 10 if legacy.total_modernization_score else 0.0
+            
+        summary = ai_service.synthesize_executive_summary(ctx, legacy)
+        
+        # 3. Rector
+        rector = ai_service.synthesize_rector_config(ctx.framework, ctx.php_era, "High coupling and legacy patterns detected.")
+        
+        # 4. Save to DB
+        run.ai_findings_json = json.dumps([f.model_dump() for f in findings])
+        run.ai_executive_summary_json = json.dumps(summary)
+        run.ai_rector_config_json = json.dumps(rector.model_dump())
+        run.status = "intelligence_ready"
+        
+        db.commit()
+    except Exception as e:
+        logger.error(f"Background AI synthesis failed: {e}")
+    finally:
+        db.close()
+
 @app.post("/analyze", 
           response_model=AnalyzeResponse, 
           tags=["Core Analysis"],
           summary="Trigger deep structural analysis")
-def analyze_project(req: AnalyzeRequest, db: Session = Depends(get_db)):
+def analyze_project(req: AnalyzeRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """
     Initiates a new analysis run for a given project directory.
     - Scans all PHP files.
@@ -256,6 +307,15 @@ def analyze_project(req: AnalyzeRequest, db: Session = Depends(get_db)):
         
         service = AnalysisService(db)
         result = service.run_analysis(project.id, req.project_path)
+        
+        from infrastructure.persistence.models import AnalysisRun
+        run = db.query(AnalysisRun).filter(AnalysisRun.id == result.run_id).first()
+        if run:
+            run.status = "analysis_complete"
+            db.commit()
+            
+        background_tasks.add_task(background_synthesize_intelligence, result.run_id)
+        
         return result
     except Exception as e:
         logger.error(f"Analysis failed: {e}")
