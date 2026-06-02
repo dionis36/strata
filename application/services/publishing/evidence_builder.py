@@ -62,8 +62,8 @@ class EvidenceBuilder:
         # 2. Hydrate Database Intelligence
         db_intel = self._extract_database_intelligence(run_id)
         
-        # 3. Hydrate Legacy Posture
-        legacy_posture = self._extract_legacy_posture(legacy)
+        # 3. Hydrate Legacy Intelligence
+        legacy_intel = self._extract_legacy_intelligence(run_id)
 
         # 4. Hydrate Modules (Inferred from metrics for now)
         modules = self._infer_modules(run_id)
@@ -80,8 +80,17 @@ class EvidenceBuilder:
         boundary_intel = self._extract_boundary_intelligence(run_id)
         layered_arch = self._extract_layered_architecture(run_id)
         
-        # 8. AI Executive Summary 
+        # 8. AI Executive Summary & Strategic Advisory
         import json
+        
+        from application.services.advisory_service import AdvisoryService
+        strategic_advisory = {}
+        try:
+            adv_service = AdvisoryService()
+            strategic_advisory = adv_service.get_strategic_roadmap(run_id)
+        except Exception as e:
+            pass
+        
         ai_exec_summary = {}
         if run and run.ai_executive_summary_json:
             try:
@@ -91,12 +100,13 @@ class EvidenceBuilder:
         
         return CanonicalModel(
             system_context=ctx,
-            legacy_posture=legacy_posture,
+            legacy_intelligence=legacy_intel,
             database_intelligence=db_intel,
             dependency_intelligence=dep_intel,
             global_state_intelligence=state_intel,
             boundary_intelligence=boundary_intel,
             layered_architecture=layered_arch,
+            strategic_advisory=strategic_advisory,
             modules=modules,
             findings=findings,
             full_risk_register=full_risk_register,
@@ -104,32 +114,20 @@ class EvidenceBuilder:
         )
 
     def _extract_database_intelligence(self, run_id: int):
-        from infrastructure.persistence.models import ComponentBehavior
-        from application.services.publishing.models import DatabaseIntelligence
-        behaviors = self.db.query(ComponentBehavior).filter(
-            ComponentBehavior.run_id == run_id,
-            ComponentBehavior.shared_table_pressure > 0
-        ).order_by(ComponentBehavior.shared_table_pressure.desc()).limit(10).all()
-        
-        return [DatabaseIntelligence(
-            table_name=b.component_name,
-            write_intensity=b.write_intensity,
-            shared_table_pressure=b.shared_table_pressure
-        ) for b in behaviors]
+        from application.services.database_intelligence_service import DatabaseIntelligenceService
+        try:
+            service = DatabaseIntelligenceService(self.db)
+            return service.get_db_intelligence(run_id)
+        except Exception as e:
+            return {}
 
-    def _extract_legacy_posture(self, legacy):
-        from application.services.publishing.models import LegacyPosture
-        if not legacy:
-            return None
-        return LegacyPosture(
-            version_score=legacy.version_score,
-            namespace_score=legacy.namespace_score,
-            db_layer_score=legacy.db_layer_score,
-            security_score=legacy.security_score,
-            testability_score=legacy.testability_score,
-            coupling_score=legacy.coupling_score,
-            total_score=legacy.total_modernization_score
-        )
+    def _extract_legacy_intelligence(self, run_id: int):
+        from application.services.legacy_intelligence_service import LegacyIntelligenceService
+        try:
+            service = LegacyIntelligenceService(self.db)
+            return service.get_legacy_intelligence(run_id)
+        except Exception as e:
+            return {}
 
     def _infer_modules(self, run_id: int) -> List[Module]:
         metrics = self.db.query(ComponentMetric).filter(ComponentMetric.run_id == run_id).all()
@@ -158,8 +156,6 @@ class EvidenceBuilder:
         return mods
 
     def _extract_findings(self, run_id: int) -> List[Finding]:
-        import json
-        run = self.db.query(AnalysisRun).filter(AnalysisRun.id == run_id).first()
         risks = self.db.query(ComponentRisk).filter(ComponentRisk.run_id == run_id).order_by(ComponentRisk.final_risk.desc()).limit(50).all()
         findings = []
         
@@ -167,54 +163,54 @@ class EvidenceBuilder:
         if not top_risks:
             return findings
             
-        ai_findings = []
-        if run and run.ai_findings_json:
-            try:
-                ai_data = json.loads(run.ai_findings_json)
-                from application.services.publishing.ai_advisory_service import GeminiFindingResponse
-                ai_findings = [GeminiFindingResponse(**f) for f in ai_data]
-            except Exception:
-                pass
-                
-        ai_map = {f.component_name: f for f in ai_findings}
+        # Deterministic Risk Dictionary
+        risk_dictionary = {
+            "GOD_CLASS": {
+                "impact": "Massive blast radius. Modifications to this component are highly likely to cause regression failures across unrelated modules.",
+                "reasoning": "High structural coupling pressure and extreme Weighted Method Count indicates a severe lack of cohesion.",
+                "action": "Extract cohesive behaviors into dedicated service classes. Implement strict interfaces for external callers."
+            },
+            "FAT_VIEW": {
+                "impact": "High architectural blast radius. Procedural database logic in the presentation layer exposes the application to SQL injection and blocks automated version upgrades.",
+                "reasoning": "Presentation files tightly entangled with database queries violate MVC principles.",
+                "action": "Isolate logic into a dedicated Controller/Repository context. Rewrite legacy queries using PDO abstractions."
+            },
+            "HIGH_COUPLING": {
+                "impact": "Tight coupling prevents modular extraction and makes automated testing virtually impossible.",
+                "reasoning": "High fan-in and fan-out metrics indicate the component is deeply entangled.",
+                "action": "Isolate dependencies behind an interface. Write characterization tests before attempting extraction."
+            }
+        }
         
         for r in top_risks:
-            ai_f = ai_map.get(r.component_name)
-            
             evidence = [
                 Evidence(type="file", target=r.component_name),
                 Evidence(type="metric", target="risk_score", metric_value=r.risk_score),
                 Evidence(type="metric", target="coupling_pressure", metric_value=r.coupling_pressure)
             ]
             
-            if ai_f:
-                # Map cached LLM response to our canonical schema
-                f = Finding(
-                    id=f"FND-{r.id}",
-                    category=ai_f.category,
-                    observation=ai_f.observation,
-                    evidence=evidence,
-                    impact=ai_f.impact,
-                    reasoning=ai_f.reasoning,
-                    recommended_action=ai_f.recommended_action,
-                    priority=ai_f.priority,
-                    confidence=ai_f.confidence,
-                    mermaid_diagram=ai_f.mermaid_diagram
-                )
+            # Determine best matched risk dictionary item
+            archetype = r.semantic_archetype if hasattr(r, 'semantic_archetype') and r.semantic_archetype else ""
+            if "GOD_CLASS" in archetype.upper():
+                risk_profile = risk_dictionary["GOD_CLASS"]
+            elif "VIEW" in archetype.upper() or r.component_name.endswith(".phtml") or r.component_name.endswith(".blade.php"):
+                risk_profile = risk_dictionary["FAT_VIEW"]
             else:
-                # Fallback if cache is empty or AI failed
-                f = Finding(
-                    id=f"FND-{r.id}",
-                    category="Architecture",
-                    observation=f"[AI SYNTHESIS UNAVAILABLE - SHOWING BASE METRICS] High Risk Component '{r.component_name}'",
-                    evidence=evidence,
-                    impact="[AI SYNTHESIS UNAVAILABLE]",
-                    reasoning=f"High structural coupling pressure ({r.coupling_pressure:.2f}) and Risk Score ({r.risk_score:.2f}).",
-                    recommended_action="[AI SYNTHESIS UNAVAILABLE]",
-                    priority="Critical" if r.risk_score > 0.8 else "High",
-                    confidence="Confirmed" if r.risk_score > 0.8 else "Probable",
-                    mermaid_diagram=None
-                )
+                risk_profile = risk_dictionary["HIGH_COUPLING"]
+            
+            mermaid_safe_name = r.component_name.split('/')[-1].replace('.', '_')
+            f = Finding(
+                id=f"FND-{r.id}",
+                category="Architecture",
+                observation=f"Critical Architectural Bottleneck in {r.component_name}",
+                evidence=evidence,
+                impact=risk_profile["impact"],
+                reasoning=risk_profile["reasoning"],
+                recommended_action=risk_profile["action"],
+                priority="Critical" if r.risk_score > 0.8 else "High",
+                confidence="Confirmed" if r.risk_score > 0.8 else "Probable",
+                mermaid_diagram=f"graph TD\n  {mermaid_safe_name} --> LegacyDependencies\n  style {mermaid_safe_name} fill:#f9f,stroke:#333,stroke-width:4px"
+            )
             findings.append(f)
             
         return findings
@@ -234,14 +230,12 @@ class EvidenceBuilder:
         ) for m in metrics]
 
     def _extract_global_state_intelligence(self, run_id: int):
-        from application.services.publishing.models import GlobalStateIntelligence
-        # Currently a placeholder until GlobalState extractor is fully implemented in the db schema.
-        # We simulate it for now.
-        return [GlobalStateIntelligence(
-            variable_name="*Placeholder Global State*",
-            mutation_count=0,
-            read_count=0
-        )]
+        from application.services.global_state_service import GlobalStateService
+        try:
+            service = GlobalStateService(self.db)
+            return service.get_global_state_intelligence(run_id)
+        except Exception as e:
+            return {}
 
     def _extract_full_risk_register(self, run_id: int) -> List[Finding]:
         risks = self.db.query(ComponentRisk).filter(ComponentRisk.run_id == run_id).order_by(ComponentRisk.final_risk.desc()).all()
@@ -346,9 +340,24 @@ class EvidenceBuilder:
                 auth_access=c.get("auth_access", False)
             ))
             
+        # Build hierarchical tree for frontend rendering
+        tree = {}
+        for path, info in sorted(dirs.items()):
+            parts = [p for p in path.split('/') if p]
+            if not parts:
+                parts = ["root"]
+            current = tree
+            for i, part in enumerate(parts):
+                if part not in current:
+                    current[part] = {"_info": None, "_children": {}}
+                if i == len(parts) - 1:
+                    current[part]["_info"] = info
+                current = current[part]["_children"]
+
         return LayeredArchitecture(
             presentation_ratio=presentation_ratio,
             bounded_contexts=contexts,
-            directory_tree=dirs,
-            file_type_distribution=l1.get("file_types", {})
+            directory_tree=tree,
+            file_type_distribution=l1.get("file_types", {}),
+            system_topology=l_data.get("layer_2", {})
         )

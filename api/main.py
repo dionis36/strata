@@ -248,72 +248,10 @@ def background_synthesize_intelligence(run_id: int):
     try:
         run = db.query(AnalysisRun).filter(AnalysisRun.id == run_id).first()
         if not run: return
-        # 1. Synthesize batch findings
-        run.status = "synthesizing_findings"
-        db.commit()
-        risks = db.query(ComponentRisk).filter(ComponentRisk.run_id == run_id).order_by(ComponentRisk.final_risk.desc()).limit(5).all()
-        from infrastructure.persistence.models import GraphNode, GraphEdge
-        
-        risk_data = []
-        for r in risks:
-            node = db.query(GraphNode).filter(
-                GraphNode.run_id == run_id, 
-                GraphNode.fqn == r.component_name
-            ).first()
-            
-            ast_metadata = {}
-            if node and node.metadata_json:
-                try:
-                    ast_metadata = json.loads(node.metadata_json)
-                except Exception:
-                    pass
-                    
-            dependencies = []
-            if node:
-                edges = db.query(GraphEdge).filter(
-                    GraphEdge.run_id == run_id,
-                    GraphEdge.source_id == node.id
-                ).all()
-                for e in edges:
-                    target = db.query(GraphNode).filter(
-                        GraphNode.run_id == run_id,
-                        GraphNode.id == e.target_id
-                    ).first()
-                    if target:
-                        dependencies.append(f"{e.edge_type} -> {target.node_type}:{target.name}")
-                        
-            if len(dependencies) > 20:
-                dependencies = dependencies[:20]
-                
-            # Keep token size small for free tier
-            ast_metadata_str = json.dumps(ast_metadata)
-            if len(ast_metadata_str) > 1000:
-                ast_metadata = {"note": "truncated for token limits", "preview": ast_metadata_str[:1000]}
-            risk_data.append({
-                "component_name": r.component_name,
-                "risk_score": r.risk_score,
-                "coupling_pressure": r.coupling_pressure,
-                "blast_radius": r.norm_blast_radius,
-                "domain_archetype": getattr(r, 'domain_archetype', 'UNKNOWN'),
-                "is_stateful": getattr(r, 'is_stateful', False),
-                "lcom": getattr(r, 'lcom', 0.0),
-                "wmc": getattr(r, 'wmc', 0),
-                "test_coverage": getattr(r, 'test_coverage', None),
-                "semantic_multiplier": getattr(r, 'semantic_multiplier', 1.0),
-                "ast_metadata": ast_metadata,
-                "dependency_edges": dependencies
-            })
-        
-        ai_service = AIAdvisoryService()
-        findings = ai_service.synthesize_batch_findings(risk_data)
-        
-        import time
-        logger.info("Rate limiting: sleeping 20s to avoid 429 quota errors on free tier.")
-        time.sleep(20)
-        
-        # 2. Synthesize exec summary
+        # 1. Synthesize exec summary
         run.status = "synthesizing_summary"
         db.commit()
+        
         class DummyCtx:
             project_name = "Strata Analysis"
             total_files = run.total_files
@@ -321,6 +259,7 @@ def background_synthesize_intelligence(run_id: int):
             framework = "Unknown"
             php_era = "Unknown"
             overall_readiness = 50.0
+            architectural_footprint = {}
             
         ctx = DummyCtx()
         legacy = db.query(LegacyMetrics).filter(LegacyMetrics.run_id == run_id).first()
@@ -329,28 +268,44 @@ def background_synthesize_intelligence(run_id: int):
             ctx.php_era = legacy.php_era or "Unknown"
             ctx.overall_readiness = legacy.total_modernization_score * 10 if legacy.total_modernization_score else 0.0
             
+        from application.services.layer_service import LayerService
+        try:
+            layer_service = LayerService(db)
+            l_data = layer_service.get_layered_analysis(run_id)
+            dirs = l_data.get("layer_1", {}).get("directories", {})
+            models = controllers = views = 0
+            for info in dirs.values():
+                for f in info.get("files", []):
+                    role = f.get("role", "file") if isinstance(f, dict) else "file"
+                    if role == "model": models += 1
+                    elif role == "controller": controllers += 1
+                    elif role == "view": views += 1
+            ctx.architectural_footprint = {
+                "Models": models,
+                "Controllers": controllers,
+                "Views": views
+            }
+        except Exception:
+            pass
+            
+        ai_service = AIAdvisoryService()
         summary = ai_service.synthesize_executive_summary(ctx, legacy)
         
-        logger.info("Rate limiting: sleeping 20s to avoid 429 quota errors on free tier.")
-        time.sleep(20)
-        
-        # 3. Rector
-        run.status = "synthesizing_rector"
-        db.commit()
-        ast_summary = " | ".join([f.observation for f in findings[:10]]) if findings else "High coupling and legacy patterns detected."
-        rector = ai_service.synthesize_rector_config(ctx.framework, ctx.php_era, ast_summary)
-        
-        # 4. Save to DB
-        run.ai_findings_json = json.dumps([f.model_dump() for f in findings])
         run.ai_executive_summary_json = json.dumps(summary)
-        run.ai_rector_config_json = json.dumps(rector.model_dump())
         run.status = "intelligence_ready"
         
         db.commit()
     except Exception as e:
         logger.error(f"Background AI synthesis failed: {e}")
-        run.status = "intelligence_failed"
-        db.commit()
+        try:
+            fallback = ai_service._generate_summary_fallback(ctx)
+            run.ai_executive_summary_json = json.dumps(fallback)
+            run.status = "intelligence_failed" # We mark it as failed so the "Retry" button appears, but we still have fallback data!
+            db.commit()
+        except Exception as fallback_e:
+            logger.error(f"Fallback synthesis also failed: {fallback_e}")
+            run.status = "intelligence_failed"
+            db.commit()
     finally:
         db.close()
 

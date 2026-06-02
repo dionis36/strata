@@ -79,7 +79,7 @@ class ApiEndpoint(BaseModel):
 
 class VendorDependency(BaseModel):
     file_path: str
-    vendor_type: Literal["Composer Vendor", "Manual Library/Plugin", "Unknown"]
+    vendor_type: str
     status: str
 
 class BoundaryIntelligence(BaseModel):
@@ -102,16 +102,18 @@ class LayeredArchitecture(BaseModel):
     bounded_contexts: List[BoundedContext] = Field(default_factory=list)
     directory_tree: Dict[str, Any] = Field(default_factory=dict)
     file_type_distribution: Dict[str, Any] = Field(default_factory=dict)
+    system_topology: Dict[str, Any] = Field(default_factory=dict)
 
 class CanonicalModel(BaseModel):
     system_context: SystemContext
-    legacy_posture: Optional[LegacyPosture] = None
-    database_intelligence: List[DatabaseIntelligence] = Field(default_factory=list)
+    legacy_intelligence: Dict[str, Any] = Field(default_factory=dict)
+    database_intelligence: Dict[str, Any] = Field(default_factory=dict)
     dependency_intelligence: List[DependencyIntelligence] = Field(default_factory=list)
-    global_state_intelligence: List[GlobalStateIntelligence] = Field(default_factory=list)
+    global_state_intelligence: Dict[str, Any] = Field(default_factory=dict)
     boundary_intelligence: Optional[BoundaryIntelligence] = None
     layered_architecture: Optional[LayeredArchitecture] = None
-    modules: List[Module]
-    findings: List[Finding]
+    strategic_advisory: Dict[str, Any] = Field(default_factory=dict)
+    modules: List[Module] = Field(default_factory=list)
+    findings: List[Finding] = Field(default_factory=list)
     full_risk_register: List[Finding] = Field(default_factory=list)
     ai_executive_summary: Dict[str, Any] = Field(default_factory=dict)

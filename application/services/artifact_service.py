@@ -79,62 +79,18 @@ class ArtifactService:
         return sarif
 
     def generate_rector_config(self, run_id: int) -> str:
-        """Generates a rector.php configuration file string from cache."""
-        run = self.db.query(AnalysisRun).filter(AnalysisRun.id == run_id).first()
-        if run and run.ai_rector_config_json:
-            try:
-                data = json.loads(run.ai_rector_config_json)
-                return data.get("rector_php_code", "<?php\n// Rector config not found\n")
-            except Exception:
-                pass
-                
-        # Fallback
-        return "<?php\n\nuse Rector\\Config\\RectorConfig;\nuse Rector\\Set\\ValueObject\\LevelSetList;\n\nreturn static function (RectorConfig $rectorConfig): void {\n    $rectorConfig->sets([\n        LevelSetList::UP_TO_PHP_82\n    ]);\n};\n"
+        """Deterministically generates rector.php configuration."""
+        from application.services.publishing.evidence_builder import EvidenceBuilder
+        from application.services.publishing.renderers.rector_generator import RectorGenerator
+        model = EvidenceBuilder(self.db).build(run_id)
+        return RectorGenerator().generate(model)
 
     def generate_deptrac_yaml(self, run_id: int) -> str:
-        """Generates a deptrac.yaml configuration file based on LayerService outputs."""
-        layer_service = LayerService(self.db)
-        layer_data = layer_service.get_layered_analysis(run_id)
-        
-        yaml_lines = [
-            "parameters:",
-            "  paths:",
-            "    - ./src",
-            "    - ./app",
-            "  layers:"
-        ]
-        
-        l1 = layer_data.get("layer_1", {})
-        dirs = l1.get("directories", {})
-        
-        unique_roles = set()
-        for dname, dinfo in dirs.items():
-            role = dinfo.get("type", "file")
-            unique_roles.add(role)
-            
-        for role in unique_roles:
-            yaml_lines.append(f"    - name: {role.capitalize()}")
-            yaml_lines.append(f"      collectors:")
-            
-            # Find directories matching this role
-            role_dirs = [d for d, info in dirs.items() if info.get("type") == role]
-            for d in role_dirs:
-                # Basic regex for directory
-                regex_path = d.replace("/", "\\/") + ".*"
-                yaml_lines.append(f"        - type: directory")
-                yaml_lines.append(f"          regex: {regex_path}")
-                
-        yaml_lines.append("  ruleset:")
-        if "Controller" in [r.capitalize() for r in unique_roles]:
-            yaml_lines.append("    Controller:")
-            yaml_lines.append("      - Service")
-            yaml_lines.append("      - Model")
-        if "Service" in [r.capitalize() for r in unique_roles]:
-            yaml_lines.append("    Service:")
-            yaml_lines.append("      - Repository")
-            yaml_lines.append("      - Model")
-            
-        return "\n".join(yaml_lines)
+        """Deterministically generates deptrac.yaml configuration."""
+        from application.services.publishing.evidence_builder import EvidenceBuilder
+        from application.services.publishing.renderers.deptrac_generator import DeptracGenerator
+        model = EvidenceBuilder(self.db).build(run_id)
+        return DeptracGenerator().generate(model)
 
     def generate_machine_json(self, run_id: int) -> str:
         """Generates a strict JSON dump of all analysis findings."""

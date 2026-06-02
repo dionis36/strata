@@ -124,11 +124,13 @@
             <ul class="space-y-1 text-sm font-medium text-gray-400">
                 <template x-for="item in [
                     { id: 'exec', name: '1. Executive Command' },
-                    { id: 'boundary', name: '2. Boundary Intelligence' },
-                    { id: 'topology', name: '3. Layered Topology' },
-                    { id: 'database', name: '4. Database Pressure' },
-                    { id: 'risks', name: '5. Structural Risk Audit' },
-                    { id: 'playbooks', name: '6. Extraction Playbooks' }
+                    { id: 'discovery', name: '2. Architectural Discovery' },
+                    { id: 'boundary', name: '3. Boundary Intelligence' },
+                    { id: 'database', name: '4. Database Intelligence' },
+                    { id: 'global_state', name: '5. Runtime & Global State' },
+                    { id: 'legacy', name: '6. Legacy PHP Intelligence' },
+                    { id: 'risks', name: '7. Structural Risk Audit' },
+                    { id: 'playbooks', name: '8. Extraction Playbooks' }
                 ]">
                     <li>
                         <a :href="'#' + item.id"
@@ -147,134 +149,399 @@
                  1. EXECUTIVE COMMAND
                  ========================================== -->
             <section id="exec" class="doc-section">
-                <header class="mb-14">
+                <header class="mb-10">
                     <div class="inline-flex items-center gap-2 px-3 py-1 rounded border border-brand-500/30 bg-brand-500/10 text-brand-400 text-xs font-mono font-bold mb-6">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        ANALYSIS COMPLETE
+                        STRATEGIC MODERNIZATION COMMAND CENTER
                     </div>
-                    <h1 class="text-5xl md:text-6xl font-extrabold text-white tracking-tighter mb-6 leading-tight">Executive Readiness<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-gray-400 to-gray-600">Assessment</span></h1>
+                    <h1 class="text-5xl md:text-6xl font-extrabold text-white tracking-tighter mb-4 leading-tight">Executive Readiness<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-gray-400 to-gray-600">Assessment</span></h1>
                     <p class="text-lg md:text-xl text-gray-400 leading-relaxed max-w-4xl">An AI-synthesized empirical audit of the <strong>{{ model.system_context.project_name }}</strong> monolithic architecture, evaluating accumulated technical debt, unmanaged boundaries, and modernization ROI.</p>
                 </header>
 
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16">
+                <!-- Top Row: Readiness & Strategy -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <!-- Gauge -->
-                    <div class="lg:col-span-4 bg-surface-100 border border-borderline p-8 rounded-2xl flex flex-col justify-center items-center shadow-2xl relative overflow-hidden">
+                    <div class="bg-surface-100 border border-borderline p-6 rounded-2xl flex flex-col justify-center items-center relative overflow-hidden">
                         <div class="absolute top-0 w-full h-1 bg-gradient-to-r {% if model.system_context.overall_readiness > 60 %}from-emerald-500 to-brand-500{% elif model.system_context.overall_readiness > 30 %}from-amber-500 to-yellow-500{% else %}from-red-500 to-amber-500{% endif %}"></div>
-                        <h3 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-6">Readiness Score</h3>
-                        <div class="w-48 h-48 relative mb-6">
-                            <canvas id="readinessChart"></canvas>
-                            <div class="absolute inset-0 flex flex-col items-center justify-center pt-6">
-                                <span class="text-5xl font-black text-white tracking-tighter">{{ model.system_context.overall_readiness }}<span class="text-2xl text-gray-500">%</span></span>
+                        <h2 class="text-4xl font-black text-brand-400 tracking-tighter mb-1">{{ model.system_context.overall_readiness }}%</h2>
+                        <p class="text-xs text-gray-500 font-mono uppercase tracking-widest mb-4">Modernization Readiness</p>
+                        <div class="w-full bg-[#30363d] h-2 rounded-full overflow-hidden">
+                            <div class="h-full bg-brand-500 rounded-full" style="width: {{ model.system_context.overall_readiness }}%;"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Project Meta -->
+                    <div class="md:col-span-2 bg-surface-100 border border-borderline p-6 rounded-2xl flex flex-col justify-center">
+                        <h4 class="text-xl font-bold text-white mb-2">{{ model.system_context.project_name }}</h4>
+                        <p class="text-sm text-gray-400 mb-4 font-mono">/var/www/strata/target</p>
+                        <div class="flex flex-wrap gap-3">
+                            <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded text-xs font-mono font-bold">ERA: {{ model.system_context.php_era }}</span>
+                            <span class="bg-brand-500/10 text-brand-400 border border-brand-500/20 px-3 py-1 rounded text-xs font-mono font-bold">FW: {{ model.system_context.framework }}</span>
+                            <span class="bg-surface-50 text-gray-400 border border-borderline px-3 py-1 rounded text-xs font-mono font-bold">Status: {% if model.system_context.overall_readiness < 40 %}CRITICAL DEBT{% elif model.system_context.overall_readiness < 70 %}HIGH RISK{% else %}HEALTHY{% endif %}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI Bento Grid -->
+                <div class="space-y-6 mb-12">
+                    <div>
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">System Vitality</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+                            <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center">
+                                <div class="text-2xl font-black text-white">{{ "{:,}".format(model.system_context.total_files) }}</div>
+                                <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Total Files</div>
+                            </div>
+                            <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center">
+                                <div class="text-2xl font-black text-white">{{ "{:,}".format(model.system_context.lines_of_code) }}</div>
+                                <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Lines of Code</div>
+                            </div>
+                            <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center">
+                                <div class="text-2xl font-black text-amber-500">{{ model.system_context.avg_complexity }}</div>
+                                <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Avg Complexity</div>
+                            </div>
+                            <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center">
+                                <div class="text-2xl font-black text-white">{{ "{:,}".format(model.system_context.total_classes) }}</div>
+                                <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Total Classes</div>
+                            </div>
+                            <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center">
+                                <div class="text-2xl font-black text-red-500">{{ "{:,}".format(model.system_context.connectivity) }}</div>
+                                <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Connectivity</div>
+                            </div>
+                            <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center">
+                                <div class="text-2xl font-black text-brand-500">{{ model.system_context.test_coverage }}</div>
+                                <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Test Coverage</div>
                             </div>
                         </div>
-                        <div class="text-center">
-                            {% if model.system_context.overall_readiness < 40 %}
-                            <span class="inline-block px-3 py-1 bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-mono font-bold rounded">STATUS: CRITICAL DEBT</span>
-                            <p class="text-xs text-gray-500 mt-3">Automated refactoring blocked by architectural deficits.</p>
-                            {% elif model.system_context.overall_readiness < 70 %}
-                            <span class="inline-block px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-mono font-bold rounded">STATUS: HIGH RISK</span>
-                            <p class="text-xs text-gray-500 mt-3">Significant decoupling needed before migration.</p>
-                            {% else %}
-                            <span class="inline-block px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs font-mono font-bold rounded">STATUS: HEALTHY</span>
-                            <p class="text-xs text-gray-500 mt-3">Ready for automated upgrade processes.</p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Architectural Footprint</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+                            {% set fp = model.system_context.architectural_footprint %}
+                            <div class="bg-surface-100 border border-borderline p-4 rounded-xl flex items-center justify-between">
+                                <span class="text-xs text-gray-400 font-medium">📦 Models</span>
+                                <span class="text-lg font-black text-white">{{ fp.get('Models', 0) }}</span>
+                            </div>
+                            <div class="bg-surface-100 border border-borderline p-4 rounded-xl flex items-center justify-between">
+                                <span class="text-xs text-gray-400 font-medium">🎛️ Controllers</span>
+                                <span class="text-lg font-black text-white">{{ fp.get('Controllers', 0) }}</span>
+                            </div>
+                            <div class="bg-surface-100 border border-borderline p-4 rounded-xl flex items-center justify-between">
+                                <span class="text-xs text-gray-400 font-medium">🖥️ Views</span>
+                                <span class="text-lg font-black text-white">{{ fp.get('Views', 0) }}</span>
+                            </div>
+                            <div class="bg-surface-100 border border-borderline p-4 rounded-xl flex items-center justify-between">
+                                <span class="text-xs text-gray-400 font-medium">⚙️ CLI Scripts</span>
+                                <span class="text-lg font-black text-white">{{ fp.get('CLI_Scripts', 0) }}</span>
+                            </div>
+                            <div class="bg-surface-100 border border-borderline p-4 rounded-xl flex items-center justify-between">
+                                <span class="text-xs text-gray-400 font-medium">💾 Schemas</span>
+                                <span class="text-lg font-black text-white">{{ fp.get('Schemas', 0) }}</span>
+                            </div>
+                            <div class="bg-surface-100 border border-borderline p-4 rounded-xl flex items-center justify-between">
+                                <span class="text-xs text-gray-400 font-medium">🧩 Libraries</span>
+                                <span class="text-lg font-black text-white">{{ fp.get('Vendor_Files', 0) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Narrative Full Width -->
+                <div class="bg-surface-100 border border-brand-500/30 p-8 md:p-12 rounded-2xl shadow-2xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                    <div class="flex items-center gap-3 mb-8 pb-6 border-b border-borderline relative z-10">
+                        <div class="w-10 h-10 rounded-full bg-brand-900/50 flex items-center justify-center border border-brand-500/30">
+                            <svg class="w-5 h-5 text-brand-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 9V5h2v4h4v2h-4v4H9v-4H5V9h4z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-white font-bold text-xl tracking-tight">Strata Engine Synthesis</h3>
+                            <p class="text-xs text-gray-500">AI-generated deep architectural assessment.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-12 relative z-10">
+                        <div class="lg:col-span-2 space-y-6">
+                            <div>
+                                <h4 class="text-sm font-bold uppercase tracking-widest text-brand-400 mb-4">Current Architectural State</h4>
+                                <div class="text-base text-gray-300 space-y-4 leading-relaxed font-medium">
+                                    {% set ai_state = model.ai_executive_summary.get('current_state', 'Analysis Pending: API Capacity Exceeded. Rely on structural metrics for strategy execution.') %}
+                                    {% for paragraph in ai_state.split('\n') %}
+                                        {% if paragraph.strip() %}
+                                        <p>{{ paragraph }}</p>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            {% set ai_roadmap = model.ai_executive_summary.get('strategic_roadmap') %}
+                            {% if ai_roadmap %}
+                            <div class="pt-6 border-t border-borderline">
+                                <h4 class="text-sm font-bold uppercase tracking-widest text-emerald-400 mb-4">Strategic Roadmap</h4>
+                                <div class="text-base text-gray-300 space-y-4 leading-relaxed">
+                                    {% for paragraph in ai_roadmap.split('\n') %}
+                                        {% if paragraph.strip() %}
+                                        <p>{{ paragraph }}</p>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
                             {% endif %}
                         </div>
-                    </div>
-
-                    <!-- Radar -->
-                    <div class="lg:col-span-3 bg-surface-100 border border-borderline p-8 rounded-2xl flex flex-col justify-center shadow-2xl">
-                        <h3 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4 text-center">Architecture Health</h3>
-                        <div class="w-full h-48 relative">
-                            <canvas id="radarChart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- AI Narrative -->
-                    <div class="lg:col-span-5 bg-surface-100 border border-borderline p-8 rounded-2xl shadow-2xl flex flex-col">
-                        <div class="flex items-center gap-3 mb-6 border-b border-borderline pb-4">
-                            <div class="w-8 h-8 rounded-full bg-brand-900/50 flex items-center justify-center border border-brand-500/30">
-                                <svg class="w-4 h-4 text-brand-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 9V5h2v4h4v2h-4v4H9v-4H5V9h4z"></path></svg>
-                            </div>
-                            <h3 class="text-white font-bold text-lg tracking-tight">Strata Engine Synthesis</h3>
-                        </div>
-                        <div class="text-sm text-gray-400 space-y-4 leading-relaxed flex-1 overflow-y-auto">
-                            {% set ai_state = model.ai_executive_summary.get('current_state', 'Analysis Pending: API Capacity Exceeded. Rely on structural metrics for strategy execution.') %}
-                            {% for paragraph in ai_state.split('\n') %}
-                                {% if paragraph.strip() %}
-                                <p>{{ paragraph }}</p>
-                                {% endif %}
-                            {% endfor %}
+                        
+                        <div>
                             {% set ai_risks = model.ai_executive_summary.get('critical_risks') %}
                             {% if ai_risks %}
-                                <div class="mt-4 pt-4 border-t border-borderline">
-                                    <p class="text-red-400 font-semibold mb-2">Critical Blockers:</p>
+                            <div class="bg-[#111] border border-red-500/30 p-6 rounded-xl">
+                                <h4 class="text-sm font-bold uppercase tracking-widest text-red-500 mb-4 flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                    Critical Blockers
+                                </h4>
+                                <div class="text-sm text-gray-400 space-y-3 leading-relaxed">
                                     {% for paragraph in ai_risks.split('\n') %}
                                         {% if paragraph.strip() %}
                                         <p>{{ paragraph }}</p>
                                         {% endif %}
                                     {% endfor %}
                                 </div>
+                            </div>
                             {% endif %}
+                            
+                            <div class="mt-8">
+                                <h4 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Architecture Health (Radar)</h4>
+                                <div class="w-full h-48 relative bg-surface-50 border border-borderline rounded-xl p-2">
+                                    <canvas id="radarChart"></canvas>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Vitality Matrix -->
-                <h3 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-5">System Vitality Matrix</h3>
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-px bg-borderline border border-borderline rounded-xl overflow-hidden shadow-2xl">
-                    <div class="bg-surface-100 p-8 flex flex-col items-center justify-center transition-colors hover:bg-surface-50">
-                        <div class="text-4xl font-black text-white tracking-tighter">{{ "{:,}".format(model.system_context.total_files) }}</div>
-                        <div class="text-[10px] text-gray-500 uppercase mt-2 font-mono font-bold tracking-widest">Total Files</div>
-                    </div>
-                    <div class="bg-surface-100 p-8 flex flex-col items-center justify-center transition-colors hover:bg-surface-50">
-                        <div class="text-4xl font-black text-white tracking-tighter">{{ "{:,}".format(model.system_context.lines_of_code) }}</div>
-                        <div class="text-[10px] text-gray-500 uppercase mt-2 font-mono font-bold tracking-widest">Lines of Code</div>
-                    </div>
-                    <div class="bg-surface-100 p-8 flex flex-col items-center justify-center transition-colors hover:bg-surface-50">
-                        <div class="text-4xl font-black text-amber-500 tracking-tighter">{{ model.system_context.avg_complexity }}</div>
-                        <div class="text-[10px] text-gray-500 uppercase mt-2 font-mono font-bold tracking-widest">Avg Complexity</div>
-                    </div>
-                    <div class="bg-surface-100 p-8 flex flex-col items-center justify-center transition-colors hover:bg-surface-50">
-                        <div class="text-4xl font-black text-red-500 tracking-tighter">{{ "{:,}".format(model.system_context.connectivity) }}</div>
-                        <div class="text-[10px] text-gray-500 uppercase mt-2 font-mono font-bold tracking-widest">Edge Connections</div>
-                    </div>
-                    <div class="bg-surface-100 p-8 flex flex-col items-center justify-center transition-colors hover:bg-surface-50">
-                        <div class="text-4xl font-black text-brand-500 tracking-tighter">{{ model.system_context.test_coverage }}<span class="text-xl text-gray-500 font-normal">%</span></div>
-                        <div class="text-[10px] text-gray-500 uppercase mt-2 font-mono font-bold tracking-widest">Test Coverage</div>
                     </div>
                 </div>
             </section>
 
             <!-- ==========================================
-                 2. BOUNDARY INTELLIGENCE
+                 2. ARCHITECTURAL DISCOVERY
+                 ========================================== -->
+            <section id="discovery" class="doc-section">
+                <header class="mb-10">
+                    <h2 class="text-4xl font-extrabold text-white tracking-tight mb-4">Architectural Discovery</h2>
+                    <p class="text-gray-400 leading-relaxed max-w-4xl text-lg">Bridging the gap between raw physical files and inferred logical boundaries. Visualizing structural edges, monolith layout, and presentation vs logic separation.</p>
+                </header>
+
+                {% if model.layered_architecture %}
+                
+                <!-- Macro-Domain Dependency Graph -->
+                <div class="bg-surface-100 border border-borderline rounded-2xl shadow-2xl flex flex-col relative overflow-hidden mb-12">
+                    <div class="p-6 border-b border-borderline flex flex-col sm:flex-row justify-between sm:items-center gap-4 z-10 bg-surface-50">
+                        <div>
+                            <h3 class="text-white font-bold text-lg">System Topology (Node-Edge Graph)</h3>
+                            <p class="text-xs text-gray-500 mt-1">Interactive visualization of module dependencies and coupling.</p>
+                        </div>
+                    </div>
+                    <!-- 500px Height Canvas -->
+                    <div id="topologyGraph" class="h-[500px] w-full bg-[#030303] bg-gradient-mesh relative">
+                        <!-- Graph will be injected here via Vis.js -->
+                    </div>
+                    <script>
+                        document.addEventListener("DOMContentLoaded", function() {
+                            {% if model.layered_architecture.system_topology %}
+                            var rawNodes = {{ model.layered_architecture.system_topology.get('nodes', []) | tojson }};
+                            var rawEdges = {{ model.layered_architecture.system_topology.get('edges', []) | tojson }};
+                            
+                            var nodes = new vis.DataSet(rawNodes.map(n => ({
+                                id: n.id, label: n.label, color: n.color, size: n.size || 15,
+                                font: { color: "#e0e0e0", face: "Inter", size: 12 },
+                                shape: 'dot'
+                            })));
+                            
+                            var edges = new vis.DataSet(rawEdges.map(e => ({
+                                from: e.source, to: e.target, color: { color: "rgba(100, 100, 100, 0.5)" }, arrows: "to"
+                            })));
+                            
+                            var container = document.getElementById('topologyGraph');
+                            var data = { nodes: nodes, edges: edges };
+                            var options = {
+                                physics: {
+                                    barnesHut: { gravitationalConstant: -2000, centralGravity: 0.3, springLength: 95, springConstant: 0.04 },
+                                    stabilization: { iterations: 150 }
+                                },
+                                nodes: { borderWidth: 0 }
+                            };
+                            if (nodes.length > 0) {
+                                new vis.Network(container, data, options);
+                            } else {
+                                container.innerHTML = '<div class="absolute inset-0 flex items-center justify-center"><span class="text-gray-500 font-mono text-sm">No topology edges detected.</span></div>';
+                            }
+                            {% endif %}
+                        });
+                    </script>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+                    <!-- Presentation vs Logic -->
+                    <div class="bg-surface-100 border border-borderline rounded-2xl p-8 shadow-2xl flex flex-col justify-center">
+                        <h3 class="text-white font-bold text-lg mb-6">Presentation vs. Logic</h3>
+                        <p class="text-sm text-gray-400 mb-6">This metric assesses whether the codebase maintains a healthy separation of concerns. A high presentation ratio indicates a UI-heavy monolith.</p>
+                        <div class="space-y-5">
+                            <div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span class="text-gray-300">Presentation / UI Files</span> 
+                                    <span class="text-white font-mono font-bold">{{ "%.1f"|format(model.layered_architecture.presentation_ratio) }}%</span>
+                                </div>
+                                <div class="w-full h-2 bg-[#111] rounded-full overflow-hidden">
+                                    <div class="h-full bg-brand-500 rounded-full shadow-glow-brand" style="width: {{ model.layered_architecture.presentation_ratio }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-6 italic">{{ "%.1f"|format(model.layered_architecture.presentation_ratio) }}% of classified files handle Presentation/Routing directly. The remaining {{ "%.1f"|format(100 - model.layered_architecture.presentation_ratio) }}% represent pure backend logic or untyped scripts.</p>
+                    </div>
+
+                    <!-- Logical Domains Matrix -->
+                    <div class="bg-surface-100 border border-borderline rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+                        <div class="p-6 border-b border-borderline flex justify-between items-center bg-surface-50">
+                            <h3 class="text-white font-bold text-lg">Inferred Bounded Contexts</h3>
+                        </div>
+                        <div class="overflow-y-auto flex-1 max-h-80">
+                            <table class="w-full data-table">
+                                <thead class="sticky top-0 z-10 bg-[#0a0a0a]">
+                                    <tr><th>Semantic Domain</th><th>Files</th><th>Coupling</th><th>State Sinks</th></tr>
+                                </thead>
+                                <tbody>
+                                    {% for c in model.layered_architecture.bounded_contexts %}
+                                    <tr>
+                                        <td class="font-bold text-white flex items-center gap-3">
+                                            <div class="w-2 h-2 {% if loop.index % 3 == 0 %}bg-emerald-500{% elif loop.index % 2 == 0 %}bg-purple-500{% else %}bg-brand-500{% endif %} rounded-full"></div> {{ c.name }}
+                                        </td>
+                                        <td class="font-mono text-xs">{{ c.file_count }}</td>
+                                        <td>
+                                            <span class="{% if c.coupling_ratio|float > 100 %}text-red-400 bg-red-500/10{% elif c.coupling_ratio|float > 50 %}text-amber-400 bg-amber-500/10{% else %}text-green-500 bg-green-500/10{% endif %} font-mono px-2 py-1 rounded text-xs">
+                                                {{ c.coupling_ratio }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="flex gap-2 text-[10px] font-bold uppercase tracking-widest">
+                                            {% if c.db_access %}<span class="text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 rounded">DB</span>{% endif %}
+                                            {% if c.auth_access %}<span class="text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 rounded">AUTH</span>{% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Macro function to render nested tree -->
+                {% macro render_tree(node, path='') %}
+                    {% for name, data in node.items()|sort %}
+                        {% set full_path = path ~ '/' ~ name %}
+                        {% set info = data.get('_info') %}
+                        {% if info %}
+                            {% set icon = '▼' %}
+                            {% set icon_color = 'text-yellow-500' %}
+                            {% if info.type == 'vendor' %}
+                                {% set icon = '■' %}
+                                {% set icon_color = 'text-gray-500' %}
+                            {% elif info.type == 'entry_point' %}
+                                {% set icon = '◆' %}
+                                {% set icon_color = 'text-red-500' %}
+                            {% elif info.type == 'asset' %}
+                                {% set icon = '●' %}
+                                {% set icon_color = 'text-emerald-500' %}
+                            {% endif %}
+                            
+                            <details class="ml-4 mb-2" {% if path == '' %}open{% endif %}>
+                                <summary class="cursor-pointer select-none mb-1 hover:text-white transition-colors">
+                                    <span class="{{ icon_color }} mr-2">{{ icon }}</span>
+                                    <span class="font-bold">{{ name }}/</span>
+                                    <span class="text-gray-600 text-xs ml-2">[{{ info.type }}]</span>
+                                </summary>
+                                <div class="border-l border-dashed border-gray-700 ml-2 pl-3 py-1 space-y-1">
+                                    {% for f in info.get('files', []) %}
+                                        {% set f_name = f.name if f is mapping else f %}
+                                        {% set f_role = f.role if f is mapping else 'file' %}
+                                        
+                                        {% set f_icon = '●' %}
+                                        {% set f_color = 'text-gray-500' %}
+                                        {% if f_role == 'entry_point' %}{% set f_icon = '◆' %}{% set f_color = 'text-red-500' %}
+                                        {% elif f_role == 'controller' %}{% set f_icon = '◆' %}{% set f_color = 'text-blue-400' %}
+                                        {% elif f_role == 'view' %}{% set f_icon = '●' %}{% set f_color = 'text-emerald-500' %}
+                                        {% elif f_role == 'job' %}{% set f_icon = '⚙️' %}{% set f_color = '' %}
+                                        {% elif f_role == 'vendor' %}{% set f_icon = '■' %}{% set f_color = 'text-gray-500' %}
+                                        {% elif f_role == 'model' %}{% set f_icon = '📦' %}{% set f_color = '' %}
+                                        {% elif f_role == 'schema' %}{% set f_icon = '💾' %}{% set f_color = '' %}
+                                        {% endif %}
+                                        
+                                        <div class="text-xs text-gray-400 flex items-center gap-2">
+                                            <span class="{{ f_color }}">{{ f_icon }}</span>
+                                            <span>{{ f_name }}</span>
+                                            <span class="text-gray-600">({{ f_role }})</span>
+                                        </div>
+                                    {% endfor %}
+                                    {{ render_tree(data.get('_children', {}), full_path) }}
+                                </div>
+                            </details>
+                        {% else %}
+                            <details class="ml-4 mb-2" {% if path == '' %}open{% endif %}>
+                                <summary class="cursor-pointer select-none font-bold hover:text-white transition-colors">
+                                    {{ name }}/
+                                </summary>
+                                <div class="border-l border-dashed border-gray-700 ml-2 pl-3 py-1">
+                                    {{ render_tree(data.get('_children', {}), full_path) }}
+                                </div>
+                            </details>
+                        {% endif %}
+                    {% endfor %}
+                {% endmacro %}
+                
+                <div class="bg-[#0a0a0a] border border-borderline rounded-2xl p-6 font-mono shadow-2xl max-h-[600px] overflow-y-auto">
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-6">Monolith Navigator</h3>
+                    {{ render_tree(model.layered_architecture.directory_tree) }}
+                </div>
+                
+                {% else %}
+                <div class="bg-surface-100 border border-borderline rounded-2xl p-12 text-center text-gray-500 italic shadow-2xl">
+                    Architectural Discovery data is unavailable.
+                </div>
+                {% endif %}
+            </section>
+
+            <!-- ==========================================
+                 3. BOUNDARY INTELLIGENCE
                  ========================================== -->
             <section id="boundary" class="doc-section">
                 <header class="mb-10">
                     <h2 class="text-4xl font-extrabold text-white tracking-tight mb-4">Boundary Intelligence</h2>
-                    <p class="text-gray-400 leading-relaxed max-w-4xl text-lg">Auditing the external surface area and structural integrity. High UI Entanglement indicates presentation files directly managing database transactions (MVC Deficits).</p>
+                    <p class="text-gray-400 leading-relaxed max-w-4xl text-lg">Auditing the external surface area and structural integrity. Mapping UI Entanglement, Network Endpoints, and Vendor Dependencies.</p>
                 </header>
 
                 {% if model.boundary_intelligence %}
-                <div class="bg-surface-100 border border-borderline rounded-2xl overflow-hidden shadow-2xl mb-12">
-                    <div class="p-6 md:p-8 border-b border-borderline flex flex-col md:flex-row justify-between md:items-center gap-6 bg-surface-50">
-                        <div>
-                            <h3 class="text-white font-bold text-xl tracking-tight">MVC Deficit Report</h3>
-                            <p class="text-sm text-gray-500 mt-1">Filtering most entangled views detected in static analysis.</p>
-                        </div>
-                        <div class="flex items-center gap-4">
-                            <div class="text-right">
-                                <span class="block text-2xl font-black text-red-500 leading-none">{{ model.boundary_intelligence.kpis.get('Global UI Entanglement', '0%') }}</span>
-                                <span class="text-[10px] uppercase tracking-widest font-mono text-gray-500">Global UI Coupling</span>
-                            </div>
-                            <div class="h-10 w-px bg-borderline"></div>
-                            <button class="bg-[#050505] border border-borderline hover:border-gray-500 text-white px-5 py-2 rounded-lg text-xs font-bold transition-all shadow-sm">
-                                Export CSV
-                            </button>
-                        </div>
+                <!-- Top-level KPI strip -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
+                        <div class="text-2xl font-black text-red-500">{{ model.boundary_intelligence.kpis.get('Global UI Entanglement', '0%') }}</div>
+                        <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Global UI Entanglement</div>
                     </div>
+                    <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
+                        <div class="text-2xl font-black text-amber-500">{{ model.boundary_intelligence.kpis.get('Fat Views (DB-Coupled UI)', 0) }}</div>
+                        <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Fat Views</div>
+                    </div>
+                    <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
+                        <div class="text-2xl font-black text-brand-400">{{ model.boundary_intelligence.kpis.get('Total Endpoints Detected', 0) }}</div>
+                        <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Endpoints Detected</div>
+                    </div>
+                    <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
+                        <div class="text-2xl font-black text-white">{{ model.boundary_intelligence.kpis.get('Vendor Files Scanned', 0) }}</div>
+                        <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Vendor Files Scanned</div>
+                    </div>
+                </div>
 
+                <div class="bg-surface-100 border border-borderline rounded-2xl overflow-hidden shadow-2xl mb-12">
+                    <div class="p-6 md:p-8 border-b border-borderline bg-surface-50">
+                        <h3 class="text-white font-bold text-xl tracking-tight">MVC Deficit Report (UI Entanglement)</h3>
+                        <p class="text-sm text-gray-500 mt-1">Quantifies how deeply HTML is baked into backend business logic.</p>
+                    </div>
                     <div class="overflow-x-auto max-h-96">
-                        <table class="w-full data-table min-w-[800px]">
+                        <table class="w-full data-table">
                             <thead class="sticky top-0 z-10 bg-[#0a0a0a]">
                                 <tr>
                                     <th class="w-1/2">File Path / Namespace</th>
@@ -316,42 +583,74 @@
                     </div>
                 </div>
 
-                <!-- Shadow IT Panel -->
+                <!-- API Surface & Vendor Panels -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div class="bg-surface-100 border border-borderline rounded-2xl p-8 shadow-2xl">
-                        <div class="flex items-center justify-between mb-6">
-                            <h3 class="text-white font-bold text-lg">Vendor & Dependency Surface</h3>
-                            <span class="bg-brand-500/10 text-brand-400 px-2 py-1 rounded text-xs font-mono border border-brand-500/20">Composer Detected</span>
+                    <!-- API Surface -->
+                    <div class="bg-surface-100 border border-borderline rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+                        <div class="p-6 border-b border-borderline bg-surface-50">
+                            <h3 class="text-white font-bold text-lg">API Surface Intelligence</h3>
+                            <p class="text-xs text-gray-500 mt-1">Automatically infers the 'front door' of the application.</p>
                         </div>
-                        <p class="text-sm text-gray-400 mb-6">Auditing third-party code. "Shadow IT" refers to manually embedded libraries circumventing package managers, creating untrackable security vulnerabilities.</p>
-
-                        <div class="space-y-4">
-                            <div class="flex items-start gap-4 p-4 bg-surface-50 border border-borderline rounded-lg">
-                                <div class="w-2 h-2 mt-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></div>
-                                <div>
-                                    <p class="font-bold text-white text-sm">Managed Ecosystem</p>
-                                    <p class="text-gray-500 text-xs mt-1">Packages mapped securely to package manager configs.</p>
-                                </div>
-                            </div>
-                            <div class="flex items-start gap-4 p-4 {% if model.boundary_intelligence.kpis.get('Vendor Files Scanned', 0) > 0 %}bg-red-500/5 border border-red-500/20{% else %}bg-surface-50 border border-borderline{% endif %} rounded-lg">
-                                <div class="w-2 h-2 mt-1.5 rounded-full {% if model.boundary_intelligence.kpis.get('Vendor Files Scanned', 0) > 0 %}bg-red-500 shadow-glow-red animate-pulse{% else %}bg-emerald-500{% endif %}"></div>
-                                <div class="w-full">
-                                    <p class="font-bold {% if model.boundary_intelligence.kpis.get('Vendor Files Scanned', 0) > 0 %}text-red-400{% else %}text-emerald-400{% endif %} text-sm">Shadow IT Assessment</p>
-                                    <p class="text-xs text-gray-500 mt-2">{{ model.boundary_intelligence.kpis.get('Vendor Files Scanned', 0) }} unmanaged vendor files detected in source paths outside package manager domains.</p>
-                                </div>
-                            </div>
+                        <div class="overflow-y-auto max-h-80">
+                            <table class="w-full data-table">
+                                <thead class="sticky top-0 z-10 bg-[#0a0a0a]">
+                                    <tr><th>Entry Point</th><th>Type</th></tr>
+                                </thead>
+                                <tbody>
+                                    {% for a in model.boundary_intelligence.api_surface %}
+                                    <tr>
+                                        <td class="font-mono text-xs text-brand-400">{{ a.path }}</td>
+                                        <td class="text-xs font-bold text-gray-300">{{ a.type }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% if not model.boundary_intelligence.api_surface %}
+                                    <tr><td colspan="2" class="text-center italic text-gray-500 py-4">No API endpoints detected.</td></tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
-                    <div class="bg-surface-100 border border-borderline rounded-2xl p-8 shadow-2xl flex flex-col justify-center">
-                        <h3 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-6 text-center">API Surface Distribution</h3>
-                        <div class="space-y-5">
+                    <!-- Vendor Inventory -->
+                    <div class="bg-surface-100 border border-borderline rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+                        <div class="p-6 border-b border-borderline bg-surface-50 flex items-center justify-between">
                             <div>
-                                <div class="flex justify-between text-sm mb-2"><span class="text-gray-300">Total Endpoints Detected</span> <span class="text-white font-mono font-bold">{{ model.boundary_intelligence.kpis.get('Total Endpoints Detected', 0) }}</span></div>
-                                <div class="w-full h-1.5 bg-[#111] rounded-full overflow-hidden"><div class="h-full bg-borderline" style="width: 100%"></div></div>
+                                <h3 class="text-white font-bold text-lg">Vendor Inventory</h3>
+                                <p class="text-xs text-gray-500 mt-1">Detects "Shadow IT" and third-party libraries.</p>
                             </div>
+                            {% if model.boundary_intelligence.kpis.get('Vendor Files Scanned', 0) > 0 %}
+                            <span class="bg-red-500/10 text-red-500 px-2 py-1 rounded text-[10px] font-mono border border-red-500/20 font-bold uppercase">Risk</span>
+                            {% else %}
+                            <span class="bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded text-[10px] font-mono border border-emerald-500/20 font-bold uppercase">Managed</span>
+                            {% endif %}
                         </div>
-                        <p class="text-xs text-gray-500 mt-6 text-center italic">API analysis reveals total inferred boundaries.</p>
+                        <div class="overflow-y-auto max-h-80">
+                            <table class="w-full data-table">
+                                <thead class="sticky top-0 z-10 bg-[#0a0a0a]">
+                                    <tr><th>Library/Plugin File</th><th>Vendor Type</th><th>Status</th></tr>
+                                </thead>
+                                <tbody>
+                                    {% for v in model.boundary_intelligence.vendor_inventory %}
+                                    <tr>
+                                        <td class="font-mono text-[10px] text-gray-400 truncate max-w-[200px]" title="{{ v.file_path }}">{{ v.file_path }}</td>
+                                        <td class="text-xs">{{ v.vendor_type }}</td>
+                                        <td>
+                                            {% if 'ORPHANED' in v.status|upper %}
+                                            <span class="px-2 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded text-[10px] uppercase font-bold">{{ v.status }}</span>
+                                            {% elif 'COMPOSER' in v.vendor_type|upper %}
+                                            <span class="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-[10px] uppercase font-bold">{{ v.status }}</span>
+                                            {% else %}
+                                            <span class="px-2 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded text-[10px] uppercase font-bold">{{ v.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% if not model.boundary_intelligence.vendor_inventory %}
+                                    <tr><td colspan="3" class="text-center italic text-gray-500 py-4">No vendor files detected.</td></tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
                 {% else %}
@@ -362,45 +661,102 @@
             </section>
 
             <!-- ==========================================
-                 3. LAYERED TOPOLOGY
+                 4. DATABASE INTELLIGENCE
                  ========================================== -->
-            <section id="topology" class="doc-section">
+            <section id="database" class="doc-section">
                 <header class="mb-10">
-                    <h2 class="text-4xl font-extrabold text-white tracking-tight mb-4">Layered Topology</h2>
-                    <p class="text-gray-400 leading-relaxed max-w-4xl text-lg">Logical Domain clustering. Visualizing structural edges to isolate macro-level architectural anomalies and God Nodes.</p>
+                    <h2 class="text-4xl font-extrabold text-white tracking-tight mb-4">Database Intelligence</h2>
+                    <p class="text-gray-400 leading-relaxed max-w-4xl text-lg">Persistence Layer Analysis, CRUD Patterns, and Table Ownership.</p>
                 </header>
-                {% if model.layered_architecture %}
-                <div class="grid grid-cols-1 gap-8 mb-10">
 
-                    <!-- Logical Domains Matrix -->
-                    <div class="bg-surface-100 border border-borderline rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-                        <div class="p-6 border-b border-borderline flex justify-between items-center bg-surface-50">
-                            <h3 class="text-white font-bold text-lg">Inferred Bounded Contexts</h3>
+                {% if model.database_intelligence %}
+                <!-- KPIs -->
+                {% set taxonomy = model.database_intelligence.taxonomy %}
+                {% set total_reads = taxonomy.values() | map(attribute='reads') | sum %}
+                {% set total_writes = taxonomy.values() | map(attribute='writes') | sum %}
+                {% set total_orm = taxonomy.values() | map(attribute='orm') | sum %}
+                {% set total_creds = taxonomy.values() | map(attribute='credentials') | sum %}
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
+                        <div class="text-2xl font-black text-brand-400">{{ total_reads }}</div>
+                        <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Read Operations</div>
+                    </div>
+                    <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
+                        <div class="text-2xl font-black text-brand-400">{{ total_writes }}</div>
+                        <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Write Operations</div>
+                    </div>
+                    <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
+                        <div class="text-2xl font-black text-emerald-500">{{ total_orm }}</div>
+                        <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">ORM Abstractions</div>
+                    </div>
+                    <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
+                        <div class="text-2xl font-black {% if total_creds > 0 %}text-red-500{% else %}text-emerald-500{% endif %}">{{ total_creds }}</div>
+                        <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Credential Risks</div>
+                    </div>
+                </div>
+
+                <!-- Access Taxonomy -->
+                <div class="bg-surface-100 border border-borderline rounded-2xl overflow-hidden shadow-2xl mb-12">
+                    <div class="p-6 md:p-8 border-b border-borderline bg-surface-50">
+                        <h3 class="text-white font-bold text-xl tracking-tight">Access Taxonomy (CRUD Patterns)</h3>
+                        <p class="text-sm text-gray-500 mt-1">Files ranked by their database interaction volume.</p>
+                    </div>
+                    <div class="overflow-x-auto max-h-96">
+                        <table class="w-full data-table">
+                            <thead class="sticky top-0 z-10 bg-[#0a0a0a]">
+                                <tr>
+                                    <th>File</th>
+                                    <th>Reads</th>
+                                    <th>Writes</th>
+                                    <th>ORM</th>
+                                    <th>Transactions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for file, metrics in model.database_intelligence.taxonomy.items() %}
+                                {% if metrics.reads > 0 or metrics.writes > 0 or metrics.orm > 0 %}
+                                <tr>
+                                    <td class="font-mono text-brand-400 text-xs">{{ file }}</td>
+                                    <td class="font-mono text-white">{{ metrics.reads }}</td>
+                                    <td class="font-mono text-white">{{ metrics.writes }}</td>
+                                    <td class="font-mono text-white">{{ metrics.orm }}</td>
+                                    <td class="font-mono text-white">{{ metrics.transactions }}</td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Table Ownership & Domain Model Mermaid -->
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-12">
+                    <div class="bg-surface-100 border border-borderline rounded-2xl overflow-hidden shadow-2xl flex flex-col h-full">
+                        <div class="p-6 border-b border-borderline bg-surface-50">
+                            <h3 class="text-white font-bold text-lg tracking-tight">Table Ownership</h3>
+                            <p class="text-xs text-gray-500 mt-1">Cross-module write conflicts.</p>
                         </div>
-                        <div class="overflow-x-auto flex-1 max-h-96">
+                        <div class="overflow-y-auto max-h-[400px] flex-grow">
                             <table class="w-full data-table">
                                 <thead class="sticky top-0 z-10 bg-[#0a0a0a]">
-                                    <tr><th>Semantic Domain</th><th>Files</th><th>Internal Calls</th><th>External Calls</th><th>Coupling Ratio</th><th>State Sinks</th></tr>
+                                    <tr>
+                                        <th>Table Name</th>
+                                        <th>Primary Owner</th>
+                                        <th>Cross-Module Conflict</th>
+                                    </tr>
                                 </thead>
                                 <tbody>
-                                    {% for c in model.layered_architecture.bounded_contexts %}
+                                    {% for row in model.database_intelligence.table_ownership %}
                                     <tr>
-                                        <td class="font-bold text-white flex items-center gap-3">
-                                            <div class="w-2 h-2 {% if loop.index % 3 == 0 %}bg-emerald-500{% elif loop.index % 2 == 0 %}bg-purple-500{% else %}bg-brand-500{% endif %} rounded-full"></div> {{ c.name }}
-                                        </td>
-                                        <td class="font-mono text-xs">{{ c.file_count }}</td>
-                                        <td class="font-mono text-xs">{{ c.internal_calls }}</td>
-                                        <td class="font-mono text-xs">{{ c.external_calls }}</td>
+                                        <td class="font-mono text-white font-bold text-xs">{{ row.table }}</td>
+                                        <td class="text-gray-300 text-xs">{{ row.primary_owner }}</td>
                                         <td>
-                                            <span class="{% if c.coupling_ratio|float > 100 %}text-red-400 bg-red-500/10{% elif c.coupling_ratio|float > 50 %}text-amber-400 bg-amber-500/10{% else %}text-green-500 bg-green-500/10{% endif %} font-mono px-2 py-1 rounded">
-                                                {{ c.coupling_ratio }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="flex gap-2 text-[10px] font-bold uppercase tracking-widest">
-                                            {% if c.db_access %}<span class="text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 rounded">DB</span>{% endif %}
-                                            {% if c.auth_access %}<span class="text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 rounded">AUTH</span>{% endif %}
-                                            </div>
+                                            {% if row.cross_module_write %}
+                                            <span class="px-2 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded text-[10px] uppercase font-bold">Conflict</span>
+                                            {% else %}
+                                            <span class="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-[10px] uppercase font-bold">Safe</span>
+                                            {% endif %}
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -408,93 +764,168 @@
                             </table>
                         </div>
                     </div>
-                </div>
-
-                <!-- Vis.js Full Width Graph -->
-                <div class="bg-surface-100 border border-borderline rounded-2xl shadow-2xl flex flex-col relative overflow-hidden">
-                    <div class="p-6 border-b border-borderline flex flex-col sm:flex-row justify-between sm:items-center gap-4 z-10 bg-surface-50">
-                        <div>
-                            <h3 class="text-white font-bold text-lg">Macro-Domain Dependency Graph</h3>
-                            <p class="text-xs text-gray-500 mt-1">For full interactivity, access the <code>raw_data/graph_{{ run_id }}.json</code> file in this export bundle.</p>
+                    
+                    <div class="bg-surface-100 border border-borderline rounded-2xl overflow-hidden shadow-2xl flex flex-col h-full">
+                        <div class="p-6 border-b border-borderline bg-surface-50">
+                            <h3 class="text-white font-bold text-lg tracking-tight">Inferred Domain Model</h3>
+                            <p class="text-xs text-gray-500 mt-1">Behavioral table relationships.</p>
+                        </div>
+                        <div class="p-6 flex-grow flex items-center justify-center overflow-auto min-h-[400px]">
+                            <div class="mermaid">
+                            graph TD
+                            {% for rel in model.database_intelligence.erd_relationships %}
+                            {% set a = rel.from | replace('-', '_') | replace('.', '_') | replace('/', '_') %}
+                            {% set b = rel.to | replace('-', '_') | replace('.', '_') | replace('/', '_') %}
+                            {{ a }}["{{ rel.from }}"] ---|{{ rel.inferred_via }}| {{ b }}["{{ rel.to }}"]
+                            {% endfor %}
+                            </div>
                         </div>
                     </div>
-                    <!-- 600px Height Canvas -->
-                    <div id="networkGraph" class="h-[600px] w-full bg-[#030303] bg-gradient-mesh flex items-center justify-center">
-                        <span class="text-gray-500 font-mono text-sm">[Raw Graph Export Available in Package]</span>
-                    </div>
                 </div>
+                
                 {% else %}
                 <div class="bg-surface-100 border border-borderline rounded-2xl p-12 text-center text-gray-500 italic shadow-2xl">
-                    Layered topology data is unavailable.
+                    Database intelligence data is unavailable.
+                </div>
+                {% endif %}
+            </section>
+            
+            <!-- ==========================================
+                 5. GLOBAL STATE INTELLIGENCE
+                 ========================================== -->
+            <section id="global_state" class="doc-section">
+                <header class="mb-10">
+                    <h2 class="text-4xl font-extrabold text-white tracking-tight mb-4">Runtime & Global State</h2>
+                    <p class="text-gray-400 leading-relaxed max-w-4xl text-lg">Superglobal Tracking, Session Flows, and Side-Effect Classification.</p>
+                </header>
+
+                {% if model.global_state_intelligence %}
+                {% set totals = model.global_state_intelligence.superglobal_totals %}
+                {% set sg_hits = totals.values() | sum %}
+                {% set total_mutations = model.global_state_intelligence.superglobal_mutations | length %}
+                
+                <!-- KPIs -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
+                        <div class="text-2xl font-black text-red-400">{{ sg_hits }}</div>
+                        <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Superglobal Hits</div>
+                    </div>
+                    <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
+                        <div class="text-2xl font-black text-amber-500">{{ total_mutations }}</div>
+                        <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">State Mutations</div>
+                    </div>
+                    <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
+                        <div class="text-2xl font-black text-brand-400">{{ model.global_state_intelligence.session_writers | length }}</div>
+                        <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Session Writers</div>
+                    </div>
+                    <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
+                        <div class="text-2xl font-black text-white">{{ model.global_state_intelligence.side_effect_totals.get('DANGER', 0) }}</div>
+                        <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Danger Sinks</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+                    <div class="bg-surface-100 border border-borderline rounded-2xl overflow-hidden shadow-2xl">
+                        <div class="p-6 border-b border-borderline bg-surface-50">
+                            <h3 class="text-white font-bold text-lg tracking-tight">Superglobal Usage Distribution</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex flex-wrap gap-3">
+                                {% for var, count in model.global_state_intelligence.superglobal_totals.items() %}
+                                <div class="px-4 py-2 bg-[#111] border border-borderline rounded-lg flex items-center gap-3">
+                                    <span class="font-mono text-brand-400 font-bold">${{ var }}</span>
+                                    <span class="text-xs text-gray-400">{{ count }} hits</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-surface-100 border border-borderline rounded-2xl overflow-hidden shadow-2xl">
+                        <div class="p-6 border-b border-borderline bg-surface-50">
+                            <h3 class="text-white font-bold text-lg tracking-tight">Side-Effect Breakdown</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex flex-wrap gap-3">
+                                {% for effect, count in model.global_state_intelligence.side_effect_totals.items() %}
+                                {% if count > 0 %}
+                                <div class="px-4 py-2 bg-[#111] border border-borderline rounded-lg flex items-center gap-3">
+                                    <span class="font-mono text-amber-500 font-bold">{{ effect }}</span>
+                                    <span class="text-xs text-gray-400">{{ count }} ops</span>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% else %}
+                <div class="bg-surface-100 border border-borderline rounded-2xl p-12 text-center text-gray-500 italic shadow-2xl">
+                    Global state intelligence data is unavailable.
                 </div>
                 {% endif %}
             </section>
 
             <!-- ==========================================
-                 4. DATABASE PRESSURE
+                 6. LEGACY PHP INTELLIGENCE
                  ========================================== -->
-            <section id="database" class="doc-section">
+            <section id="legacy" class="doc-section">
                 <header class="mb-10">
-                    <h2 class="text-4xl font-extrabold text-white tracking-tight mb-4">Database Pressure Intelligence</h2>
-                    <p class="text-gray-400 leading-relaxed max-w-4xl text-lg">Identifying monolithic anchors. The Shared Table Pressure Index highlights schemas accessed by a disproportionate volume of unrelated presentation and business logic files.</p>
+                    <h2 class="text-4xl font-extrabold text-white tracking-tight mb-4">Legacy PHP Intelligence</h2>
+                    <p class="text-gray-400 leading-relaxed max-w-4xl text-lg">Era Classification, Anti-Pattern Detection, and Modernization Scoring.</p>
                 </header>
 
-                <div class="bg-surface-100 border border-borderline rounded-2xl overflow-hidden shadow-2xl">
-                    <div class="overflow-x-auto max-h-[600px]">
-                        <table class="w-full data-table min-w-[800px]">
-                            <thead class="sticky top-0 z-10 bg-[#0a0a0a]">
-                                <tr>
-                                    <th class="w-1/3">Schema / Target Table</th>
-                                    <th class="w-1/4">Write/Read Profile</th>
-                                    <th>Shared Pressure Index</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for db in model.database_intelligence %}
-                                <tr>
-                                    <td>
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-8 h-8 rounded bg-surface border border-borderline flex items-center justify-center"><svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg></div>
-                                            <span class="font-mono text-white font-bold">{{ db.table_name }}</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        {% if 'Write' in db.write_intensity %}
-                                            <span class="text-amber-500 font-bold text-xs uppercase tracking-wider">{{ db.write_intensity }}</span>
-                                        {% else %}
-                                            <span class="text-emerald-500 font-bold text-xs uppercase tracking-wider">{{ db.write_intensity }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="flex gap-1 items-center">
-                                            {% set blocks = 5 %}
-                                            {% set active = (db.shared_table_pressure / 2) | int %}
-                                            {% if active > 5 %}{% set active = 5 %}{% endif %}
-                                            {% set block_color = 'bg-red-500 shadow-glow-red' if db.shared_table_pressure > 7 else ('bg-amber-500' if db.shared_table_pressure > 3 else 'bg-emerald-500') %}
-                                            {% for i in range(blocks) %}
-                                                {% if i < active %}
-                                                <div class="w-full h-2 {{ block_color }} rounded"></div>
-                                                {% else %}
-                                                <div class="w-full h-2 bg-borderline rounded"></div>
-                                                {% endif %}
-                                            {% endfor %}
-                                            <span class="ml-3 text-xs font-mono font-bold text-white">{{ db.shared_table_pressure }}</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% else %}
-                                <tr>
-                                    <td colspan="3" class="text-center italic text-gray-500 py-10">No database interaction data available.</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                {% if model.legacy_intelligence %}
+                <!-- KPIs -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
+                        <div class="text-xl font-black text-white truncate px-2" title="{{ model.legacy_intelligence.classified_era }}">{{ model.legacy_intelligence.classified_era.split('(')[0].strip() }}</div>
+                        <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">PHP Era</div>
+                    </div>
+                    <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
+                        <div class="text-2xl font-black text-brand-400">{{ (model.legacy_intelligence.score_dimensions.get('Total Modernization Score', 0) * 100) | round(1) }}%</div>
+                        <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Modernization Score</div>
+                    </div>
+                    <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
+                        <div class="text-2xl font-black text-amber-500">{{ (model.legacy_intelligence.procedural_ratio * 100) | round(1) }}%</div>
+                        <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Procedural Ratio</div>
+                    </div>
+                    <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
+                        <div class="text-2xl font-black text-emerald-500">{{ (model.legacy_intelligence.namespace_ratio * 100) | round(1) }}%</div>
+                        <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Namespace Coverage</div>
                     </div>
                 </div>
+
+                <div class="bg-surface-100 border border-borderline rounded-2xl overflow-hidden shadow-2xl mb-12">
+                    <div class="p-6 md:p-8 border-b border-borderline bg-surface-50">
+                        <h3 class="text-white font-bold text-xl tracking-tight">Legacy Anti-Pattern Inventory</h3>
+                        <p class="text-sm text-gray-500 mt-1">Dangerous and depreciated patterns driving modernization complexity.</p>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {% for pattern, count in model.legacy_intelligence.pattern_totals.items() %}
+                        {% if count > 0 %}
+                        <div class="bg-[#111] p-5 rounded-xl border border-borderline relative overflow-hidden group hover:border-red-500/30 transition-colors">
+                            <div class="text-red-400 font-mono font-bold text-lg mb-2 relative z-10">{{ pattern }}</div>
+                            <div class="flex items-end justify-between relative z-10">
+                                <span class="text-gray-500 text-xs">Total Occurrences</span>
+                                <span class="text-2xl font-black text-white">{{ count }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {% else %}
+                <div class="bg-surface-100 border border-borderline p-12 text-center text-gray-500 italic shadow-2xl">
+                    Legacy intelligence data is unavailable.
+                </div>
+                {% endif %}
             </section>
 
             <!-- ==========================================
-                 5. RISK AUDIT
+                 7. STRUCTURAL RISK AUDIT
                  ========================================== -->
             <section id="risks" class="doc-section">
                 <header class="mb-10">
@@ -574,24 +1005,137 @@
             </section>
 
             <!-- ==========================================
-                 6. EXTRACTION PLAYBOOKS
+            <!-- ==========================================
+                 8. STRATEGIC ADVISORY
                  ========================================== -->
             <section id="playbooks" class="doc-section border-b-0 pb-16">
                 <header class="mb-14">
-                    <h2 class="text-4xl font-extrabold text-white tracking-tight mb-4">Modernization Playbooks</h2>
-                    <p class="text-gray-400 leading-relaxed max-w-4xl text-lg">Strangler Fig pattern execution guidelines. Strict adherence to the chronological phasing is required to prevent cascaded regression failures across the monolith.</p>
+                    <h2 class="text-4xl font-extrabold text-white tracking-tight mb-4">Strategic Advisory</h2>
+                    <p class="text-gray-400 leading-relaxed max-w-4xl text-lg">Modernization Decision Engine recommendations, Actionable ROI matrices, and execution playbooks based on architectural complexity.</p>
                 </header>
 
-                <div class="relative border-l-2 border-borderline ml-3 md:ml-6 space-y-16">
-                    
-                    {% set roadmap = model.ai_executive_summary.get('strategic_roadmap', 'Execute architectural decoupling based on boundary data.') %}
+                {% if model.strategic_advisory %}
+                {% set kpis = model.strategic_advisory.get('kpis', {}) %}
+                {% set recommendations = model.strategic_advisory.get('recommendations', []) %}
+                
+                <!-- Decision Engine KPIs -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                    <div class="bg-surface-100 border border-borderline p-6 rounded-2xl shadow-xl text-center">
+                        <div class="text-3xl font-black text-brand-400 mb-2">{{ kpis.get('Overall Migration Effort', 'N/A') }}</div>
+                        <div class="text-xs text-gray-500 uppercase tracking-widest font-bold">Estimated Effort</div>
+                    </div>
+                    <div class="bg-surface-100 border border-borderline p-6 rounded-2xl shadow-xl text-center">
+                        <div class="text-3xl font-black text-white mb-2">{{ kpis.get('Most Common Strategy', 'N/A') }}</div>
+                        <div class="text-xs text-gray-500 uppercase tracking-widest font-bold">Primary Path</div>
+                    </div>
+                    <div class="bg-surface-100 border border-borderline p-6 rounded-2xl shadow-xl text-center">
+                        <div class="text-3xl font-black text-emerald-500 mb-2">{{ kpis.get('High Value Targets', 0) }}</div>
+                        <div class="text-xs text-gray-500 uppercase tracking-widest font-bold">Quick Wins (High ROI)</div>
+                    </div>
+                </div>
 
+                <!-- Modernization ROI Table -->
+                <div class="bg-surface-100 border border-borderline rounded-2xl overflow-hidden shadow-2xl mb-16">
+                    <div class="p-6 md:p-8 border-b border-borderline bg-surface-50 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-white font-bold text-xl tracking-tight">Modernization ROI Matrix</h3>
+                            <p class="text-sm text-gray-500 mt-1">Cost-benefit analysis of modernizing each architectural module.</p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full data-table text-sm min-w-[800px]">
+                            <thead class="bg-[#0a0a0a]">
+                                <tr>
+                                    <th>Module Context</th>
+                                    <th>Recommended Strategy</th>
+                                    <th>ROI Score</th>
+                                    <th>Migration Effort</th>
+                                    <th>Primary Blocker</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rec in recommendations %}
+                                <tr>
+                                    <td class="font-bold text-white">{{ rec.Context }}</td>
+                                    <td>
+                                        {% if rec['Recommended Strategy'] == 'EXTRACT (MICROSERVICE)' %}
+                                        <span class="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-[10px] font-bold">EXTRACT</span>
+                                        {% elif rec['Recommended Strategy'] == 'REWRITE' %}
+                                        <span class="px-2 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded text-[10px] font-bold">REWRITE</span>
+                                        {% elif rec['Recommended Strategy'] == 'STRANGLER FIG' %}
+                                        <span class="px-2 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded text-[10px] font-bold">STRANGLER FIG</span>
+                                        {% elif rec['Recommended Strategy'] == 'REPLATFORM' %}
+                                        <span class="px-2 py-1 bg-brand-500/10 text-brand-400 border border-brand-500/20 rounded text-[10px] font-bold">REPLATFORM</span>
+                                        {% else %}
+                                        <span class="px-2 py-1 bg-gray-500/10 text-gray-400 border border-gray-500/20 rounded text-[10px] font-bold">{{ rec['Recommended Strategy'] }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-16 h-2 bg-surface rounded overflow-hidden">
+                                                <div class="h-full bg-emerald-500" style="width: {{ rec['Modernization ROI'] }}%"></div>
+                                            </div>
+                                            <span class="font-mono text-gray-300">{{ rec['Modernization ROI'] }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="font-mono text-gray-400">{{ rec['Migration Effort'] }}</td>
+                                    <td class="text-gray-400 italic">{{ rec['Primary Blocker'] }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- AI Architectural Intelligence (Deep Insights) -->
+                {% if model.ai_executive_summary and model.ai_executive_summary.get('findings') %}
+                <div class="mb-16">
+                    <h3 class="text-2xl font-bold text-white mb-6">Deep AI Architectural Intelligence</h3>
+                    <div class="space-y-6">
+                        {% for finding in model.ai_executive_summary.get('findings', []) %}
+                        <div class="bg-surface-100 border border-borderline p-8 rounded-2xl shadow-xl flex flex-col xl:flex-row gap-8">
+                            <div class="flex-1 space-y-4">
+                                <div class="flex items-center gap-3 mb-2">
+                                    {% if finding.priority == 'Critical' %}
+                                    <span class="px-2 py-0.5 bg-red-500/10 text-red-500 border border-red-500/30 rounded text-xs font-bold uppercase">CRITICAL</span>
+                                    {% else %}
+                                    <span class="px-2 py-0.5 bg-amber-500/10 text-amber-500 border border-amber-500/30 rounded text-xs font-bold uppercase">HIGH</span>
+                                    {% endif %}
+                                    <h4 class="text-xl font-bold text-white">{{ finding.observation }}</h4>
+                                </div>
+                                <div class="text-sm text-gray-400 leading-relaxed border-l-2 border-borderline pl-4">
+                                    <p class="font-bold text-gray-300 mb-1">Impact:</p>
+                                    {{ finding.impact }}
+                                </div>
+                                <div class="text-sm text-brand-100 leading-relaxed bg-brand-500/5 p-4 rounded-lg border border-brand-500/20">
+                                    <p class="font-bold text-brand-400 mb-1">Executive Recommendation:</p>
+                                    {{ finding.recommended_action }}
+                                </div>
+                            </div>
+                            
+                            {% if finding.mermaid_diagram %}
+                            <div class="xl:w-[400px] shrink-0 bg-[#050505] rounded-xl border border-borderline p-4 flex items-center justify-center min-h-[250px] overflow-auto">
+                                <div class="mermaid">
+                                {{ finding.mermaid_diagram }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Executive Roadmap Timeline -->
+                <div class="relative border-l-2 border-borderline ml-3 md:ml-6 space-y-16">
+                    {% set roadmap = model.ai_executive_summary.get('strategic_roadmap', 'Execute architectural decoupling based on boundary data.') %}
                     <div class="relative pl-10 md:pl-12">
                         <div class="absolute w-5 h-5 bg-brand-500 rounded-full -left-[10.5px] top-1 border-[4px] border-[#050505] shadow-[0_0_15px_rgba(59,130,246,0.8)]"></div>
                         <div class="flex flex-col md:flex-row md:items-center gap-4 mb-4">
-                            <span class="text-brand-500 font-mono text-sm uppercase tracking-widest font-extrabold bg-brand-500/10 border border-brand-500/20 px-3 py-1 rounded inline-block w-max">Extracted Playbook</span>
+                            <span class="text-brand-500 font-mono text-sm uppercase tracking-widest font-extrabold bg-brand-500/10 border border-brand-500/20 px-3 py-1 rounded inline-block w-max">Extraction Playbook</span>
                         </div>
-                        <h3 class="text-3xl font-bold text-white mb-4">Executive Roadmap</h3>
+                        <h3 class="text-3xl font-bold text-white mb-4">Phased Execution</h3>
                         <p class="text-base text-gray-400 mb-8 leading-relaxed max-w-4xl whitespace-pre-wrap">{{ roadmap }}</p>
 
                         <div class="bg-surface-100 border border-borderline rounded-xl overflow-hidden shadow-2xl max-w-4xl">
@@ -601,13 +1145,12 @@
                                 <div class="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50"></div>
                             </div>
                             <div class="p-6 text-sm font-mono text-gray-300 space-y-4 bg-[#050505]">
-                                <div class="flex group"><span class="w-8 shrink-0 text-brand-500">01</span> <span class="group-hover:text-white transition-colors">Review MVC Deficit Report and isolate Fat Views.</span></div>
-                                <div class="flex group"><span class="w-8 shrink-0 text-brand-500">02</span> <span class="group-hover:text-white transition-colors">Extract embedded queries into standalone abstractions.</span></div>
-                                <div class="flex group"><span class="w-8 shrink-0 text-brand-500">03</span> <span class="group-hover:text-white transition-colors">Apply strict boundaries to prevent future UI entanglement.</span></div>
+                                <div class="flex group"><span class="w-8 shrink-0 text-brand-500">01</span> <span class="group-hover:text-white transition-colors">Target Quick Wins: Extract highly cohesive, low-effort modules.</span></div>
+                                <div class="flex group"><span class="w-8 shrink-0 text-brand-500">02</span> <span class="group-hover:text-white transition-colors">Wrap tangled business logic with anti-corruption layers.</span></div>
+                                <div class="flex group"><span class="w-8 shrink-0 text-brand-500">03</span> <span class="group-hover:text-white transition-colors">Execute Strangler Fig pattern for core structural rewrites.</span></div>
                             </div>
                         </div>
                     </div>
-
                 </div>
             </section>
 

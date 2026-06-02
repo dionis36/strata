@@ -47,10 +47,12 @@ def test_document_generator():
     model = CanonicalModel(
         run_id=1,
         system_context=ctx,
-        modules=[],
+        legacy_intelligence={},
+        database_intelligence={},
         dependency_intelligence=[],
-        global_state_intelligence=[],
-        database_intelligence=[],
+        global_state_intelligence={},
+        strategic_advisory={},
+        boundary_intelligence=None,
         legacy_posture=None,
         findings=[f1],
         full_risk_register=[f1]
