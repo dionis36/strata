@@ -97,7 +97,8 @@ def show_artifact_center():
             
         submit_bundle = st.form_submit_button("Generate Full Bundle (.zip)")
         
-    if submit_bundle or st.session_state.get("zip_bundle_data") is not None:
+    zip_key = f"zip_bundle_data_{run_id}"
+    if submit_bundle or st.session_state.get(zip_key) is not None:
         if submit_bundle:
             with st.spinner("Compiling Workspace Bundle..."):
                 params = {
@@ -112,14 +113,14 @@ def show_artifact_center():
                 }
                 res = requests.get(f"{FASTAPI_URL}/artifacts/bundle/{run_id}", params=params)
                 if res.status_code == 200:
-                    st.session_state["zip_bundle_data"] = res.content
+                    st.session_state[zip_key] = res.content
                 else:
                     st.error("Failed to generate Workspace Bundle.")
                     
-        if st.session_state.get("zip_bundle_data") is not None:
+        if st.session_state.get(zip_key) is not None:
             st.download_button(
                 label="📥 Download strata_workspace.zip",
-                data=st.session_state["zip_bundle_data"],
+                data=st.session_state[zip_key],
                 file_name=f"strata_workspace_{run_id}.zip",
                 mime="application/zip"
             )
@@ -146,16 +147,17 @@ def show_artifact_center():
         selected_format = format_options[selected_format_label]
         
         btn_compile = st.button("Generate Assessment")
+        cached_human_key = f"cached_human_{selected_format}_{run_id}"
+        
         if btn_compile:
             with st.spinner(f"Generating {selected_format.upper()} Report..."):
                 res = requests.get(f"{FASTAPI_URL}/artifacts/human/{run_id}?format={selected_format}")
                 if res.status_code == 200:
-                    st.session_state[f"cached_human_{selected_format}"] = res.content
+                    st.session_state[cached_human_key] = res.content
                     st.success(f"{selected_format.upper()} report generated!")
                 else:
                     st.error("Failed to generate report.")
         
-        cached_human_key = f"cached_human_{selected_format}"
         if st.session_state.get(cached_human_key) is not None:
             mime_types = {
                 "pdf": "application/pdf",
@@ -177,19 +179,21 @@ def show_artifact_center():
         st.caption("A flat CSV of all component risk scores for Jira or Excel.")
         
         btn_csv = st.button("Generate CSV Export")
+        csv_key = f"cached_csv_data_{run_id}"
+        
         if btn_csv:
             with st.spinner("Generating CSV..."):
                 res = requests.get(f"{FASTAPI_URL}/artifacts/csv/{run_id}")
                 if res.status_code == 200:
-                    st.session_state["cached_csv_data"] = res.text
+                    st.session_state[csv_key] = res.text
                     st.success("CSV generated!")
                 else:
                     st.error("Failed to generate CSV.")
                     
-        if st.session_state.get("cached_csv_data") is not None:
+        if st.session_state.get(csv_key) is not None:
             st.download_button(
                 label="📥 Download risks.csv",
-                data=st.session_state["cached_csv_data"],
+                data=st.session_state[csv_key],
                 file_name="risks.csv",
                 mime="text/csv"
             )
@@ -203,19 +207,21 @@ def show_artifact_center():
         st.caption("OASIS standard JSON format for static analysis findings. Ready for GitHub Code Scanning.")
         
         btn_sarif = st.button("Generate SARIF JSON")
+        sarif_key = f"cached_sarif_data_{run_id}"
+        
         if btn_sarif:
             with st.spinner("Generating SARIF..."):
                 res = requests.get(f"{FASTAPI_URL}/artifacts/sarif/{run_id}")
                 if res.status_code == 200:
-                    st.session_state["cached_sarif_data"] = json.dumps(res.json(), indent=2)
+                    st.session_state[sarif_key] = json.dumps(res.json(), indent=2)
                     st.success("SARIF generated!")
                 else:
                     st.error("Failed to generate SARIF.")
                     
-        if st.session_state.get("cached_sarif_data") is not None:
+        if st.session_state.get(sarif_key) is not None:
             st.download_button(
                 label="📥 Download results.sarif",
-                data=st.session_state["cached_sarif_data"],
+                data=st.session_state[sarif_key],
                 file_name="results.sarif",
                 mime="application/json"
             )
@@ -227,21 +233,23 @@ def show_artifact_center():
         st.caption("Automated PHP refactoring rules synthesized by the LLM based on detected legacy patterns (`rector.php`).")
         
         btn_rector = st.button("Generate rector.php")
+        rector_key = f"cached_rector_data_{run_id}"
+        
         if btn_rector:
             with st.spinner("Synthesizing custom Rector rules via AI..."):
                 res = requests.get(f"{FASTAPI_URL}/artifacts/rector/{run_id}")
                 if res.status_code == 200:
-                    st.session_state["cached_rector_data"] = res.text
+                    st.session_state[rector_key] = res.text
                     st.success("Rector Configuration Synthesized")
                 else:
                     st.error("Failed to generate Rector config.")
                     
-        if st.session_state.get("cached_rector_data") is not None:
+        if st.session_state.get(rector_key) is not None:
             with st.expander("View AI-Generated rector.php", expanded=True):
-                st.code(st.session_state["cached_rector_data"], language="php")
+                st.code(st.session_state[rector_key], language="php")
             st.download_button(
                 label="📥 Download rector.php",
-                data=st.session_state["cached_rector_data"],
+                data=st.session_state[rector_key],
                 file_name="rector.php",
                 mime="text/php"
             )
@@ -253,19 +261,21 @@ def show_artifact_center():
         st.caption("Architectural boundary enforcement rules based on inferred layers (`deptrac.yaml`).")
         
         btn_deptrac = st.button("Generate deptrac.yaml")
+        deptrac_key = f"cached_deptrac_data_{run_id}"
+        
         if btn_deptrac:
             with st.spinner("Generating Deptrac rules..."):
                 res = requests.get(f"{FASTAPI_URL}/artifacts/deptrac/{run_id}")
                 if res.status_code == 200:
-                    st.session_state["cached_deptrac_data"] = res.text
+                    st.session_state[deptrac_key] = res.text
                     st.success("Deptrac generated!")
                 else:
                     st.error("Failed to generate Deptrac config.")
                     
-        if st.session_state.get("cached_deptrac_data") is not None:
+        if st.session_state.get(deptrac_key) is not None:
             st.download_button(
                 label="📥 Download deptrac.yaml",
-                data=st.session_state["cached_deptrac_data"],
+                data=st.session_state[deptrac_key],
                 file_name="deptrac.yaml",
                 mime="application/yaml"
             )
@@ -277,18 +287,20 @@ def show_artifact_center():
         st.caption("A comprehensive, strict JSON schema dump of all system nodes, edges, and scores.")
         
         btn_json = st.button("Generate Strict JSON")
+        json_key = f"cached_json_data_{run_id}"
+        
         if btn_json:
             with st.spinner("Generating JSON Dump..."):
                 res = requests.get(f"{FASTAPI_URL}/artifacts/json/{run_id}")
                 if res.status_code == 200:
-                    st.session_state["cached_json_data"] = json.dumps(res.json(), indent=2)
+                    st.session_state[json_key] = json.dumps(res.json(), indent=2)
                     st.success("Strict JSON generated!")
                 else:
                     st.error("Failed to generate JSON dump.")
-        if st.session_state.get("cached_json_data") is not None:
+        if st.session_state.get(json_key) is not None:
             st.download_button(
                 label="📥 Download system_dump.json",
-                data=st.session_state["cached_json_data"],
+                data=st.session_state[json_key],
                 file_name="system_dump.json",
                 mime="application/json"
             )

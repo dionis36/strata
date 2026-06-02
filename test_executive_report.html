@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Strata Enterprise Audit: {{ model.system_context.project_name }}</title>
+    <title>Strata Enterprise Audit: OWASPWebGoatPHP_master</title>
 
     <!-- Core Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -144,13 +144,13 @@
             <span class="font-extrabold text-themeHeading tracking-tight text-lg">STRATA <span class="font-medium text-themeDim">INTELLIGENCE</span></span>
             <div class="h-4 w-px bg-borderline hidden md:block"></div>
             <span class="hidden md:flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-surface-50 border border-borderline text-themeMuted">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Target: {{ model.system_context.project_name }}
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Target: OWASPWebGoatPHP_master
             </span>
         </div>
         <div class="flex items-center gap-6">
             <div class="hidden lg:flex flex-col items-end">
                 <span class="text-xs font-bold text-themeHeading">Analysis Generated</span>
-                <span class="text-xs font-mono text-themeDim">{{ current_date | default('Current Export Date') }}</span>
+                <span class="text-xs font-mono text-themeDim">2026-06-02 21:51:28 UTC</span>
             </div>
             <button @click="darkMode = !darkMode; document.body.classList.toggle('light-theme', !darkMode); window.dispatchEvent(new CustomEvent('theme-changed'))" 
                     class="p-2 rounded-lg border border-borderline hover:bg-surface-50 text-themeMuted hover:text-themeHeading transition-all shadow-glow-brand"
@@ -181,15 +181,15 @@
                     </div>
                     <div class="border-b border-borderline pb-2">
                         <div class="text-gray-500 uppercase text-[10px] tracking-wider">Framework</div>
-                        <div class="text-white font-bold mt-0.5 break-words">{{ model.system_context.framework | default('Unknown') }}</div>
+                        <div class="text-white font-bold mt-0.5 break-words">Custom Legacy Monolith</div>
                     </div>
                     <div class="border-b border-borderline pb-2">
                         <div class="text-gray-500 uppercase text-[10px] tracking-wider">Total Files</div>
-                        <div class="text-white font-bold mt-0.5">{{ "{:,}".format(model.system_context.total_files) }}</div>
+                        <div class="text-white font-bold mt-0.5">1,324</div>
                     </div>
                     <div class="border-b border-borderline pb-2">
                         <div class="text-gray-500 uppercase text-[10px] tracking-wider">Lines of Code</div>
-                        <div class="text-white font-bold mt-0.5">{{ "{:,}".format(model.system_context.lines_of_code) }}</div>
+                        <div class="text-white font-bold mt-0.5">119,613</div>
                     </div>
                 </div>
             </div>
@@ -229,35 +229,35 @@
                         STRATEGIC MODERNIZATION COMMAND CENTER
                     </div>
                     <h1 class="text-5xl md:text-6xl font-extrabold text-white tracking-tighter mb-4 leading-tight">Software Architecture &<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-gray-400 to-gray-600">Modernization Report</span></h1>
-                    <p class="text-lg md:text-xl text-themeMuted leading-relaxed max-w-4xl">A comprehensive architectural evaluation of the <strong>{{ model.system_context.project_name }}</strong> codebase, evaluating technical debt, boundary segregation, coupling risk, and refactoring pathways.</p>
+                    <p class="text-lg md:text-xl text-themeMuted leading-relaxed max-w-4xl">A comprehensive architectural evaluation of the <strong>OWASPWebGoatPHP_master</strong> codebase, evaluating technical debt, boundary segregation, coupling risk, and refactoring pathways.</p>
                 </header>
 
                 <!-- Top Row: Readiness & Strategy -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <!-- Gauge -->
                     <div class="bg-surface-100 border border-borderline p-6 rounded-2xl flex flex-col justify-center items-center relative overflow-hidden">
-                        <div class="absolute top-0 w-full h-1 bg-gradient-to-r {% if model.system_context.overall_readiness > 60 %}from-emerald-500 to-brand-500{% elif model.system_context.overall_readiness > 30 %}from-amber-500 to-yellow-500{% else %}from-red-500 to-amber-500{% endif %}"></div>
-                        <h2 class="text-4xl font-black text-brand-400 tracking-tighter mb-1">{{ model.system_context.overall_readiness }}%</h2>
+                        <div class="absolute top-0 w-full h-1 bg-gradient-to-r from-red-500 to-amber-500"></div>
+                        <h2 class="text-4xl font-black text-brand-400 tracking-tighter mb-1">29.48%</h2>
                         <p class="text-xs text-gray-500 font-mono uppercase tracking-widest mb-4">Modernization Readiness</p>
                         <div class="w-full bg-surface-200 h-2 rounded-full overflow-hidden">
-                            <div class="h-full bg-brand-500 rounded-full" style="width: {{ model.system_context.overall_readiness }}%;"></div>
+                            <div class="h-full bg-brand-500 rounded-full" style="width: 29.48%;"></div>
                         </div>
                     </div>
                     
                     <!-- Project Meta -->
                     <div class="md:col-span-2 bg-surface-100 border border-borderline p-6 rounded-2xl flex flex-col justify-center">
-                        <h4 class="text-xl font-bold text-white mb-2">{{ model.system_context.project_name }}</h4>
-                        <p class="text-sm text-themeMuted mb-4 font-mono">{{ model.system_context.root_path | default('Not Specified') }}</p>
+                        <h4 class="text-xl font-bold text-white mb-2">OWASPWebGoatPHP_master</h4>
+                        <p class="text-sm text-themeMuted mb-4 font-mono">/data/OWASPWebGoatPHP-master/app/model</p>
                         <div class="flex flex-wrap gap-3">
-                            <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded text-xs font-mono font-bold">ERA: {{ model.system_context.php_era }}</span>
-                            <span class="bg-brand-500/10 text-brand-400 border border-brand-500/20 px-3 py-1 rounded text-xs font-mono font-bold">FW: {{ model.system_context.framework }}</span>
-                            <span class="bg-surface-50 text-gray-400 border border-borderline px-3 py-1 rounded text-xs font-mono font-bold">Status: {% if model.system_context.overall_readiness < 40 %}CRITICAL DEBT{% elif model.system_context.overall_readiness < 70 %}HIGH RISK{% else %}HEALTHY{% endif %}</span>
+                            <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded text-xs font-mono font-bold">ERA: Bespoke / Custom Era</span>
+                            <span class="bg-brand-500/10 text-brand-400 border border-brand-500/20 px-3 py-1 rounded text-xs font-mono font-bold">FW: Custom Legacy Monolith</span>
+                            <span class="bg-surface-50 text-gray-400 border border-borderline px-3 py-1 rounded text-xs font-mono font-bold">Status: CRITICAL DEBT</span>
                         </div>
                     </div>
                 </div>
  
                 <!-- Radar & Scorecard Row -->
-                {% if model.legacy_intelligence and model.legacy_intelligence.score_dimensions %}
+                
                 <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
                     <!-- Radar Card -->
                     <div class="lg:col-span-3 bg-surface-100 border border-borderline p-6 rounded-2xl flex flex-col">
@@ -271,25 +271,67 @@
                         <div>
                             <h4 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Dimension Scorecard</h4>
                             <div class="space-y-4 font-mono text-xs">
-                                {% for label, key in [
-                                    ('Security Posture', 'Security Score'),
-                                    ('Database Layering', 'DB Layer Score'),
-                                    ('Code Testability', 'Testability Score'),
-                                    ('Namespace Adoption', 'Namespace Score'),
-                                    ('Coupling Segregation', 'Coupling Score')
-                                ] %}
-                                {% set raw_val = model.legacy_intelligence.score_dimensions.get(key, 0.0) %}
-                                {% set pct = (raw_val * 100) | round(1) %}
+                                
+                                
+                                
                                 <div>
                                     <div class="flex justify-between mb-1.5">
-                                        <span class="text-themeMuted font-bold">{{ label }}</span>
-                                        <span class="text-white font-extrabold">{{ pct }}%</span>
+                                        <span class="text-themeMuted font-bold">Security Posture</span>
+                                        <span class="text-white font-extrabold">0.0%</span>
                                     </div>
                                     <div class="w-full bg-surface-200 h-2 rounded-full overflow-hidden">
-                                        <div class="h-full rounded-full {% if pct < 35 %}bg-red-500{% elif pct < 70 %}bg-amber-500{% else %}bg-emerald-500{% endif %}" style="width: {{ pct }}%;"></div>
+                                        <div class="h-full rounded-full bg-red-500" style="width: 0.0%;"></div>
                                     </div>
                                 </div>
-                                {% endfor %}
+                                
+                                
+                                
+                                <div>
+                                    <div class="flex justify-between mb-1.5">
+                                        <span class="text-themeMuted font-bold">Database Layering</span>
+                                        <span class="text-white font-extrabold">50.0%</span>
+                                    </div>
+                                    <div class="w-full bg-surface-200 h-2 rounded-full overflow-hidden">
+                                        <div class="h-full rounded-full bg-amber-500" style="width: 50.0%;"></div>
+                                    </div>
+                                </div>
+                                
+                                
+                                
+                                <div>
+                                    <div class="flex justify-between mb-1.5">
+                                        <span class="text-themeMuted font-bold">Code Testability</span>
+                                        <span class="text-white font-extrabold">0.0%</span>
+                                    </div>
+                                    <div class="w-full bg-surface-200 h-2 rounded-full overflow-hidden">
+                                        <div class="h-full rounded-full bg-red-500" style="width: 0.0%;"></div>
+                                    </div>
+                                </div>
+                                
+                                
+                                
+                                <div>
+                                    <div class="flex justify-between mb-1.5">
+                                        <span class="text-themeMuted font-bold">Namespace Adoption</span>
+                                        <span class="text-white font-extrabold">0.0%</span>
+                                    </div>
+                                    <div class="w-full bg-surface-200 h-2 rounded-full overflow-hidden">
+                                        <div class="h-full rounded-full bg-red-500" style="width: 0.0%;"></div>
+                                    </div>
+                                </div>
+                                
+                                
+                                
+                                <div>
+                                    <div class="flex justify-between mb-1.5">
+                                        <span class="text-themeMuted font-bold">Coupling Segregation</span>
+                                        <span class="text-white font-extrabold">99.9%</span>
+                                    </div>
+                                    <div class="w-full bg-surface-200 h-2 rounded-full overflow-hidden">
+                                        <div class="h-full rounded-full bg-emerald-500" style="width: 99.9%;"></div>
+                                    </div>
+                                </div>
+                                
                             </div>
                         </div>
                         <div class="mt-6 pt-4 border-t border-borderline text-[10px] text-themeMuted font-mono">
@@ -297,7 +339,7 @@
                         </div>
                     </div>
                 </div>
-                {% endif %}
+                
 
                 <!-- KPI Bento Grid -->
                 <div class="space-y-6 mb-12">
@@ -305,27 +347,27 @@
                         <h3 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">System Vitality</h3>
                         <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
                             <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center">
-                                <div class="text-2xl font-black text-white">{{ "{:,}".format(model.system_context.total_files) }}</div>
+                                <div class="text-2xl font-black text-white">1,324</div>
                                 <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Total Files</div>
                             </div>
                             <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center">
-                                <div class="text-2xl font-black text-white">{{ "{:,}".format(model.system_context.lines_of_code) }}</div>
+                                <div class="text-2xl font-black text-white">119,613</div>
                                 <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Lines of Code</div>
                             </div>
                             <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center">
-                                <div class="text-2xl font-black text-amber-500">{{ model.system_context.avg_complexity }}</div>
+                                <div class="text-2xl font-black text-amber-500">6.78</div>
                                 <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Avg Complexity</div>
                             </div>
                             <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center">
-                                <div class="text-2xl font-black text-white">{{ "{:,}".format(model.system_context.total_classes) }}</div>
+                                <div class="text-2xl font-black text-white">847</div>
                                 <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Total Classes</div>
                             </div>
                             <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center">
-                                <div class="text-2xl font-black text-red-500">{{ "{:,}".format(model.system_context.connectivity) }}</div>
+                                <div class="text-2xl font-black text-red-500">36,307</div>
                                 <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Connectivity</div>
                             </div>
                             <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center">
-                                <div class="text-2xl font-black text-brand-500">{{ model.system_context.test_coverage }}</div>
+                                <div class="text-2xl font-black text-brand-500">N/A</div>
                                 <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Test Coverage</div>
                             </div>
                         </div>
@@ -334,30 +376,30 @@
                     <div>
                         <h3 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Architectural Footprint</h3>
                         <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
-                            {% set fp = model.system_context.architectural_footprint %}
+                            
                             <div class="bg-surface-100 border border-borderline p-4 rounded-xl flex items-center justify-between">
                                 <span class="text-xs text-gray-400 font-medium">📦 Models</span>
-                                <span class="text-lg font-black text-white">{{ fp.get('Models', 0) }}</span>
+                                <span class="text-lg font-black text-white">0</span>
                             </div>
                             <div class="bg-surface-100 border border-borderline p-4 rounded-xl flex items-center justify-between">
                                 <span class="text-xs text-gray-400 font-medium">🎛️ Controllers</span>
-                                <span class="text-lg font-black text-white">{{ fp.get('Controllers', 0) }}</span>
+                                <span class="text-lg font-black text-white">0</span>
                             </div>
                             <div class="bg-surface-100 border border-borderline p-4 rounded-xl flex items-center justify-between">
                                 <span class="text-xs text-gray-400 font-medium">🖥️ Views</span>
-                                <span class="text-lg font-black text-white">{{ fp.get('Views', 0) }}</span>
+                                <span class="text-lg font-black text-white">0</span>
                             </div>
                             <div class="bg-surface-100 border border-borderline p-4 rounded-xl flex items-center justify-between">
                                 <span class="text-xs text-gray-400 font-medium">⚙️ CLI Scripts</span>
-                                <span class="text-lg font-black text-white">{{ fp.get('CLI_Scripts', 0) }}</span>
+                                <span class="text-lg font-black text-white">0</span>
                             </div>
                             <div class="bg-surface-100 border border-borderline p-4 rounded-xl flex items-center justify-between">
                                 <span class="text-xs text-gray-400 font-medium">💾 Schemas</span>
-                                <span class="text-lg font-black text-white">{{ fp.get('Schemas', 0) }}</span>
+                                <span class="text-lg font-black text-white">0</span>
                             </div>
                             <div class="bg-surface-100 border border-borderline p-4 rounded-xl flex items-center justify-between">
                                 <span class="text-xs text-gray-400 font-medium">🧩 Libraries</span>
-                                <span class="text-lg font-black text-white">{{ fp.get('Vendor_Files', 0) }}</span>
+                                <span class="text-lg font-black text-white">0</span>
                             </div>
                         </div>
                     </div>
@@ -381,72 +423,49 @@
                         <div>
                             <h4 class="text-sm font-bold uppercase tracking-widest text-brand-400 mb-4">Current Architectural State</h4>
                             <div class="text-base text-gray-300 space-y-4 leading-relaxed font-medium">
-                                {% set ai_state = model.ai_executive_summary.get('current_state', 'Analysis Pending: API Capacity Exceeded. Rely on structural metrics for strategy execution.') %}
-                                {% for paragraph in ai_state.split('\n') %}
-                                    {% if paragraph.strip() %}
-                                    <p>{{ paragraph }}</p>
-                                    {% endif %}
-                                {% endfor %}
+                                
+                                
+                                    
+                                    <p>The Strata Analysis monolith consists of 51 Model classes and 63 View scripts, with no dedicated Controllers, reflecting a tightly‑coupled MVC‑like structure that predates modern frameworks. The codebase spans roughly 120k lines across 1,324 files, indicating a substantial legacy footprint. Versioning is at a middling score of 5.0, meaning the application likely runs on an older PHP version and lacks recent language features. Namespace usage is absent (score 0.0), so all classes reside in the global namespace, which hampers autoloading and leads to naming collisions. The database layer scores relatively well at 7.5, suggesting that data access patterns are at least somewhat organized, perhaps via custom ORM or raw queries. Security, testability and automated testing are essentially nonexistent (scores 0.0), exposing the system to injection, authentication, and regression hazards. The coupling score of 14.98 is far above the ideal range, confirming that business logic, presentation, and data access are heavily intertwined, making change propagation risky. Overall, the system is a classic legacy monolith: functionally operational but architecturally fragile, with a sparse separation of concerns and no modern development safeguards.</p>
+                                    
+                                
                             </div>
                         </div>
 
                         <!-- 2. Critical Blockers -->
-                        {% set ai_risks = model.ai_executive_summary.get('critical_risks') %}
-                        {% if ai_risks %}
+                        
+                        
                         <div class="bg-red-500/5 border border-red-500/25 p-6 rounded-xl">
                             <h4 class="text-sm font-bold uppercase tracking-widest text-red-400 mb-4 flex items-center gap-2">
                                 <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                                 Critical Blockers
                             </h4>
                             <div class="text-sm text-gray-300 space-y-3 leading-relaxed">
-                                {% for paragraph in ai_risks.split('\n') %}
-                                    {% if paragraph.strip() %}
-                                    <p>{{ paragraph }}</p>
-                                    {% endif %}
-                                {% endfor %}
+                                
+                                    
+                                    <p>The absence of namespaces and a controller layer means any new feature or bug fix must navigate a tangled global namespace, increasing the probability of accidental overrides and making code navigation difficult. This lack of modularization also impedes any effort to adopt composer autoloading or PSR‑4 standards. Security being at zero indicates no input sanitisation, CSRF protection, or password hashing upgrades, leaving the application vulnerable to common web attacks and potentially non‑compliant with regulatory standards. Testability at zero means there are no unit, integration, or end‑to‑end tests; any change carries a high risk of regression, slowing delivery and inflating maintenance costs. The extreme coupling score signals that a change in one Model can ripple through many Views, causing unintended side effects and making refactoring dangerous. Together, these weaknesses create a brittle platform that cannot safely evolve to meet new business demands.</p>
+                                    
+                                
                             </div>
                         </div>
-                        {% endif %}
+                        
                         
                         <!-- 3. Strategic Roadmap -->
-                        {% set ai_roadmap = model.ai_executive_summary.get('strategic_roadmap') %}
-                        {% if ai_roadmap %}
+                        
+                        
                         <div class="pt-8 border-t border-borderline">
                             <h4 class="text-sm font-bold uppercase tracking-widest text-emerald-400 mb-6">Strategic Roadmap</h4>
-                            {% if ai_roadmap is string %}
+                            
                                 <div class="text-base text-gray-300 space-y-4 leading-relaxed">
-                                    {% for paragraph in ai_roadmap.split('\n') %}
-                                        {% if paragraph.strip() %}
-                                        <p>{{ paragraph }}</p>
-                                        {% endif %}
-                                    {% endfor %}
+                                    
+                                        
+                                        <p>Step 1: Introduce a lightweight front controller and routing layer using a micro‑framework (e.g. Slim or Lumen) while keeping existing Models intact. This isolates request handling, creates a clear entry point, and allows gradual migration of View scripts into route callbacks or template engines without stopping feature work. Step 2: Refactor core Models into PSR‑4 namespaced classes and adopt Composer autoloading. Start with high‑traffic or high‑risk Models, adding unit tests as they are refactored to build a safety net. Namespacing immediately reduces naming collisions and prepares the codebase for future modular services. Step 3: Implement a security hardening and testing program. Add input validation, output escaping, and modern password hashing to critical paths; integrate a CI pipeline with automated static analysis and a baseline test suite covering the newly namespaced Models and routing layer. This creates a defend‑in‑depth posture and establishes continuous quality checks while allowing ongoing feature development on the legacy sections.</p>
+                                        
+                                    
                                 </div>
-                            {% else %}
-                                <!-- Render Premium Vertical Timeline -->
-                                <div class="relative pl-6 border-l border-borderline space-y-8">
-                                    {% for step in ai_roadmap %}
-                                    <div class="relative">
-                                        <!-- Step Badge -->
-                                        <div class="absolute -left-[2.15rem] top-0 w-8 h-8 rounded-full bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400 text-sm font-black font-mono shadow-glow-brand">
-                                            {{ step.step_number | default(loop.index) }}
-                                        </div>
-                                        <!-- Step Card -->
-                                        <div class="bg-surface-50 border border-borderline p-5 rounded-xl ml-2 shadow-sm transition-all hover:border-brand-500/30">
-                                            <h5 class="text-white font-bold text-base mb-2">{{ step.title }}</h5>
-                                            <p class="text-sm text-gray-300 leading-relaxed mb-3">{{ step.description }}</p>
-                                            {% if step.rationale %}
-                                            <div class="text-xs bg-surface-100/50 p-2.5 rounded border border-borderline/50 text-themeMuted">
-                                                <strong class="text-brand-400 font-bold uppercase tracking-wider text-[9px] block mb-1">Modernization Rationale</strong>
-                                                {{ step.rationale }}
-                                            </div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
+                            
                         </div>
-                        {% endif %}
+                        
                     </div>
                 </div>
             </section>
@@ -460,7 +479,7 @@
                     <p class="text-gray-400 leading-relaxed max-w-4xl text-lg">Bridging the gap between raw physical files and inferred logical boundaries. Visualizing structural edges, monolith layout, and presentation vs logic separation.</p>
                 </header>
 
-                {% if model.layered_architecture %}
+                
                 
                 <!-- Macro-Domain Dependency Graph -->
                 <div class="bg-surface-100 border border-borderline rounded-2xl shadow-2xl flex flex-col relative overflow-hidden mb-12">
@@ -476,9 +495,9 @@
                     </div>
                     <script>
                         document.addEventListener("DOMContentLoaded", function() {
-                            {% if model.layered_architecture.system_topology %}
-                            var rawNodes = {{ model.layered_architecture.system_topology.get('nodes', []) | tojson }};
-                            var rawEdges = {{ model.layered_architecture.system_topology.get('edges', []) | tojson }};
+                            
+                            var rawNodes = [];
+                            var rawEdges = [];
                             
                             var nodes = new vis.DataSet(rawNodes.map(n => ({
                                 id: n.id, label: n.label, color: n.color, size: n.size || 15,
@@ -504,7 +523,7 @@
                             } else {
                                 container.innerHTML = '<div class="absolute inset-0 flex items-center justify-center"><span class="text-gray-500 font-mono text-sm">No topology edges detected.</span></div>';
                             }
-                            {% endif %}
+                            
                         });
                     </script>
                 </div>
@@ -518,14 +537,14 @@
                             <div>
                                 <div class="flex justify-between text-sm mb-2">
                                     <span class="text-gray-300">Presentation / UI Files</span> 
-                                    <span class="text-white font-mono font-bold">{{ "%.1f"|format(model.layered_architecture.presentation_ratio) }}%</span>
+                                    <span class="text-white font-mono font-bold">0.0%</span>
                                 </div>
                                 <div class="w-full h-2 bg-surface-200 rounded-full overflow-hidden">
-                                    <div class="h-full bg-brand-500 rounded-full shadow-glow-brand" style="width: {{ model.layered_architecture.presentation_ratio }}%"></div>
+                                    <div class="h-full bg-brand-500 rounded-full shadow-glow-brand" style="width: 0.0%"></div>
                                 </div>
                             </div>
                         </div>
-                        <p class="text-xs text-gray-500 mt-6 italic">{{ "%.1f"|format(model.layered_architecture.presentation_ratio) }}% of classified files handle Presentation/Routing directly. The remaining {{ "%.1f"|format(100 - model.layered_architecture.presentation_ratio) }}% represent pure backend logic or untyped scripts.</p>
+                        <p class="text-xs text-gray-500 mt-6 italic">0.0% of classified files handle Presentation/Routing directly. The remaining 100.0% represent pure backend logic or untyped scripts.</p>
                     </div>
 
                     <!-- Logical Domains Matrix -->
@@ -539,25 +558,25 @@
                                     <tr><th>Semantic Domain</th><th>Files</th><th>Coupling</th><th>State Sinks</th></tr>
                                 </thead>
                                 <tbody>
-                                    {% for c in model.layered_architecture.bounded_contexts %}
+                                    
                                     <tr>
                                         <td class="font-bold text-white flex items-center gap-3">
-                                            <div class="w-2 h-2 {% if loop.index % 3 == 0 %}bg-emerald-500{% elif loop.index % 2 == 0 %}bg-purple-500{% else %}bg-brand-500{% endif %} rounded-full"></div> {{ c.name }}
+                                            <div class="w-2 h-2 bg-brand-500 rounded-full"></div> legacy_chaos
                                         </td>
-                                        <td class="font-mono text-xs">{{ c.file_count }}</td>
+                                        <td class="font-mono text-xs">5</td>
                                         <td>
-                                            <span class="{% if c.coupling_ratio|float > 100 %}text-red-400 bg-red-500/10{% elif c.coupling_ratio|float > 50 %}text-amber-400 bg-amber-500/10{% else %}text-green-500 bg-green-500/10{% endif %} font-mono px-2 py-1 rounded text-xs">
-                                                {{ c.coupling_ratio }}
+                                            <span class="text-green-500 bg-green-500/10 font-mono px-2 py-1 rounded text-xs">
+                                                1.17
                                             </span>
                                         </td>
                                         <td>
                                             <div class="flex gap-2 text-[10px] font-bold uppercase tracking-widest">
-                                            {% if c.db_access %}<span class="text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 rounded">DB</span>{% endif %}
-                                            {% if c.auth_access %}<span class="text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 rounded">AUTH</span>{% endif %}
+                                            
+                                            
                                             </div>
                                         </td>
                                     </tr>
-                                    {% endfor %}
+                                    
                                 </tbody>
                             </table>
                         </div>
@@ -565,78 +584,152 @@
                 </div>
                 
                 <!-- Macro function to render nested tree -->
-                {% macro render_tree(node, path='') %}
-                    {% for name, data in node.items()|sort %}
-                        {% set full_path = path ~ '/' ~ name %}
-                        {% set info = data.get('_info') %}
-                        {% if info %}
-                            {% set icon = '▼' %}
-                            {% set icon_color = 'text-yellow-500' %}
-                            {% if info.type == 'vendor' %}
-                                {% set icon = '■' %}
-                                {% set icon_color = 'text-gray-500' %}
-                            {% elif info.type == 'entry_point' %}
-                                {% set icon = '◆' %}
-                                {% set icon_color = 'text-red-500' %}
-                            {% elif info.type == 'asset' %}
-                                {% set icon = '●' %}
-                                {% set icon_color = 'text-emerald-500' %}
-                            {% endif %}
-                            
-                            <details class="ml-4 mb-2" {% if path == '' %}open{% endif %}>
-                                <summary class="cursor-pointer select-none mb-1 hover:text-white transition-colors">
-                                    <span class="{{ icon_color }} mr-2">{{ icon }}</span>
-                                    <span class="font-bold">{{ name }}/</span>
-                                    <span class="text-gray-600 text-xs ml-2">[{{ info.type }}]</span>
-                                </summary>
-                                <div class="border-l border-dashed border-gray-700 ml-2 pl-3 py-1 space-y-1">
-                                    {% for f in info.get('files', []) %}
-                                        {% set f_name = f.name if f is mapping else f %}
-                                        {% set f_role = f.role if f is mapping else 'file' %}
-                                        
-                                        {% set f_icon = '●' %}
-                                        {% set f_color = 'text-gray-500' %}
-                                        {% if f_role == 'entry_point' %}{% set f_icon = '◆' %}{% set f_color = 'text-red-500' %}
-                                        {% elif f_role == 'controller' %}{% set f_icon = '◆' %}{% set f_color = 'text-blue-400' %}
-                                        {% elif f_role == 'view' %}{% set f_icon = '●' %}{% set f_color = 'text-emerald-500' %}
-                                        {% elif f_role == 'job' %}{% set f_icon = '⚙️' %}{% set f_color = '' %}
-                                        {% elif f_role == 'vendor' %}{% set f_icon = '■' %}{% set f_color = 'text-gray-500' %}
-                                        {% elif f_role == 'model' %}{% set f_icon = '📦' %}{% set f_color = '' %}
-                                        {% elif f_role == 'schema' %}{% set f_icon = '💾' %}{% set f_color = '' %}
-                                        {% endif %}
-                                        
-                                        <div class="text-xs text-gray-400 flex items-center gap-2">
-                                            <span class="{{ f_color }}">{{ f_icon }}</span>
-                                            <span>{{ f_name }}</span>
-                                            <span class="text-gray-600">({{ f_role }})</span>
-                                        </div>
-                                    {% endfor %}
-                                    {{ render_tree(data.get('_children', {}), full_path) }}
-                                </div>
-                            </details>
-                        {% else %}
-                            <details class="ml-4 mb-2" {% if path == '' %}open{% endif %}>
-                                <summary class="cursor-pointer select-none font-bold hover:text-white transition-colors">
-                                    {{ name }}/
-                                </summary>
-                                <div class="border-l border-dashed border-gray-700 ml-2 pl-3 py-1">
-                                    {{ render_tree(data.get('_children', {}), full_path) }}
-                                </div>
-                            </details>
-                        {% endif %}
-                    {% endfor %}
-                {% endmacro %}
+                
                 
                 <div class="bg-surface-200 border border-borderline rounded-2xl p-6 font-mono shadow-2xl max-h-[600px] overflow-y-auto">
                     <h3 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-6">Monolith Navigator</h3>
-                    {{ render_tree(model.layered_architecture.directory_tree) }}
+                    
+                    
+                        
+                        
+                        
+                            <details class="ml-4 mb-2" open>
+                                <summary class="cursor-pointer select-none font-bold hover:text-white transition-colors">
+                                    app/
+                                </summary>
+                                <div class="border-l border-dashed border-gray-700 ml-2 pl-3 py-1">
+                                    
+                    
+                        
+                        
+                        
+                            <details class="ml-4 mb-2" >
+                                <summary class="cursor-pointer select-none font-bold hover:text-white transition-colors">
+                                    tests/
+                                </summary>
+                                <div class="border-l border-dashed border-gray-700 ml-2 pl-3 py-1">
+                                    
+                    
+                        
+                        
+                        
+                            <details class="ml-4 mb-2" >
+                                <summary class="cursor-pointer select-none font-bold hover:text-white transition-colors">
+                                    fixtures/
+                                </summary>
+                                <div class="border-l border-dashed border-gray-700 ml-2 pl-3 py-1">
+                                    
+                    
+                        
+                        
+                        
+                            
+                            
+                            
+                                
+                                
+                            
+                            
+                            <details class="ml-4 mb-2" >
+                                <summary class="cursor-pointer select-none mb-1 hover:text-white transition-colors">
+                                    <span class="text-red-500 mr-2">◆</span>
+                                    <span class="font-bold">legacy_chaos/</span>
+                                    <span class="text-gray-600 text-xs ml-2">[entry_point]</span>
+                                </summary>
+                                <div class="border-l border-dashed border-gray-700 ml-2 pl-3 py-1 space-y-1">
+                                    
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        <div class="text-xs text-gray-400 flex items-center gap-2">
+                                            <span class="text-gray-500">●</span>
+                                            <span>config.php</span>
+                                            <span class="text-gray-600">(config)</span>
+                                        </div>
+                                    
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        <div class="text-xs text-gray-400 flex items-center gap-2">
+                                            <span class="text-gray-500">●</span>
+                                            <span>circular_b.php</span>
+                                            <span class="text-gray-600">(file)</span>
+                                        </div>
+                                    
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        <div class="text-xs text-gray-400 flex items-center gap-2">
+                                            <span class="text-gray-500">●</span>
+                                            <span>circular_a.php</span>
+                                            <span class="text-gray-600">(file)</span>
+                                        </div>
+                                    
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        <div class="text-xs text-gray-400 flex items-center gap-2">
+                                            <span class="text-red-500">◆</span>
+                                            <span>index.php</span>
+                                            <span class="text-gray-600">(entry_point)</span>
+                                        </div>
+                                    
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        <div class="text-xs text-gray-400 flex items-center gap-2">
+                                            <span class="text-gray-500">●</span>
+                                            <span>functions.php</span>
+                                            <span class="text-gray-600">(file)</span>
+                                        </div>
+                                    
+                                    
+                    
+                
+                                </div>
+                            </details>
+                        
+                    
+                
+                                </div>
+                            </details>
+                        
+                    
+                
+                                </div>
+                            </details>
+                        
+                    
+                
+                                </div>
+                            </details>
+                        
+                    
+                
                 </div>
                 
-                {% else %}
-                <div class="bg-surface-100 border border-borderline rounded-2xl p-12 text-center text-gray-500 italic shadow-2xl">
-                    Architectural Discovery data is unavailable.
-                </div>
-                {% endif %}
+                
             </section>
 
             <!-- ==========================================
@@ -648,23 +741,23 @@
                     <p class="text-gray-400 leading-relaxed max-w-4xl text-lg">Auditing the external surface area and structural integrity. Mapping UI Entanglement, Network Endpoints, and Vendor Dependencies.</p>
                 </header>
 
-                {% if model.boundary_intelligence %}
+                
                 <!-- Top-level KPI strip -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
-                        <div class="text-2xl font-black text-red-500">{{ model.boundary_intelligence.kpis.get('Global UI Entanglement', '0%') }}</div>
+                        <div class="text-2xl font-black text-red-500">0.0%</div>
                         <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Global UI Entanglement</div>
                     </div>
                     <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
-                        <div class="text-2xl font-black text-amber-500">{{ model.boundary_intelligence.kpis.get('Fat Views (DB-Coupled UI)', 0) }}</div>
+                        <div class="text-2xl font-black text-amber-500">0</div>
                         <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Fat Views</div>
                     </div>
                     <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
-                        <div class="text-2xl font-black text-brand-400">{{ model.boundary_intelligence.kpis.get('Total Endpoints Detected', 0) }}</div>
+                        <div class="text-2xl font-black text-brand-400">1</div>
                         <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Endpoints Detected</div>
                     </div>
                     <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
-                        <div class="text-2xl font-black text-white">{{ model.boundary_intelligence.kpis.get('Vendor Files Scanned', 0) }}</div>
+                        <div class="text-2xl font-black text-white">0</div>
                         <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Vendor Files Scanned</div>
                     </div>
                 </div>
@@ -685,33 +778,29 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for p in model.boundary_intelligence.presentation_coupling %}
+                                
                                 <tr>
-                                    <td class="font-mono text-brand-400">{{ p.file_path }}</td>
+                                    <td class="font-mono text-brand-400">/app/tests/fixtures/legacy_chaos/index.php</td>
                                     <td>
                                         <div class="flex items-center gap-3">
                                             <div class="w-full max-w-[120px] h-1.5 bg-surface-200 rounded-full overflow-hidden border border-borderline">
-                                                {% set bar_color = 'bg-red-500' if p.ui_entanglement_ratio > 70 else ('bg-amber-500' if p.ui_entanglement_ratio > 30 else 'bg-emerald-500') %}
-                                                {% set glow_class = 'shadow-glow-red' if p.ui_entanglement_ratio > 70 else '' %}
-                                                <div class="h-full {{ bar_color }} rounded-full {{ glow_class }}" style="width: {{ p.ui_entanglement_ratio }}%"></div>
+                                                
+                                                
+                                                <div class="h-full bg-amber-500 rounded-full " style="width: 33.3%"></div>
                                             </div>
-                                            <span class="font-mono text-xs text-white">{{ p.ui_entanglement_ratio }}%</span>
+                                            <span class="font-mono text-xs text-white">33.3%</span>
                                         </div>
                                     </td>
-                                    <td class="font-mono {% if p.db_queries > 5 %}text-red-400{% elif p.db_queries > 0 %}text-amber-500{% else %}text-gray-500{% endif %} text-xs">
-                                        {{ p.db_queries }} SQL Queries
+                                    <td class="font-mono text-gray-500 text-xs">
+                                        0 SQL Queries
                                     </td>
                                     <td>
-                                        {% if p.is_fat_view %}
-                                        <span class="px-2.5 py-1 bg-red-500/10 text-red-500 border border-red-500/20 rounded text-[10px] uppercase font-bold tracking-wider">Critical</span>
-                                        {% elif p.db_queries > 0 %}
-                                        <span class="px-2.5 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded text-[10px] uppercase font-bold tracking-wider">High</span>
-                                        {% else %}
+                                        
                                         <span class="px-2.5 py-1 bg-surface-200 text-gray-400 border border-borderline rounded text-[10px] uppercase font-bold tracking-wider">Safe</span>
-                                        {% endif %}
+                                        
                                     </td>
                                 </tr>
-                                {% endfor %}
+                                
                             </tbody>
                         </table>
                     </div>
@@ -731,15 +820,13 @@
                                     <tr><th>Entry Point</th><th>Type</th></tr>
                                 </thead>
                                 <tbody>
-                                    {% for a in model.boundary_intelligence.api_surface %}
+                                    
                                     <tr>
-                                        <td class="font-mono text-xs text-brand-400">{{ a.path }}</td>
-                                        <td class="text-xs font-bold text-gray-300">{{ a.type }}</td>
+                                        <td class="font-mono text-xs text-brand-400">/app/tests/fixtures/legacy_chaos/index.php</td>
+                                        <td class="text-xs font-bold text-gray-300">Server-Rendered Page</td>
                                     </tr>
-                                    {% endfor %}
-                                    {% if not model.boundary_intelligence.api_surface %}
-                                    <tr><td colspan="2" class="text-center italic text-gray-500 py-4">No API endpoints detected.</td></tr>
-                                    {% endif %}
+                                    
+                                    
                                 </tbody>
                             </table>
                         </div>
@@ -752,11 +839,9 @@
                                 <h3 class="text-white font-bold text-lg">Vendor Inventory</h3>
                                 <p class="text-xs text-gray-500 mt-1">Detects "Shadow IT" and third-party libraries.</p>
                             </div>
-                            {% if model.boundary_intelligence.kpis.get('Vendor Files Scanned', 0) > 0 %}
-                            <span class="bg-red-500/10 text-red-500 px-2 py-1 rounded text-[10px] font-mono border border-red-500/20 font-bold uppercase">Risk</span>
-                            {% else %}
+                            
                             <span class="bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded text-[10px] font-mono border border-emerald-500/20 font-bold uppercase">Managed</span>
-                            {% endif %}
+                            
                         </div>
                         <div class="overflow-y-auto max-h-80">
                             <table class="w-full data-table">
@@ -764,34 +849,16 @@
                                     <tr><th>Library/Plugin File</th><th>Vendor Type</th><th>Status</th></tr>
                                 </thead>
                                 <tbody>
-                                    {% for v in model.boundary_intelligence.vendor_inventory %}
-                                    <tr>
-                                        <td class="font-mono text-[10px] text-gray-400 truncate max-w-[200px]" title="{{ v.file_path }}">{{ v.file_path }}</td>
-                                        <td class="text-xs">{{ v.vendor_type }}</td>
-                                        <td>
-                                            {% if 'ORPHANED' in v.status|upper %}
-                                            <span class="px-2 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded text-[10px] uppercase font-bold">{{ v.status }}</span>
-                                            {% elif 'COMPOSER' in v.vendor_type|upper %}
-                                            <span class="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-[10px] uppercase font-bold">{{ v.status }}</span>
-                                            {% else %}
-                                            <span class="px-2 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded text-[10px] uppercase font-bold">{{ v.status }}</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                    {% if not model.boundary_intelligence.vendor_inventory %}
+                                    
+                                    
                                     <tr><td colspan="3" class="text-center italic text-gray-500 py-4">No vendor files detected.</td></tr>
-                                    {% endif %}
+                                    
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
-                {% else %}
-                <div class="bg-surface-100 border border-borderline rounded-2xl p-12 text-center text-gray-500 italic shadow-2xl">
-                    Boundary intelligence data is unavailable.
-                </div>
-                {% endif %}
+                
             </section>
 
             <!-- ==========================================
@@ -803,29 +870,29 @@
                     <p class="text-gray-400 leading-relaxed max-w-4xl text-lg">Persistence Layer Analysis, CRUD Patterns, and Table Ownership.</p>
                 </header>
 
-                {% if model.database_intelligence %}
+                
                 <!-- KPIs -->
-                {% set taxonomy = model.database_intelligence.taxonomy %}
-                {% set total_reads = taxonomy.values() | map(attribute='reads') | sum %}
-                {% set total_writes = taxonomy.values() | map(attribute='writes') | sum %}
-                {% set total_orm = taxonomy.values() | map(attribute='orm') | sum %}
-                {% set total_creds = taxonomy.values() | map(attribute='credentials') | sum %}
+                
+                
+                
+                
+                
 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
-                        <div class="text-2xl font-black text-brand-400">{{ total_reads }}</div>
+                        <div class="text-2xl font-black text-brand-400">1</div>
                         <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Read Operations</div>
                     </div>
                     <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
-                        <div class="text-2xl font-black text-brand-400">{{ total_writes }}</div>
+                        <div class="text-2xl font-black text-brand-400">0</div>
                         <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Write Operations</div>
                     </div>
                     <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
-                        <div class="text-2xl font-black text-emerald-500">{{ total_orm }}</div>
+                        <div class="text-2xl font-black text-emerald-500">0</div>
                         <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">ORM Abstractions</div>
                     </div>
                     <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
-                        <div class="text-2xl font-black {% if total_creds > 0 %}text-red-500{% else %}text-emerald-500{% endif %}">{{ total_creds }}</div>
+                        <div class="text-2xl font-black text-emerald-500">0</div>
                         <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Credential Risks</div>
                     </div>
                 </div>
@@ -848,17 +915,17 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for file, metrics in model.database_intelligence.taxonomy.items() %}
-                                {% if metrics.reads > 0 or metrics.writes > 0 or metrics.orm > 0 %}
+                                
+                                
                                 <tr>
-                                    <td class="font-mono text-brand-400 text-xs">{{ file }}</td>
-                                    <td class="font-mono text-white">{{ metrics.reads }}</td>
-                                    <td class="font-mono text-white">{{ metrics.writes }}</td>
-                                    <td class="font-mono text-white">{{ metrics.orm }}</td>
-                                    <td class="font-mono text-white">{{ metrics.transactions }}</td>
+                                    <td class="font-mono text-brand-400 text-xs">functions.php</td>
+                                    <td class="font-mono text-white">1</td>
+                                    <td class="font-mono text-white">0</td>
+                                    <td class="font-mono text-white">0</td>
+                                    <td class="font-mono text-white">0</td>
                                 </tr>
-                                {% endif %}
-                                {% endfor %}
+                                
+                                
                             </tbody>
                         </table>
                     </div>
@@ -881,19 +948,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for row in model.database_intelligence.table_ownership %}
-                                    <tr>
-                                        <td class="font-mono text-white font-bold text-xs">{{ row.table }}</td>
-                                        <td class="text-gray-300 text-xs">{{ row.primary_owner }}</td>
-                                        <td>
-                                            {% if row.cross_module_write %}
-                                            <span class="px-2 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded text-[10px] uppercase font-bold">Conflict</span>
-                                            {% else %}
-                                            <span class="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-[10px] uppercase font-bold">Safe</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
+                                    
                                 </tbody>
                             </table>
                         </div>
@@ -907,21 +962,13 @@
                         <div class="p-6 flex-grow flex items-center justify-center overflow-auto min-h-[400px]">
                             <div class="mermaid">
                             graph TD
-                            {% for rel in model.database_intelligence.erd_relationships %}
-                            {% set a = rel.from | replace('-', '_') | replace('.', '_') | replace('/', '_') %}
-                            {% set b = rel.to | replace('-', '_') | replace('.', '_') | replace('/', '_') %}
-                            {{ a }}["{{ rel.from }}"] ---|{{ rel.inferred_via }}| {{ b }}["{{ rel.to }}"]
-                            {% endfor %}
+                            
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                {% else %}
-                <div class="bg-surface-100 border border-borderline rounded-2xl p-12 text-center text-gray-500 italic shadow-2xl">
-                    Database intelligence data is unavailable.
-                </div>
-                {% endif %}
+                
             </section>
             
             <!-- ==========================================
@@ -933,27 +980,27 @@
                     <p class="text-gray-400 leading-relaxed max-w-4xl text-lg">Superglobal Tracking, Session Flows, and Side-Effect Classification.</p>
                 </header>
 
-                {% if model.global_state_intelligence %}
-                {% set totals = model.global_state_intelligence.superglobal_totals %}
-                {% set sg_hits = totals.values() | sum %}
-                {% set total_mutations = model.global_state_intelligence.superglobal_mutations | length %}
+                
+                
+                
+                
                 
                 <!-- KPIs -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
-                        <div class="text-2xl font-black text-red-400">{{ sg_hits }}</div>
+                        <div class="text-2xl font-black text-red-400">7</div>
                         <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Superglobal Hits</div>
                     </div>
                     <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
-                        <div class="text-2xl font-black text-amber-500">{{ total_mutations }}</div>
+                        <div class="text-2xl font-black text-amber-500">1</div>
                         <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">State Mutations</div>
                     </div>
                     <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
-                        <div class="text-2xl font-black text-brand-400">{{ model.global_state_intelligence.session_writers | length }}</div>
+                        <div class="text-2xl font-black text-brand-400">0</div>
                         <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Session Writers</div>
                     </div>
                     <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
-                        <div class="text-2xl font-black text-white">{{ model.global_state_intelligence.side_effect_totals.get('DANGER', 0) }}</div>
+                        <div class="text-2xl font-black text-white">0</div>
                         <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Danger Sinks</div>
                     </div>
                 </div>
@@ -965,12 +1012,22 @@
                         </div>
                         <div class="p-6">
                             <div class="flex flex-wrap gap-3">
-                                {% for var, count in model.global_state_intelligence.superglobal_totals.items() %}
+                                
                                 <div class="px-4 py-2 bg-surface-50 border border-borderline rounded-lg flex items-center gap-3">
-                                    <span class="font-mono text-brand-400 font-bold">${{ var }}</span>
-                                    <span class="text-xs text-gray-400">{{ count }} hits</span>
+                                    <span class="font-mono text-brand-400 font-bold">$GLOBALS</span>
+                                    <span class="text-xs text-gray-400">3 hits</span>
                                 </div>
-                                {% endfor %}
+                                
+                                <div class="px-4 py-2 bg-surface-50 border border-borderline rounded-lg flex items-center gap-3">
+                                    <span class="font-mono text-brand-400 font-bold">$_GET</span>
+                                    <span class="text-xs text-gray-400">2 hits</span>
+                                </div>
+                                
+                                <div class="px-4 py-2 bg-surface-50 border border-borderline rounded-lg flex items-center gap-3">
+                                    <span class="font-mono text-brand-400 font-bold">$_SESSION</span>
+                                    <span class="text-xs text-gray-400">2 hits</span>
+                                </div>
+                                
                             </div>
                         </div>
                     </div>
@@ -981,24 +1038,49 @@
                         </div>
                         <div class="p-6">
                             <div class="flex flex-wrap gap-3">
-                                {% for effect, count in model.global_state_intelligence.side_effect_totals.items() %}
-                                {% if count > 0 %}
+                                
+                                
                                 <div class="px-4 py-2 bg-surface-50 border border-borderline rounded-lg flex items-center gap-3">
-                                    <span class="font-mono text-amber-500 font-bold">{{ effect }}</span>
-                                    <span class="text-xs text-gray-400">{{ count }} ops</span>
+                                    <span class="font-mono text-amber-500 font-bold">DB</span>
+                                    <span class="text-xs text-gray-400">1 ops</span>
                                 </div>
-                                {% endif %}
-                                {% endfor %}
+                                
+                                
+                                
+                                
+                                
+                                
+                                
+                                
+                                
+                                <div class="px-4 py-2 bg-surface-50 border border-borderline rounded-lg flex items-center gap-3">
+                                    <span class="font-mono text-amber-500 font-bold">HOSTING</span>
+                                    <span class="text-xs text-gray-400">1 ops</span>
+                                </div>
+                                
+                                
+                                
+                                <div class="px-4 py-2 bg-surface-50 border border-borderline rounded-lg flex items-center gap-3">
+                                    <span class="font-mono text-amber-500 font-bold">TEMPLATE</span>
+                                    <span class="text-xs text-gray-400">1 ops</span>
+                                </div>
+                                
+                                
+                                
+                                <div class="px-4 py-2 bg-surface-50 border border-borderline rounded-lg flex items-center gap-3">
+                                    <span class="font-mono text-amber-500 font-bold">AUTH</span>
+                                    <span class="text-xs text-gray-400">1 ops</span>
+                                </div>
+                                
+                                
+                                
+                                
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                {% else %}
-                <div class="bg-surface-100 border border-borderline rounded-2xl p-12 text-center text-gray-500 italic shadow-2xl">
-                    Global state intelligence data is unavailable.
-                </div>
-                {% endif %}
+                
             </section>
 
             <!-- ==========================================
@@ -1010,23 +1092,23 @@
                     <p class="text-gray-400 leading-relaxed max-w-4xl text-lg">Era Classification, Anti-Pattern Detection, and Modernization Scoring.</p>
                 </header>
 
-                {% if model.legacy_intelligence %}
+                
                 <!-- KPIs -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
-                        <div class="text-xl font-black text-white truncate px-2" title="{{ model.legacy_intelligence.classified_era }}">{{ model.legacy_intelligence.classified_era.split('(')[0].strip() }}</div>
+                        <div class="text-xl font-black text-white truncate px-2" title="Bespoke / Custom Era">Bespoke / Custom Era</div>
                         <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">PHP Era</div>
                     </div>
                     <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
-                        <div class="text-2xl font-black text-brand-400">{{ (model.legacy_intelligence.score_dimensions.get('Total Modernization Score', 0) * 100) | round(1) }}%</div>
+                        <div class="text-2xl font-black text-brand-400">29.5%</div>
                         <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Modernization Score</div>
                     </div>
                     <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
-                        <div class="text-2xl font-black text-amber-500">{{ (model.legacy_intelligence.procedural_ratio * 100) | round(1) }}%</div>
+                        <div class="text-2xl font-black text-amber-500">100.0%</div>
                         <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Procedural Ratio</div>
                     </div>
                     <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center shadow-lg">
-                        <div class="text-2xl font-black text-emerald-500">{{ (model.legacy_intelligence.namespace_ratio * 100) | round(1) }}%</div>
+                        <div class="text-2xl font-black text-emerald-500">0.0%</div>
                         <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Namespace Coverage</div>
                     </div>
                 </div>
@@ -1037,25 +1119,31 @@
                         <p class="text-sm text-gray-500 mt-1">Dangerous and depreciated patterns driving modernization complexity.</p>
                     </div>
                     <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {% for pattern, count in model.legacy_intelligence.pattern_totals.items() %}
-                        {% if count > 0 %}
+                        
+                        
                         <div class="bg-surface-100 p-5 rounded-xl border border-borderline relative overflow-hidden group hover:border-red-500/30 transition-colors">
-                            <div class="text-red-400 font-mono font-bold text-lg mb-2 relative z-10">{{ pattern }}</div>
+                            <div class="text-red-400 font-mono font-bold text-lg mb-2 relative z-10">CUSTOM_AUTH</div>
                             <div class="flex items-end justify-between relative z-10">
                                 <span class="text-gray-500 text-xs">Total Occurrences</span>
-                                <span class="text-2xl font-black text-white">{{ count }}</span>
+                                <span class="text-2xl font-black text-white">1</span>
                             </div>
                         </div>
-                        {% endif %}
-                        {% endfor %}
+                        
+                        
+                        
+                        <div class="bg-surface-100 p-5 rounded-xl border border-borderline relative overflow-hidden group hover:border-red-500/30 transition-colors">
+                            <div class="text-red-400 font-mono font-bold text-lg mb-2 relative z-10">MYSQL_LEGACY</div>
+                            <div class="flex items-end justify-between relative z-10">
+                                <span class="text-gray-500 text-xs">Total Occurrences</span>
+                                <span class="text-2xl font-black text-white">2</span>
+                            </div>
+                        </div>
+                        
+                        
                     </div>
                 </div>
 
-                {% else %}
-                <div class="bg-surface-100 border border-borderline p-12 text-center text-gray-500 italic shadow-2xl">
-                    Legacy intelligence data is unavailable.
-                </div>
-                {% endif %}
+                
             </section>
 
             <!-- ==========================================
@@ -1067,21 +1155,21 @@
                     <p class="text-gray-400 leading-relaxed max-w-4xl text-lg">Deep-dive SARIF-style findings for critical architectural blockers. Focuses on security sinks and modernization incompatibilities.</p>
                 </header>
 
-                {% for f in model.findings %}
+                
                 <div class="bg-surface-100 border border-borderline rounded-2xl shadow-2xl overflow-hidden mb-8">
                     <!-- Card Header -->
                     <div class="p-8 border-b border-borderline bg-surface-50 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div class="flex items-center gap-5">
-                            <div class="w-12 h-12 rounded-xl {% if f.priority == 'Critical' %}bg-red-500/10 border-red-500/30{% else %}bg-amber-500/10 border-amber-500/30{% endif %} border flex items-center justify-center shrink-0">
-                                <svg class="w-6 h-6 {% if f.priority == 'Critical' %}text-red-500{% else %}text-amber-500{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            <div class="w-12 h-12 rounded-xl bg-amber-500/10 border-amber-500/30 border flex items-center justify-center shrink-0">
+                                <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                             </div>
                             <div>
-                                <h3 class="text-2xl font-bold text-white tracking-tight">{{ f.observation }}</h3>
+                                <h3 class="text-2xl font-bold text-white tracking-tight">Critical Architectural Bottleneck in Doctrine\DBAL\Connection</h3>
                                 <p class="text-gray-500 text-sm mt-1">Identified during static structural audit.</p>
                             </div>
                         </div>
                         <div class="flex gap-3 shrink-0">
-                            <span class="px-3 py-1.5 bg-themeBg border border-borderline text-gray-400 rounded text-xs font-mono font-bold">Severity: {% if f.priority == 'Critical' %}CRITICAL{% else %}HIGH{% endif %}</span>
+                            <span class="px-3 py-1.5 bg-themeBg border border-borderline text-gray-400 rounded text-xs font-mono font-bold">Severity: HIGH</span>
                         </div>
                     </div>
 
@@ -1092,11 +1180,11 @@
                         <div class="space-y-8">
                             <div>
                                 <h4 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3 border-b border-borderline pb-2">Business & Security Impact</h4>
-                                <p class="text-sm text-gray-300 leading-relaxed">{{ f.impact }}</p>
+                                <p class="text-sm text-gray-300 leading-relaxed">Tight coupling prevents modular extraction and makes automated testing virtually impossible.</p>
                             </div>
                             <div>
                                 <h4 class="text-xs font-bold uppercase tracking-widest text-brand-400 mb-3 border-b border-brand-500/20 pb-2">Remediation Action</h4>
-                                <p class="text-sm text-gray-300 leading-relaxed">{{ f.recommended_action }}</p>
+                                <p class="text-sm text-gray-300 leading-relaxed">Isolate dependencies behind an interface. Write characterization tests before attempting extraction.</p>
                             </div>
                         </div>
 
@@ -1105,37 +1193,339 @@
                             <!-- Code Snippet -->
                             <div>
                                 <div class="flex justify-between items-center bg-surface-50 px-4 py-2 border border-borderline border-b-0 rounded-t-lg">
-                                    <span class="text-xs font-mono text-themeMuted truncate max-w-sm" title="{% for ev in f.evidence %}{% if loop.first %}{{ ev.target }}{% endif %}{% endfor %}">
-                                        {% for ev in f.evidence %}
-                                            {% if loop.first %}{{ ev.target }}{% endif %}
-                                        {% endfor %}
+                                    <span class="text-xs font-mono text-themeMuted truncate max-w-sm" title="Doctrine\DBAL\Connection">
+                                        
+                                            Doctrine\DBAL\Connection
+                                        
+                                            
+                                        
+                                            
+                                        
                                     </span>
                                 </div>
                                 <div class="code-block rounded-t-none border-t-0 bg-themeBg m-0 text-brand-400">
                                     // Primary Target Code Path
-                                    {% for ev in f.evidence %}
-                                        {% if loop.first %}{{ ev.target }}{% endif %}
-                                    {% endfor %}
+                                    
+                                        Doctrine\DBAL\Connection
+                                    
+                                        
+                                    
+                                        
+                                    
                                 </div>
                             </div>
 
                             <!-- Mermaid Diagram -->
-                            {% if f.mermaid_diagram %}
+                            
                             <div class="flex-1 bg-themeBg border border-borderline rounded-lg p-6 flex flex-col items-center justify-center min-h-[200px] overflow-x-auto">
                                 <span class="text-[10px] uppercase text-gray-600 tracking-widest font-bold self-start mb-4">Topology Fragment</span>
                                 <div class="w-full flex justify-center">
-                                    <pre class="mermaid text-center">{{ f.mermaid_diagram }}</pre>
+                                    <pre class="mermaid text-center">graph TD
+  Doctrine\DBAL\Connection --> LegacyDependencies
+  style Doctrine\DBAL\Connection fill:#f9f,stroke:#333,stroke-width:4px</pre>
                                 </div>
                             </div>
-                            {% endif %}
+                            
                         </div>
                     </div>
                 </div>
-                {% else %}
-                <div class="bg-surface-100 border border-borderline rounded-2xl p-12 text-center text-gray-500 italic shadow-2xl">
-                    No critical structural risks identified.
+                
+                <div class="bg-surface-100 border border-borderline rounded-2xl shadow-2xl overflow-hidden mb-8">
+                    <!-- Card Header -->
+                    <div class="p-8 border-b border-borderline bg-surface-50 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div class="flex items-center gap-5">
+                            <div class="w-12 h-12 rounded-xl bg-amber-500/10 border-amber-500/30 border flex items-center justify-center shrink-0">
+                                <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-white tracking-tight">Critical Architectural Bottleneck in Doctrine\DBAL\Platforms\AbstractPlatform</h3>
+                                <p class="text-gray-500 text-sm mt-1">Identified during static structural audit.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 shrink-0">
+                            <span class="px-3 py-1.5 bg-themeBg border border-borderline text-gray-400 rounded text-xs font-mono font-bold">Severity: HIGH</span>
+                        </div>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="p-8 grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+                        <!-- Left: Narrative -->
+                        <div class="space-y-8">
+                            <div>
+                                <h4 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3 border-b border-borderline pb-2">Business & Security Impact</h4>
+                                <p class="text-sm text-gray-300 leading-relaxed">Tight coupling prevents modular extraction and makes automated testing virtually impossible.</p>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold uppercase tracking-widest text-brand-400 mb-3 border-b border-brand-500/20 pb-2">Remediation Action</h4>
+                                <p class="text-sm text-gray-300 leading-relaxed">Isolate dependencies behind an interface. Write characterization tests before attempting extraction.</p>
+                            </div>
+                        </div>
+
+                        <!-- Right: Evidence & Topology -->
+                        <div class="space-y-6 flex flex-col">
+                            <!-- Code Snippet -->
+                            <div>
+                                <div class="flex justify-between items-center bg-surface-50 px-4 py-2 border border-borderline border-b-0 rounded-t-lg">
+                                    <span class="text-xs font-mono text-themeMuted truncate max-w-sm" title="Doctrine\DBAL\Platforms\AbstractPlatform">
+                                        
+                                            Doctrine\DBAL\Platforms\AbstractPlatform
+                                        
+                                            
+                                        
+                                            
+                                        
+                                    </span>
+                                </div>
+                                <div class="code-block rounded-t-none border-t-0 bg-themeBg m-0 text-brand-400">
+                                    // Primary Target Code Path
+                                    
+                                        Doctrine\DBAL\Platforms\AbstractPlatform
+                                    
+                                        
+                                    
+                                        
+                                    
+                                </div>
+                            </div>
+
+                            <!-- Mermaid Diagram -->
+                            
+                            <div class="flex-1 bg-themeBg border border-borderline rounded-lg p-6 flex flex-col items-center justify-center min-h-[200px] overflow-x-auto">
+                                <span class="text-[10px] uppercase text-gray-600 tracking-widest font-bold self-start mb-4">Topology Fragment</span>
+                                <div class="w-full flex justify-center">
+                                    <pre class="mermaid text-center">graph TD
+  Doctrine\DBAL\Platforms\AbstractPlatform --> LegacyDependencies
+  style Doctrine\DBAL\Platforms\AbstractPlatform fill:#f9f,stroke:#333,stroke-width:4px</pre>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
                 </div>
-                {% endfor %}
+                
+                <div class="bg-surface-100 border border-borderline rounded-2xl shadow-2xl overflow-hidden mb-8">
+                    <!-- Card Header -->
+                    <div class="p-8 border-b border-borderline bg-surface-50 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div class="flex items-center gap-5">
+                            <div class="w-12 h-12 rounded-xl bg-amber-500/10 border-amber-500/30 border flex items-center justify-center shrink-0">
+                                <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-white tracking-tight">Critical Architectural Bottleneck in Doctrine\ORM\UnitOfWork</h3>
+                                <p class="text-gray-500 text-sm mt-1">Identified during static structural audit.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 shrink-0">
+                            <span class="px-3 py-1.5 bg-themeBg border border-borderline text-gray-400 rounded text-xs font-mono font-bold">Severity: HIGH</span>
+                        </div>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="p-8 grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+                        <!-- Left: Narrative -->
+                        <div class="space-y-8">
+                            <div>
+                                <h4 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3 border-b border-borderline pb-2">Business & Security Impact</h4>
+                                <p class="text-sm text-gray-300 leading-relaxed">Tight coupling prevents modular extraction and makes automated testing virtually impossible.</p>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold uppercase tracking-widest text-brand-400 mb-3 border-b border-brand-500/20 pb-2">Remediation Action</h4>
+                                <p class="text-sm text-gray-300 leading-relaxed">Isolate dependencies behind an interface. Write characterization tests before attempting extraction.</p>
+                            </div>
+                        </div>
+
+                        <!-- Right: Evidence & Topology -->
+                        <div class="space-y-6 flex flex-col">
+                            <!-- Code Snippet -->
+                            <div>
+                                <div class="flex justify-between items-center bg-surface-50 px-4 py-2 border border-borderline border-b-0 rounded-t-lg">
+                                    <span class="text-xs font-mono text-themeMuted truncate max-w-sm" title="Doctrine\ORM\UnitOfWork">
+                                        
+                                            Doctrine\ORM\UnitOfWork
+                                        
+                                            
+                                        
+                                            
+                                        
+                                    </span>
+                                </div>
+                                <div class="code-block rounded-t-none border-t-0 bg-themeBg m-0 text-brand-400">
+                                    // Primary Target Code Path
+                                    
+                                        Doctrine\ORM\UnitOfWork
+                                    
+                                        
+                                    
+                                        
+                                    
+                                </div>
+                            </div>
+
+                            <!-- Mermaid Diagram -->
+                            
+                            <div class="flex-1 bg-themeBg border border-borderline rounded-lg p-6 flex flex-col items-center justify-center min-h-[200px] overflow-x-auto">
+                                <span class="text-[10px] uppercase text-gray-600 tracking-widest font-bold self-start mb-4">Topology Fragment</span>
+                                <div class="w-full flex justify-center">
+                                    <pre class="mermaid text-center">graph TD
+  Doctrine\ORM\UnitOfWork --> LegacyDependencies
+  style Doctrine\ORM\UnitOfWork fill:#f9f,stroke:#333,stroke-width:4px</pre>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-surface-100 border border-borderline rounded-2xl shadow-2xl overflow-hidden mb-8">
+                    <!-- Card Header -->
+                    <div class="p-8 border-b border-borderline bg-surface-50 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div class="flex items-center gap-5">
+                            <div class="w-12 h-12 rounded-xl bg-amber-500/10 border-amber-500/30 border flex items-center justify-center shrink-0">
+                                <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-white tracking-tight">Critical Architectural Bottleneck in Doctrine\ORM\Mapping\ClassMetadataInfo</h3>
+                                <p class="text-gray-500 text-sm mt-1">Identified during static structural audit.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 shrink-0">
+                            <span class="px-3 py-1.5 bg-themeBg border border-borderline text-gray-400 rounded text-xs font-mono font-bold">Severity: HIGH</span>
+                        </div>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="p-8 grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+                        <!-- Left: Narrative -->
+                        <div class="space-y-8">
+                            <div>
+                                <h4 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3 border-b border-borderline pb-2">Business & Security Impact</h4>
+                                <p class="text-sm text-gray-300 leading-relaxed">Tight coupling prevents modular extraction and makes automated testing virtually impossible.</p>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold uppercase tracking-widest text-brand-400 mb-3 border-b border-brand-500/20 pb-2">Remediation Action</h4>
+                                <p class="text-sm text-gray-300 leading-relaxed">Isolate dependencies behind an interface. Write characterization tests before attempting extraction.</p>
+                            </div>
+                        </div>
+
+                        <!-- Right: Evidence & Topology -->
+                        <div class="space-y-6 flex flex-col">
+                            <!-- Code Snippet -->
+                            <div>
+                                <div class="flex justify-between items-center bg-surface-50 px-4 py-2 border border-borderline border-b-0 rounded-t-lg">
+                                    <span class="text-xs font-mono text-themeMuted truncate max-w-sm" title="Doctrine\ORM\Mapping\ClassMetadataInfo">
+                                        
+                                            Doctrine\ORM\Mapping\ClassMetadataInfo
+                                        
+                                            
+                                        
+                                            
+                                        
+                                    </span>
+                                </div>
+                                <div class="code-block rounded-t-none border-t-0 bg-themeBg m-0 text-brand-400">
+                                    // Primary Target Code Path
+                                    
+                                        Doctrine\ORM\Mapping\ClassMetadataInfo
+                                    
+                                        
+                                    
+                                        
+                                    
+                                </div>
+                            </div>
+
+                            <!-- Mermaid Diagram -->
+                            
+                            <div class="flex-1 bg-themeBg border border-borderline rounded-lg p-6 flex flex-col items-center justify-center min-h-[200px] overflow-x-auto">
+                                <span class="text-[10px] uppercase text-gray-600 tracking-widest font-bold self-start mb-4">Topology Fragment</span>
+                                <div class="w-full flex justify-center">
+                                    <pre class="mermaid text-center">graph TD
+  Doctrine\ORM\Mapping\ClassMetadataInfo --> LegacyDependencies
+  style Doctrine\ORM\Mapping\ClassMetadataInfo fill:#f9f,stroke:#333,stroke-width:4px</pre>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-surface-100 border border-borderline rounded-2xl shadow-2xl overflow-hidden mb-8">
+                    <!-- Card Header -->
+                    <div class="p-8 border-b border-borderline bg-surface-50 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div class="flex items-center gap-5">
+                            <div class="w-12 h-12 rounded-xl bg-amber-500/10 border-amber-500/30 border flex items-center justify-center shrink-0">
+                                <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-white tracking-tight">Critical Architectural Bottleneck in Doctrine\ORM\Persisters\BasicEntityPersister</h3>
+                                <p class="text-gray-500 text-sm mt-1">Identified during static structural audit.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 shrink-0">
+                            <span class="px-3 py-1.5 bg-themeBg border border-borderline text-gray-400 rounded text-xs font-mono font-bold">Severity: HIGH</span>
+                        </div>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="p-8 grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+                        <!-- Left: Narrative -->
+                        <div class="space-y-8">
+                            <div>
+                                <h4 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3 border-b border-borderline pb-2">Business & Security Impact</h4>
+                                <p class="text-sm text-gray-300 leading-relaxed">Tight coupling prevents modular extraction and makes automated testing virtually impossible.</p>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold uppercase tracking-widest text-brand-400 mb-3 border-b border-brand-500/20 pb-2">Remediation Action</h4>
+                                <p class="text-sm text-gray-300 leading-relaxed">Isolate dependencies behind an interface. Write characterization tests before attempting extraction.</p>
+                            </div>
+                        </div>
+
+                        <!-- Right: Evidence & Topology -->
+                        <div class="space-y-6 flex flex-col">
+                            <!-- Code Snippet -->
+                            <div>
+                                <div class="flex justify-between items-center bg-surface-50 px-4 py-2 border border-borderline border-b-0 rounded-t-lg">
+                                    <span class="text-xs font-mono text-themeMuted truncate max-w-sm" title="Doctrine\ORM\Persisters\BasicEntityPersister">
+                                        
+                                            Doctrine\ORM\Persisters\BasicEntityPersister
+                                        
+                                            
+                                        
+                                            
+                                        
+                                    </span>
+                                </div>
+                                <div class="code-block rounded-t-none border-t-0 bg-themeBg m-0 text-brand-400">
+                                    // Primary Target Code Path
+                                    
+                                        Doctrine\ORM\Persisters\BasicEntityPersister
+                                    
+                                        
+                                    
+                                        
+                                    
+                                </div>
+                            </div>
+
+                            <!-- Mermaid Diagram -->
+                            
+                            <div class="flex-1 bg-themeBg border border-borderline rounded-lg p-6 flex flex-col items-center justify-center min-h-[200px] overflow-x-auto">
+                                <span class="text-[10px] uppercase text-gray-600 tracking-widest font-bold self-start mb-4">Topology Fragment</span>
+                                <div class="w-full flex justify-center">
+                                    <pre class="mermaid text-center">graph TD
+  Doctrine\ORM\Persisters\BasicEntityPersister --> LegacyDependencies
+  style Doctrine\ORM\Persisters\BasicEntityPersister fill:#f9f,stroke:#333,stroke-width:4px</pre>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                
             </section>
 
             <!-- ==========================================
@@ -1148,22 +1538,22 @@
                     <p class="text-gray-400 leading-relaxed max-w-4xl text-lg">Modernization Decision Engine recommendations, Actionable ROI matrices, and execution playbooks based on architectural complexity.</p>
                 </header>
 
-                {% if model.strategic_advisory %}
-                {% set kpis = model.strategic_advisory.get('kpis', {}) %}
-                {% set recommendations = model.strategic_advisory.get('recommendations', []) %}
+                
+                
+                
                 
                 <!-- Decision Engine KPIs -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
                     <div class="bg-surface-100 border border-borderline p-6 rounded-2xl shadow-xl text-center">
-                        <div class="text-3xl font-black text-brand-400 mb-2">{{ kpis.get('Overall Migration Effort', 'N/A') }}</div>
+                        <div class="text-3xl font-black text-brand-400 mb-2">1 Points</div>
                         <div class="text-xs text-gray-500 uppercase tracking-widest font-bold">Estimated Effort</div>
                     </div>
                     <div class="bg-surface-100 border border-borderline p-6 rounded-2xl shadow-xl text-center">
-                        <div class="text-3xl font-black text-white mb-2">{{ kpis.get('Most Common Strategy', 'N/A') }}</div>
+                        <div class="text-3xl font-black text-white mb-2">REPLATFORM</div>
                         <div class="text-xs text-gray-500 uppercase tracking-widest font-bold">Primary Path</div>
                     </div>
                     <div class="bg-surface-100 border border-borderline p-6 rounded-2xl shadow-xl text-center">
-                        <div class="text-3xl font-black text-emerald-500 mb-2">{{ kpis.get('High Value Targets', 0) }}</div>
+                        <div class="text-3xl font-black text-emerald-500 mb-2">1</div>
                         <div class="text-xs text-gray-500 uppercase tracking-widest font-bold">Quick Wins (High ROI)</div>
                     </div>
                 </div>
@@ -1188,89 +1578,45 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for rec in recommendations %}
+                                
                                 <tr>
-                                    <td class="font-bold text-white">{{ rec.Context }}</td>
+                                    <td class="font-bold text-white">fixtures</td>
                                     <td>
-                                        {% if rec['Recommended Strategy'] == 'EXTRACT (MICROSERVICE)' %}
-                                        <span class="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-[10px] font-bold">EXTRACT</span>
-                                        {% elif rec['Recommended Strategy'] == 'REWRITE' %}
-                                        <span class="px-2 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded text-[10px] font-bold">REWRITE</span>
-                                        {% elif rec['Recommended Strategy'] == 'STRANGLER FIG' %}
-                                        <span class="px-2 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded text-[10px] font-bold">STRANGLER FIG</span>
-                                        {% elif rec['Recommended Strategy'] == 'REPLATFORM' %}
+                                        
                                         <span class="px-2 py-1 bg-brand-500/10 text-brand-400 border border-brand-500/20 rounded text-[10px] font-bold">REPLATFORM</span>
-                                        {% else %}
-                                        <span class="px-2 py-1 bg-gray-500/10 text-gray-400 border border-gray-500/20 rounded text-[10px] font-bold">{{ rec['Recommended Strategy'] }}</span>
-                                        {% endif %}
+                                        
                                     </td>
                                     <td>
                                         <div class="flex items-center gap-2">
                                             <div class="w-16 h-2 bg-surface rounded overflow-hidden">
-                                                <div class="h-full bg-emerald-500" style="width: {{ rec['Modernization ROI'] }}%"></div>
+                                                <div class="h-full bg-emerald-500" style="width: 75%"></div>
                                             </div>
-                                            <span class="font-mono text-gray-300">{{ rec['Modernization ROI'] }}</span>
+                                            <span class="font-mono text-gray-300">75</span>
                                         </div>
                                     </td>
-                                    <td class="font-mono text-gray-400">{{ rec['Migration Effort'] }}</td>
-                                    <td class="text-gray-400 italic">{{ rec['Primary Blocker'] }}</td>
+                                    <td class="font-mono text-gray-400">1 Logic Points</td>
+                                    <td class="text-gray-400 italic">None</td>
                                 </tr>
-                                {% endfor %}
+                                
                             </tbody>
                         </table>
                     </div>
                 </div>
-                {% endif %}
+                
 
                 <!-- AI Architectural Intelligence (Deep Insights) -->
-                {% if model.ai_executive_summary and model.ai_executive_summary.get('findings') %}
-                <div class="mb-16">
-                    <h3 class="text-2xl font-bold text-white mb-6">Deep AI Architectural Intelligence</h3>
-                    <div class="space-y-6">
-                        {% for finding in model.ai_executive_summary.get('findings', []) %}
-                        <div class="bg-surface-100 border border-borderline p-8 rounded-2xl shadow-xl flex flex-col xl:flex-row gap-8">
-                            <div class="flex-1 space-y-4">
-                                <div class="flex items-center gap-3 mb-2">
-                                    {% if finding.priority == 'Critical' %}
-                                    <span class="px-2 py-0.5 bg-red-500/10 text-red-500 border border-red-500/30 rounded text-xs font-bold uppercase">CRITICAL</span>
-                                    {% else %}
-                                    <span class="px-2 py-0.5 bg-amber-500/10 text-amber-500 border border-amber-500/30 rounded text-xs font-bold uppercase">HIGH</span>
-                                    {% endif %}
-                                    <h4 class="text-xl font-bold text-white">{{ finding.observation }}</h4>
-                                </div>
-                                <div class="text-sm text-gray-400 leading-relaxed border-l-2 border-borderline pl-4">
-                                    <p class="font-bold text-gray-300 mb-1">Impact:</p>
-                                    {{ finding.impact }}
-                                </div>
-                                <div class="text-sm text-brand-100 leading-relaxed bg-brand-500/5 p-4 rounded-lg border border-brand-500/20">
-                                    <p class="font-bold text-brand-400 mb-1">Executive Recommendation:</p>
-                                    {{ finding.recommended_action }}
-                                </div>
-                            </div>
-                            
-                            {% if finding.mermaid_diagram %}
-                            <div class="xl:w-[400px] shrink-0 bg-themeBg rounded-xl border border-borderline p-4 flex items-center justify-center min-h-[250px] overflow-auto">
-                                <div class="mermaid">
-                                {{ finding.mermaid_diagram }}
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
+                
 
                 <!-- Executive Roadmap Timeline -->
                 <div class="relative border-l-2 border-borderline ml-3 md:ml-6 space-y-16">
-                    {% set roadmap = model.ai_executive_summary.get('strategic_roadmap', 'Execute architectural decoupling based on boundary data.') %}
+                    
                     <div class="relative pl-10 md:pl-12">
                         <div class="absolute w-5 h-5 bg-brand-500 rounded-full -left-[10.5px] top-1 border-[4px] border-themeBg shadow-[0_0_15px_rgba(59,130,246,0.8)]"></div>
                         <div class="flex flex-col md:flex-row md:items-center gap-4 mb-4">
                             <span class="text-brand-500 font-mono text-sm uppercase tracking-widest font-extrabold bg-brand-500/10 border border-brand-500/20 px-3 py-1 rounded inline-block w-max">Extraction Playbook</span>
                         </div>
                         <h3 class="text-3xl font-bold text-white mb-4">Phased Execution</h3>
-                        <p class="text-base text-gray-400 mb-8 leading-relaxed max-w-4xl whitespace-pre-wrap">{{ roadmap }}</p>
+                        <p class="text-base text-gray-400 mb-8 leading-relaxed max-w-4xl whitespace-pre-wrap">Step 1: Introduce a lightweight front controller and routing layer using a micro‑framework (e.g. Slim or Lumen) while keeping existing Models intact. This isolates request handling, creates a clear entry point, and allows gradual migration of View scripts into route callbacks or template engines without stopping feature work. Step 2: Refactor core Models into PSR‑4 namespaced classes and adopt Composer autoloading. Start with high‑traffic or high‑risk Models, adding unit tests as they are refactored to build a safety net. Namespacing immediately reduces naming collisions and prepares the codebase for future modular services. Step 3: Implement a security hardening and testing program. Add input validation, output escaping, and modern password hashing to critical paths; integrate a CI pipeline with automated static analysis and a baseline test suite covering the newly namespaced Models and routing layer. This creates a defend‑in‑depth posture and establishes continuous quality checks while allowing ongoing feature development on the legacy sections.</p>
 
                         <div class="bg-surface-100 border border-borderline rounded-xl overflow-hidden shadow-2xl max-w-4xl">
                             <div class="p-4 border-b border-borderline bg-surface-200 flex gap-2">
@@ -1302,11 +1648,11 @@
             const readinessEl = document.getElementById('readinessChart');
             if (readinessEl) {
                 const ctxDoughnut = readinessEl.getContext('2d');
-                {% set score = model.system_context.overall_readiness %}
-                {% set color = '#10b981' if score > 60 else ('#f59e0b' if score > 30 else '#ef4444') %}
+                
+                
                 new Chart(ctxDoughnut, {
                     type: 'doughnut',
-                    data: { datasets: [{ data: [{{ score }}, {{ 100 - score }}], backgroundColor: ['{{ color }}', '#111'], borderWidth: 0 }] },
+                    data: { datasets: [{ data: [29.48, 70.52], backgroundColor: ['#ef4444', '#111'], borderWidth: 0 }] },
                     options: {
                         cutout: '85%', responsive: true, maintainAspectRatio: false,
                         plugins: { tooltip: { enabled: false } },
@@ -1317,7 +1663,7 @@
             }
 
             // 2. Architecture Radar Chart
-            {% if model.legacy_intelligence and model.legacy_intelligence.score_dimensions %}
+            
             const ctxRadar = document.getElementById('radarChart').getContext('2d');
             const getChartColors = () => {
                 const isL = document.body.classList.contains('light-theme');
@@ -1337,12 +1683,12 @@
                     datasets: [{
                         label: 'Current State',
                         data: [
-                            {{ (model.legacy_intelligence.score_dimensions.get('Security Score', 0) * 10) | round(1) }},
-                            {{ (model.legacy_intelligence.score_dimensions.get('Coupling Score', 0) * 10) | round(1) }},
-                            {{ (model.legacy_intelligence.score_dimensions.get('Testability Score', 0) * 10) | round(1) }},
-                            {{ (model.legacy_intelligence.score_dimensions.get('Namespace Score', 0) * 10) | round(1) }},
-                            {{ [0, 10 - (model.system_context.avg_complexity / 10)] | max | round(1) }},
-                            {{ (model.legacy_intelligence.score_dimensions.get('DB Layer Score', 0) * 10) | round(1) }}
+                            0.0,
+                            10.0,
+                            0.0,
+                            0.0,
+                            9.3,
+                            5.0
                         ],
                         backgroundColor: colors.bg,
                         borderColor: '#3b82f6',
@@ -1374,7 +1720,7 @@
                 radarChart.options.scales.r.pointLabels.color = newColors.labels;
                 radarChart.update();
             });
-            {% endif %}
+            
         });
     </script>
 </body>

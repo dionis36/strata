@@ -289,8 +289,17 @@ def background_synthesize_intelligence(run_id: int):
         except Exception:
             pass
             
+        from application.services.advisory_service import AdvisoryService
+        recs = []
+        try:
+            adv_service = AdvisoryService()
+            advisory_data = adv_service.get_strategic_roadmap(run_id)
+            recs = advisory_data.get("recommendations", [])
+        except Exception as adv_e:
+            logger.error(f"Failed to fetch advisory roadmap for AI: {adv_e}")
+
         ai_service = AIAdvisoryService()
-        summary = ai_service.synthesize_executive_summary(ctx, legacy)
+        summary = ai_service.synthesize_executive_summary(ctx, legacy, recs)
         
         run.ai_executive_summary_json = json.dumps(summary)
         run.error_message = None

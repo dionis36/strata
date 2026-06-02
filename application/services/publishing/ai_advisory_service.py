@@ -37,11 +37,20 @@ class AIAdvisoryService:
                 else:
                     raise
 
-    def synthesize_executive_summary(self, system_context: Any, legacy_posture: Any) -> Dict[str, str]:
+    def synthesize_executive_summary(self, system_context: Any, legacy_posture: Any, recs: List[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Calls an LLM to write a high-level strategic executive summary."""
         if not self.openrouter_key and not self.client:
             raise ValueError("No API keys found. AI Synthesis unavailable.")
             
+        recs_str = ""
+        if recs:
+            recs_str = "\n".join([
+                f"- Module '{r.get('Context')}': Recommend {r.get('Recommended Strategy')} (ROI: {r.get('Modernization ROI')}%, Effort: {r.get('Migration Effort')}). Rationale: {r.get('Rationale')}. Primary Blocker: {r.get('Primary Blocker')}."
+                for r in recs
+            ])
+        else:
+            recs_str = "No specific module-level recommendations calculated."
+
         prompt = f"""
         You are a Principal PHP Modernization Architect consulting for a C-level executive.
         
@@ -56,24 +65,46 @@ class AIAdvisoryService:
         
         Legacy Posture Scores (0.0 to 10.0 scale, where 10 is modern):
         - Version Score: {legacy_posture.version_score if legacy_posture else 'N/A'}
-        - Namespace Score: {legacy_posture.namespace_score if legacy_posture else 'N/A'}
+        - Namespace Score: {legacy_posture.namespace_score if legacy_posture else 'N/A'} (Note: A score of 0.0 means the project's own source code does not use PSR-4 namespaces, even if vendor/dependency frameworks in the graph do).
         - Database Layer Score: {legacy_posture.db_layer_score if legacy_posture else 'N/A'}
         - Security Score: {legacy_posture.security_score if legacy_posture else 'N/A'}
         - Testability Score: {legacy_posture.testability_score if legacy_posture else 'N/A'}
         - Coupling Score: {legacy_posture.coupling_score if legacy_posture else 'N/A'}
         
+        Detailed Backend Recommendations calculated per cluster:
+        {recs_str}
+        
         Provide a strategic evaluation in three exact parts.
-        You must return a raw JSON object with EXACTLY these three string keys.
+        You must return a raw JSON object with EXACTLY these three keys.
         
         CRITICAL FORMATTING RULES:
-        1. Do NOT use double quotes (") anywhere inside the text values of current_state, critical_risks, or strategic_roadmap. If you need to quote anything, use single quotes (') or backticks (`) instead.
+        1. Do NOT use double quotes (") anywhere inside the text values of current_state, critical_risks, or the roadmap step fields. If you need to quote anything, use single quotes (') or backticks (`) instead.
         2. All double quotes (") must strictly be used ONLY for JSON keys and JSON value boundaries.
         3. Do not include markdown backticks around the JSON.
         
         {{
-            "current_state": "A comprehensive, multi-paragraph deep-dive assessment of the system's current architectural health. You MUST explicitly list the structural components of the application (e.g. X Models, Y Controllers, Z Schemas) based on the Architectural Footprint provided above to prove deep comprehension. Use professional, advisory tone and expand on the implications of the current footprint.",
-            "critical_risks": "A detailed explanation of the biggest systemic dangers based on the lowest dimension scores. Provide multiple paragraphs if necessary.",
-            "strategic_roadmap": "A definitive, highly-detailed 3-step action plan to modernize the system without halting feature development. Explain the 'why' behind each step."
+            "current_state": "A comprehensive, multi-paragraph deep-dive assessment of the system's current architectural health. You MUST explicitly list the structural components of the application (e.g. X Models, Y Controllers, Z Schemas) based on the Architectural Footprint and context to prove deep comprehension. Explain that while vendor/framework dependencies (Doctrine, Symfony) utilize namespaces in the topology graph, the project's own files lack namespaces entirely (score 0.0). Expand on the implications of the current footprint.",
+            "critical_risks": "A detailed explanation of the biggest systemic dangers based on the lowest dimension scores. Explain the risks of SQL injection/security surface (Score 0.0), testability gaps (Score 0.0), and architectural coupling.",
+            "strategic_roadmap": [
+                {{
+                    "step_number": 1,
+                    "title": "Title of Step 1",
+                    "description": "Detailed description of Step 1 - what needs to be done and how it affects the codebase.",
+                    "rationale": "The technical and business rationale explaining 'why' this step is critical at this phase."
+                }},
+                {{
+                    "step_number": 2,
+                    "title": "Title of Step 2",
+                    "description": "Detailed description of Step 2 - what needs to be done.",
+                    "rationale": "Rationale explaining 'why'."
+                }},
+                {{
+                    "step_number": 3,
+                    "title": "Title of Step 3",
+                    "description": "Detailed description of Step 3.",
+                    "rationale": "Rationale explaining 'why'."
+                }}
+            ]
         }}
         """
         
@@ -126,7 +157,19 @@ class AIAdvisoryService:
                                 "properties": {
                                     "current_state": {"type": "STRING"},
                                     "critical_risks": {"type": "STRING"},
-                                    "strategic_roadmap": {"type": "STRING"}
+                                    "strategic_roadmap": {
+                                        "type": "ARRAY",
+                                        "items": {
+                                            "type": "OBJECT",
+                                            "properties": {
+                                                "step_number": {"type": "INTEGER"},
+                                                "title": {"type": "STRING"},
+                                                "description": {"type": "STRING"},
+                                                "rationale": {"type": "STRING"}
+                                            },
+                                            "required": ["step_number", "title", "description", "rationale"]
+                                        }
+                                    }
                                 },
                                 "required": ["current_state", "critical_risks", "strategic_roadmap"]
                             },
@@ -137,10 +180,14 @@ class AIAdvisoryService:
         except Exception as e:
             logger.error(f"API Error (Summary): {e}")
             raise
-
-    def _generate_summary_fallback(self, system_context: Any) -> Dict[str, str]:
+ 
+    def _generate_summary_fallback(self, system_context: Any) -> Dict[str, Any]:
         return {
-            "current_state": f"The {system_context.framework} system contains significant technical debt.",
+            "current_state": f"The {system_context.project_name} framework contains significant technical debt.",
             "critical_risks": "High architectural coupling and low test coverage make modifications dangerous.",
-            "strategic_roadmap": "1. Introduce static analysis.\n2. Add characterization tests.\n3. Incrementally decouple the database layer."
+            "strategic_roadmap": [
+                {"step_number": 1, "title": "Introduce Static Analysis", "description": "Set up phpstan or psalm to baseline the project.", "rationale": "Ensures no new legacy syntax errors or deprecations are introduced."},
+                {"step_number": 2, "title": "Add Characterization Tests", "description": "Create integration testing suites around critical endpoints.", "rationale": "Guarantees logic preservation during active refactoring."},
+                {"step_number": 3, "title": "Database Decoupling", "description": "Isolate DB transactions behind modern service interfaces.", "rationale": "Enables migration to new database platforms without breaking core controllers."}
+            ]
         }

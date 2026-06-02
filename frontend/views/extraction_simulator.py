@@ -63,17 +63,20 @@ def show_extraction_simulator():
         st.info("Select a file above to begin the impact simulation.")
         return
 
+    sim_key = f"last_sim_{run_id}"
+    ghost_key = f"last_ghost_{run_id}"
+
     if st.button("Run Impact Simulation"):
         with st.spinner(f"Simulating extraction of {os.path.basename(target_fqn)}..."):
             data = fetch_simulation(run_id, target_fqn)
             ghost_data = fetch_ghost_graph(run_id, target_fqn)
             if data:
-                st.session_state["last_sim"] = data
+                st.session_state[sim_key] = data
             if ghost_data:
-                st.session_state["last_ghost"] = ghost_data
+                st.session_state[ghost_key] = ghost_data
 
-    sim = st.session_state.get("last_sim")
-    ghost = st.session_state.get("last_ghost")
+    sim = st.session_state.get(sim_key)
+    ghost = st.session_state.get(ghost_key)
     
     if sim and sim.get("target") == target_fqn:
         tab_as_is, tab_to_be = st.tabs(["As-Is Blast Radius", "To-Be Ghost Graph"])
