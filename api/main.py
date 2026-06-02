@@ -209,6 +209,7 @@ class AnalysisRunSchema(BaseModel):
     avg_maintainability: float
     total_classes: int
     total_edges: int
+    error_message: Optional[str] = None
 
 class GraphvizResponse(BaseModel):
     dot: str
@@ -292,18 +293,20 @@ def background_synthesize_intelligence(run_id: int):
         summary = ai_service.synthesize_executive_summary(ctx, legacy)
         
         run.ai_executive_summary_json = json.dumps(summary)
+        run.error_message = None
         run.status = "intelligence_ready"
-        
         db.commit()
     except Exception as e:
         logger.error(f"Background AI synthesis failed: {e}")
         try:
+            run.error_message = str(e)
             fallback = ai_service._generate_summary_fallback(ctx)
             run.ai_executive_summary_json = json.dumps(fallback)
             run.status = "intelligence_failed" # We mark it as failed so the "Retry" button appears, but we still have fallback data!
             db.commit()
         except Exception as fallback_e:
             logger.error(f"Fallback synthesis also failed: {fallback_e}")
+            run.error_message = f"Fallback error: {fallback_e}"
             run.status = "intelligence_failed"
             db.commit()
     finally:
@@ -498,7 +501,8 @@ def list_runs(db: Session = Depends(get_db)):
                 "avg_complexity": r.avg_complexity or 0.0,
                 "avg_maintainability": r.avg_maintainability or 0.0,
                 "total_classes": r.total_classes or 0,
-                "total_edges": r.total_edges or 0
+                "total_edges": r.total_edges or 0,
+                "error_message": r.error_message
             }
             for r in runs
         ]

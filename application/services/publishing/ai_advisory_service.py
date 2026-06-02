@@ -63,7 +63,13 @@ class AIAdvisoryService:
         - Coupling Score: {legacy_posture.coupling_score if legacy_posture else 'N/A'}
         
         Provide a strategic evaluation in three exact parts.
-        You must return a raw JSON object with EXACTLY these three string keys (do not include markdown backticks around the JSON):
+        You must return a raw JSON object with EXACTLY these three string keys.
+        
+        CRITICAL FORMATTING RULES:
+        1. Do NOT use double quotes (") anywhere inside the text values of current_state, critical_risks, or strategic_roadmap. If you need to quote anything, use single quotes (') or backticks (`) instead.
+        2. All double quotes (") must strictly be used ONLY for JSON keys and JSON value boundaries.
+        3. Do not include markdown backticks around the JSON.
+        
         {{
             "current_state": "A comprehensive, multi-paragraph deep-dive assessment of the system's current architectural health. You MUST explicitly list the structural components of the application (e.g. X Models, Y Controllers, Z Schemas) based on the Architectural Footprint provided above to prove deep comprehension. Use professional, advisory tone and expand on the implications of the current footprint.",
             "critical_risks": "A detailed explanation of the biggest systemic dangers based on the lowest dimension scores. Provide multiple paragraphs if necessary.",
@@ -88,17 +94,25 @@ class AIAdvisoryService:
                     result_json = response.json()
                     content = result_json["choices"][0]["message"]["content"]
                     
-                    # Clean up markdown if the LLM hallucinated it
-                    content = content.strip()
-                    if content.startswith("```json"):
-                        content = content[7:]
-                    elif content.startswith("```"):
-                        content = content[3:]
-                    if content.endswith("```"):
-                        content = content[:-3]
+                    # Extract clean JSON block if there is preamble/postamble
+                    content_str = content.strip()
+                    start_idx = content_str.find('{')
+                    end_idx = content_str.rfind('}')
+                    if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+                        content_str = content_str[start_idx:end_idx+1]
                         
-                    return json.loads(content.strip())
-                    
+                    try:
+                        return json.loads(content_str, strict=False)
+                    except Exception as parse_e:
+                        logger.warning(f"Initial JSON parse failed: {parse_e}. Trying to repair and parse using AST...")
+                        try:
+                            import ast
+                            py_str = content_str.replace('true', 'True').replace('false', 'False').replace('null', 'None')
+                            return ast.literal_eval(py_str)
+                        except Exception as ast_e:
+                            logger.error(f"AST parse also failed: {ast_e}")
+                            raise parse_e
+                            
                 return self._invoke_with_retry(_call_openrouter)
             else:
                 def _call_gemini():
@@ -118,7 +132,7 @@ class AIAdvisoryService:
                             },
                         ),
                     )
-                    return json.loads(res.text)
+                    return json.loads(res.text, strict=False)
                 return self._invoke_with_retry(_call_gemini)
         except Exception as e:
             logger.error(f"API Error (Summary): {e}")
