@@ -39,6 +39,7 @@ class SystemContext(BaseModel):
     framework: str
     overall_readiness: float
     architectural_footprint: dict = Field(default_factory=dict)
+    root_path: Optional[str] = None
 
 class DatabaseIntelligence(BaseModel):
     table_name: str

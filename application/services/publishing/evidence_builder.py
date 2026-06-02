@@ -56,7 +56,8 @@ class EvidenceBuilder:
             php_era=legacy.php_era if legacy else "Unknown",
             framework=legacy.detected_framework if legacy else "Custom/None",
             overall_readiness=legacy.total_modernization_score if legacy else 0.0,
-            architectural_footprint=footprint
+            architectural_footprint=footprint,
+            root_path=project.root_path if project else None
         )
         
         # 2. Hydrate Database Intelligence
