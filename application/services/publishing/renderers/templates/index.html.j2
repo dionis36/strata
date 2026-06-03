@@ -467,13 +467,42 @@
                     <div class="p-6 border-b border-borderline flex flex-col sm:flex-row justify-between sm:items-center gap-4 z-10 bg-surface-50">
                         <div>
                             <h3 class="text-white font-bold text-lg">System Topology (Node-Edge Graph)</h3>
-                            <p class="text-xs text-gray-500 mt-1">Interactive visualization of module dependencies and coupling.</p>
+                            <p class="text-xs text-gray-500 mt-1">Interactive visualization of module dependencies, coupling, and logical flow. Physics layout computes force-directed clustering.</p>
                         </div>
                     </div>
-                    <!-- 500px Height Canvas -->
-                    <div id="topologyGraph" class="h-[500px] w-full bg-themeBg bg-gradient-mesh relative">
+                    <!-- 700px Height Canvas -->
+                    <div id="topologyGraph" class="h-[700px] w-full bg-themeBg bg-gradient-mesh relative">
                         <!-- Graph will be injected here via Vis.js -->
                     </div>
+                    
+                    <!-- Graph Blueprint Legend -->
+                    <div class="border-t border-borderline/50 p-4 bg-surface-50 flex flex-wrap gap-6 justify-center text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3.5 h-3.5 rounded bg-[#ff4b4b] border border-white/10"></span>
+                            <span class="text-gray-300 font-semibold">Entry Points</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3.5 h-3.5 rounded bg-[#00d4ff] border border-white/10"></span>
+                            <span class="text-gray-300 font-semibold">Controllers</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3.5 h-3.5 rounded bg-[#00cc96] border border-white/10"></span>
+                            <span class="text-gray-300 font-semibold">Views</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3.5 h-3.5 rounded bg-[#5c6bc0] border border-white/10"></span>
+                            <span class="text-gray-300 font-semibold">Classes / OOP Entities</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3.5 h-3.5 rounded bg-[#ff1744] border border-white/10 shadow-[0_0_8px_rgba(255,23,68,0.5)]"></span>
+                            <span class="text-gray-300 font-semibold">God Classes (High Coupling)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3.5 h-3.5 rounded bg-[#757575] border border-white/10"></span>
+                            <span class="text-gray-300 font-semibold">Vendor / Libraries</span>
+                        </div>
+                    </div>
+                    
                     <script>
                         document.addEventListener("DOMContentLoaded", function() {
                             {% if model.layered_architecture.system_topology %}
@@ -580,9 +609,20 @@
                                 <h3 class="text-white font-bold text-lg">Inferred Bounded Contexts</h3>
                             </div>
                             <div class="overflow-y-auto flex-1 max-h-60">
+                                {% set has_sinks = namespace(val=false) %}
+                                {% for c in model.layered_architecture.bounded_contexts %}
+                                    {% if c.db_access or c.auth_access %}
+                                        {% set has_sinks.val = true %}
+                                    {% endif %}
+                                {% endfor %}
                                 <table class="w-full data-table">
                                     <thead class="sticky top-0 z-10 bg-surface-200">
-                                        <tr><th>Semantic Domain</th><th>Files</th><th>Coupling</th><th>State Sinks</th></tr>
+                                        <tr>
+                                            <th>Semantic Domain</th>
+                                            <th>Files</th>
+                                            <th>Coupling</th>
+                                            {% if has_sinks.val %}<th>State Sinks</th>{% endif %}
+                                        </tr>
                                     </thead>
                                     <tbody>
                                         {% for c in model.layered_architecture.bounded_contexts %}
@@ -596,12 +636,14 @@
                                                     {{ c.coupling_ratio }}
                                                 </span>
                                             </td>
+                                            {% if has_sinks.val %}
                                             <td>
                                                 <div class="flex gap-2 text-[10px] font-bold uppercase tracking-widest">
                                                 {% if c.db_access %}<span class="text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 rounded">DB</span>{% endif %}
                                                 {% if c.auth_access %}<span class="text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 rounded">AUTH</span>{% endif %}
                                                 </div>
                                             </td>
+                                            {% endif %}
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -676,7 +718,7 @@
                 </div>
                 
                 <!-- Macro function to render nested tree -->
-                {% macro render_tree(node, path='') %}
+                {% macro render_tree(node, path='', depth=0) %}
                     {% for name, data in node.items()|sort %}
                         {% set full_path = path ~ '/' ~ name %}
                         {% set info = data.get('_info') %}
@@ -694,7 +736,7 @@
                                 {% set icon_color = 'text-emerald-500' %}
                             {% endif %}
                             
-                            <details class="ml-4 mb-2" {% if path == '' %}open{% endif %}>
+                            <details class="ml-4 mb-2" {% if depth < 2 %}open{% endif %}>
                                 <summary class="cursor-pointer select-none mb-1 hover:text-white transition-colors">
                                     <span class="{{ icon_color }} mr-2">{{ icon }}</span>
                                     <span class="font-bold">{{ name }}/</span>
@@ -722,16 +764,16 @@
                                             <span class="text-gray-600">({{ f_role }})</span>
                                         </div>
                                     {% endfor %}
-                                    {{ render_tree(data.get('_children', {}), full_path) }}
+                                    {{ render_tree(data.get('_children', {}), full_path, depth + 1) }}
                                 </div>
                             </details>
                         {% else %}
-                            <details class="ml-4 mb-2" {% if path == '' %}open{% endif %}>
+                            <details class="ml-4 mb-2" {% if depth < 2 %}open{% endif %}>
                                 <summary class="cursor-pointer select-none font-bold hover:text-white transition-colors">
                                     {{ name }}/
                                 </summary>
                                 <div class="border-l border-dashed border-gray-700 ml-2 pl-3 py-1">
-                                    {{ render_tree(data.get('_children', {}), full_path) }}
+                                    {{ render_tree(data.get('_children', {}), full_path, depth + 1) }}
                                 </div>
                             </details>
                         {% endif %}

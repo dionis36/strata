@@ -19,8 +19,8 @@ def main():
     Session = sessionmaker(bind=engine)
     session = Session()
     
-    # Run ID 2 (or 1)
-    run_id = 2
+    # Run ID 1
+    run_id = 1
     print(f"Building CanonicalModel for Run ID {run_id}...")
     try:
         builder = EvidenceBuilder(session)
