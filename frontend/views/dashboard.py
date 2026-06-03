@@ -99,7 +99,7 @@ def show_dashboard():
     else:
         st.info("Select a project or start a new analysis to populate the dashboard.")
 
-    st.markdown("---")
+    # st.markdown("---")
 
     # ── Action Center ─────────────────────────────────────────────────────────────
     st.subheader("Action Center")
