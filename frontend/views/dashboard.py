@@ -178,7 +178,7 @@ def show_dashboard():
         if dashboard_data and dashboard_data.get("project"):
             st.markdown("#### Project Management")
             st.write(f"Active Root: `{dashboard_data['project']['root_path']}`")
-            if st.button("Trigger Delta Re-Scan", use_container_width=True):
+            if st.button("Re-Scan", use_container_width=True):
                 with st.spinner("Analyzing changes..."):
                     res = requests.post(f"{FASTAPI_URL}/analyze", json={
                         "project_name": dashboard_data['project']['name'], 

@@ -205,7 +205,7 @@ def show_risk_audit():
         st.caption("Structural violations that prevent automated refactoring or containerization. **HIGH** indicates a severe blocker (e.g., extreme global coupling, missing PSR-4 autoloading).")
 
         # --- Extraction Feasibility UI ---
-        st.markdown("##### 🔬 Extraction Feasibility Profiles")
+        st.markdown("##### Extraction Feasibility Profiles")
         st.markdown("The system runs composite 'Strong Logic' heuristics to determine the exact extraction friction of a module.")
         
         blockers = [r for r in rot if r.get("Defect Type") in ["High Refactor Risk", "Microservice Extraction Blocker"]]

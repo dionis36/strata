@@ -75,7 +75,7 @@ def show_database_intelligence():
         "Access Taxonomy (CRUD Patterns)",
         "Risk Audit (Security & Integrity)",
         "Table Ownership (DB-per-Service)",
-        "Domain Model (ERD Visualization)",
+        # "Domain Model (ERD Visualization)",
     ])
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
