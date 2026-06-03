@@ -93,7 +93,7 @@ def show_monolith_navigator():
         df_oop = pd.DataFrame(entities)
         
         # UI Prettification
-        df_oop["Interactions"] = df_oop["side_effects"].apply(lambda x: ", ".join([s.split("::")[-1] for s in x]))
+        df_oop["Interactions"] = df_oop["side_effects"].apply(lambda x: ", ".join([s.split("::")[-1] for s in x]) if x else "none")
         df_oop["Complexity"] = df_oop["methods_count"].apply(lambda x: "High" if x > 20 else ("Medium" if x > 10 else "Low"))
         
         # Rename for clarity and replace empty boolean columns with concrete metrics

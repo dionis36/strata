@@ -50,7 +50,7 @@ DESCRIPTION = """
 ### 🔬 The Strata Methodology
 Unlike traditional static analysis, Strata converts raw source code into a **Structural Intelligence Graph**. By parsing Abstract Syntax Trees (AST) and projecting them into a NetworkX-backed mathematical model, we identify the hidden "gravity" of your codebase—the components that hold the monolith together and the chokepoints that prevent agility.
 
-### 🧠 The Intelligence Stack
+### The Intelligence Stack
 The system is organized into four strategic pillars, mirrored in the API and UI:
 
 **1. Architectural Discovery**

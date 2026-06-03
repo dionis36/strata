@@ -175,10 +175,10 @@ def show_system_topology():
         with colB:
             st.markdown("""
             **Edge Intelligence (Coupling)**
-            - <hr style="border: 2px solid #ff4b4b; width: 20px; display: inline-block; margin: 0; vertical-align: middle;"> **Static Call**: Toxic tight coupling. Hard to mock.
-            - <hr style="border: 2px solid #f9a825; width: 20px; display: inline-block; margin: 0; vertical-align: middle;"> **Instantiates**: Direct `new` usage. Violates DI.
-            - <hr style="border: 2px dashed #00cc96; width: 20px; display: inline-block; margin: 0; vertical-align: middle;"> **Injects**: Clean Dependency Injection.
-            - <hr style="border: 1px solid rgba(150,150,150,0.5); width: 20px; display: inline-block; margin: 0; vertical-align: middle;"> **Calls**: Standard procedural linkage.
+            - <hr style="border: 2px solid #ff4b4b; width: 20px; display: inline-block; margin: 0; vertical-align: middle;"> Static Call: Toxic tight coupling. Hard to mock.
+            - <hr style="border: 2px solid #f9a825; width: 20px; display: inline-block; margin: 0; vertical-align: middle;"> Instantiates: Direct `new` usage. Violates DI.
+            - <hr style="border: 2px dashed #00cc96; width: 20px; display: inline-block; margin: 0; vertical-align: middle;"> Injects: Clean Dependency Injection.
+            - <hr style="border: 1px solid rgba(150,150,150,0.5); width: 20px; display: inline-block; margin: 0; vertical-align: middle;"> Calls: Standard procedural linkage.
             """, unsafe_allow_html=True)
         with colC:
             st.markdown("""
