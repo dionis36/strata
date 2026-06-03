@@ -90,9 +90,9 @@ def show_dashboard():
         kpi4.metric("Total Classes", f"{run.get('total_classes', 0):,}")
         kpi5.metric("Connectivity", f"{run.get('total_edges', 0):,}")
         
-        cov = run.get('test_coverage')
-        cov_str = f"{round(cov * 100, 1)}%" if cov is not None else "N/A"
-        kpi6.metric("Test Coverage", cov_str, help="Overall Code Coverage from Clover/PHPUnit reports.")
+        # cov = run.get('test_coverage')
+        # cov_str = f"{round(cov * 100, 1)}%" if cov is not None else "N/A"
+        # kpi6.metric("Test Coverage", cov_str, help="Overall Code Coverage from Clover/PHPUnit reports.")
 
         st.markdown("---")
 
