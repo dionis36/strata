@@ -77,22 +77,28 @@ class LegacyIntelligenceService:
         # ---------------------------------------------------------------
         total_files = 0
         files_with_classes = 0
-        files_with_namespace = 0
-        files_with_functions_only = 0
-        variable_variable_files = set()
-        hosting_signal_files = set()
+        file_types = {"file", "entry_point", "bootstrap", "controller", "view", "config", "job", "model"}
+
+        # Helper to check if a node type represents a file
+        def is_file_node(n):
+            nt = n.get('node_type') or n.get('type') or ''
+            if not isinstance(nt, str):
+                nt = getattr(nt, 'value', str(nt))
+            nt = nt.replace("NodeType.", "").lower()
+            return nt in file_types
 
         for n in nodes:
-            ntype = n.get("type", "")
-            valid_types = ["file", "class", "entry_point", "bootstrap", "controller", "view", "config", "asset", "job", "model", "schema", "NodeType.FILE", "NodeType.CLASS", "NodeType.ENTRY_POINT", "NodeType.BOOTSTRAP", "NodeType.CONTROLLER", "NodeType.VIEW", "NodeType.CONFIG", "NodeType.ASSET", "NodeType.JOB", "NodeType.MODEL", "NodeType.SCHEMA"]
-            if ntype not in valid_types:
+            if not is_file_node(n):
                 continue
             fqn = n.get("fqn", "")
-            if "vendor" in fqn or "doctrine" in fqn.lower():
+            if "vendor" in fqn.lower() or "doctrine" in fqn.lower():
                 continue
+            if not fqn.lower().endswith(('.php', '.phtml', '.inc')):
+                continue
+
             total_files += 1
             metadata = n.get("metadata", {})
-            has_classes = bool(metadata.get("classes"))
+            has_classes = bool(metadata.get("classes") or metadata.get("interfaces") or metadata.get("traits"))
             has_ns = bool(metadata.get("namespaces"))
             has_fns = bool(metadata.get("functions"))
 
@@ -187,7 +193,7 @@ class LegacyIntelligenceService:
             classified_era = "Era A/B (PHP 4 / Early PHP 5)"
         elif high >= 2 or namespace_ratio < 0.2:
             classified_era = "Era B/C (PHP 5 Transitional)"
-        elif namespace_ratio > 0.5 and files_with_classes > files_with_functions_only:
+        elif namespace_ratio > 0.5:
             classified_era = "Era D (PHP 7+)"
         else:
             classified_era = "Era C (PHP 5 Transitional)"

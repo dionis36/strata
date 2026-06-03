@@ -89,8 +89,11 @@ class ParserBridge:
                                     method_map[m_name] = []
                                 method_map[m_name].append(m_id)
 
+                        c_ns = None
+                        if "\\" in fqn:
+                            c_ns = fqn.rsplit("\\", 1)[0]
                         add_node_safe(Node(
-                            id=c_id, name=cdata["name"], node_type=ntype, fqn=fqn, file_path=path, metadata=cdata, methods=method_names
+                            id=c_id, name=cdata["name"], node_type=ntype, fqn=fqn, file_path=path, metadata=cdata, methods=method_names, namespace=c_ns
                         ))
                         all_edges.append(Edge(source_id=f_id, target_id=c_id, edge_type=EdgeType.DECLARES))
                         symbol_map[fqn.lower()] = c_id

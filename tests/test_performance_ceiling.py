@@ -40,7 +40,7 @@ def test_timeout_guard_triggers():
     calculator = MetricCalculator(G)
 
     # Monkeypatch _compute to sleep for 3s, triggering a 1s timeout
-    def slow_compute():
+    def slow_compute(*args, **kwargs):
         time.sleep(3)
         return {}
 

@@ -29,7 +29,7 @@ class DummyLegacy:
 
 def test():
     service = AIAdvisoryService()
-    print(f"API Key present: {bool(service.api_key)}")
+    print(f"API Key present: {bool(service.gemini_key or service.openrouter_key)}")
     ctx = DummyCtx()
     legacy = DummyLegacy()
     

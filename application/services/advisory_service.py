@@ -191,8 +191,16 @@ class AdvisoryService:
         nodes = data.get("nodes", [])
         
         # 1. Determine project root path dynamically
-        valid_types = ["file", "class", "entry_point", "bootstrap", "controller", "view", "config", "asset", "job", "model", "schema", "NodeType.FILE", "NodeType.CLASS", "NodeType.ENTRY_POINT", "NodeType.BOOTSTRAP", "NodeType.CONTROLLER", "NodeType.VIEW", "NodeType.CONFIG", "NodeType.ASSET", "NodeType.JOB", "NodeType.MODEL", "NodeType.SCHEMA"]
-        file_paths = [n.get("fqn", "") for n in nodes if n.get("type") in valid_types]
+        file_types = {"file", "entry_point", "bootstrap", "controller", "view", "config", "job", "model", "schema"}
+        file_paths = []
+        for n in nodes:
+            ntype = n.get("type") or n.get("node_type") or ""
+            if isinstance(ntype, str):
+                ntype = ntype.replace("NodeType.", "").lower()
+            if ntype in file_types:
+                path = n.get("file_path") or n.get("fqn")
+                if path and path.startswith("/"):
+                    file_paths.append(path)
         if not file_paths:
             project_root = "/data"
         else:

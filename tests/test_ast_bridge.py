@@ -49,13 +49,13 @@ class TestASTBridge(unittest.TestCase):
         # Call: UserService -> App\Log\Logger (Static Call)
         static_call = next((e for e in edges if e.source_id == user_svc_id 
                            and e.target_id == logger_id 
-                           and e.edge_type == EdgeType.CALLS), None)
+                           and e.edge_type == EdgeType.STATIC_CALL), None)
         self.assertIsNotNone(static_call, "UserService should have a call to Logger")
 
         # Call: UserService -> stdClass (Instantiation)
         instantiation = next((e for e in edges if e.source_id == user_svc_id 
                              and e.target_id == std_class_id 
-                             and e.edge_type == EdgeType.CALLS), None)
+                             and e.edge_type == EdgeType.INSTANTIATES), None)
         self.assertIsNotNone(instantiation, "UserService should have a call to stdClass")
 
 if __name__ == "__main__":

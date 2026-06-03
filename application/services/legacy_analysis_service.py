@@ -111,13 +111,45 @@ class LegacyAnalysisService:
                         elif st == 'HOSTING':
                             hosting_sink_count += 1
         
-        has_htaccess = any(n.get('name') == '.htaccess' for n in nodes if n.get('node_type') == 'file')
-        has_composer = any(n.get('name') == 'composer.json' for n in nodes if n.get('node_type') == 'file')
+        file_types = {"file", "entry_point", "bootstrap", "controller", "view", "config", "job", "model"}
         
-        # Procedural ratio: non-class files vs total files
-        total_files = sum(1 for n in nodes if n.get('node_type') == 'file')
-        procedural_files = total_files - total_classes
-        procedural_ratio = procedural_files / total_files if total_files > 0 else 0.0
+        # Helper to check if a node type represents a file
+        def is_file_node(n):
+            nt = n.get('node_type') or n.get('type') or ''
+            if not isinstance(nt, str):
+                nt = getattr(nt, 'value', str(nt))
+            nt = nt.replace("NodeType.", "").lower()
+            return nt in file_types
+
+        # Check for composer/htaccess
+        has_htaccess = any(n.get('name') == '.htaccess' for n in nodes if is_file_node(n))
+        has_composer = any(n.get('name') == 'composer.json' for n in nodes if is_file_node(n) or (n.get('name') or '').lower() == 'composer.json')
+        
+        # PHP files only for structural calculations
+        php_files = [n for n in nodes if is_file_node(n) and n.get('name', '').lower().endswith(('.php', '.phtml', '.inc'))]
+        total_php_files = len(php_files)
+        
+        # Procedural ratio based on AST metadata within files
+        procedural_files = 0
+        for n in php_files:
+            meta = n.get('metadata', {})
+            has_oop = (
+                meta.get('classes') or 
+                meta.get('interfaces') or 
+                meta.get('traits')
+            )
+            if not has_oop:
+                procedural_files += 1
+                
+        procedural_ratio = procedural_files / total_php_files if total_php_files > 0 else 0.0
+
+        # Heuristic for has_tests: Check if any PHP file contains "test" or "phpunit" in name or path
+        has_tests = any(
+            'test' in n.get('name', '').lower() or 
+            (n.get('file_path') and 'test' in n.get('file_path', '').lower()) or
+            'phpunit' in n.get('name', '').lower()
+            for n in nodes if is_file_node(n)
+        )
 
         return {
             "namespace_ratio": namespaced_classes / total_classes if total_classes > 0 else 0.0,
@@ -129,5 +161,5 @@ class LegacyAnalysisService:
             "has_htaccess": has_htaccess,
             "coupling_density": len(edges) / (len(nodes) * (len(nodes) - 1)) if len(nodes) > 1 else 0.0,
             "has_composer": has_composer,
-            "has_tests": False
+            "has_tests": has_tests
         }

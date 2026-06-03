@@ -70,4 +70,4 @@ class FrameworkFingerprinter:
         if composer_data and "php" in composer_data.get("require", {}):
             return f"Custom App (PHP: {composer_data['require']['php']})"
             
-        return "Custom Legacy Monolith"
+        return "Bespoke / Custom App"
