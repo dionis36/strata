@@ -95,43 +95,6 @@ def show_dashboard():
         kpi6.metric("Test Coverage", cov_str, help="Overall Code Coverage from Clover/PHPUnit reports.")
 
         st.markdown("---")
-        st.markdown("### Architectural Footprint")
-        try:
-            layer_res = requests.get(f"{FASTAPI_URL}/layer-analysis/{run['id']}", timeout=5)
-            if layer_res.status_code == 200:
-                l_data = layer_res.json()
-                dirs = l_data.get("layer_1", {}).get("directories", {})
-                
-                models = 0
-                controllers = 0
-                jobs = 0
-                schemas = 0
-                views = 0
-                vendors = 0
-                
-                for info in dirs.values():
-                    for f in info.get("files", []):
-                        role = f.get("role", "file") if isinstance(f, dict) else "file"
-                        if role == "model": models += 1
-                        elif role == "controller": controllers += 1
-                        elif role == "job": jobs += 1
-                        elif role == "schema": schemas += 1
-                        elif role == "view": views += 1
-                        elif role == "vendor": vendors += 1
-                        
-                contexts = l_data.get("layer_3", {}).get("bounded_contexts", [])
-                site_variants = len([c for c in contexts if c["name"].startswith("Site:")])
-                
-                af1, af2, af3, af4, af5, af6, af7 = st.columns(7)
-                af1.metric("📦 Models", models)
-                af2.metric("🎛️ Controllers", controllers)
-                af3.metric("🖥️ Views", views)
-                af4.metric("⚙️ CLI Scripts", jobs)
-                af5.metric("💾 Schemas", schemas)
-                af6.metric("🧩 Libraries", vendors)
-                af7.metric("🌍 Site Variants", site_variants)
-        except Exception as e:
-            st.warning(f"Could not load architectural footprint: {e}")
 
     else:
         st.info("Select a project or start a new analysis to populate the dashboard.")
