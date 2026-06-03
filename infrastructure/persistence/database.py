@@ -1,5 +1,6 @@
 import os
 import logging
+import sqlite3
 from typing import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -43,6 +44,28 @@ def init_db() -> None:
         # Create tables
         Base.metadata.create_all(bind=engine)
         logger.info(f"Database initialized: Tables created if not existed at {db_url}")
+
+        # If running against an existing SQLite DB that predates new AI columns, ensure they exist
+        try:
+            if engine.dialect.name == "sqlite":
+                sqlite_db_path = engine.url.database
+                if sqlite_db_path and os.path.exists(sqlite_db_path):
+                    try:
+                        conn_sql = sqlite3.connect(sqlite_db_path)
+                        cur = conn_sql.cursor()
+                        cur.execute("PRAGMA table_info('analysis_run')")
+                        existing_cols = [row[1] for row in cur.fetchall()]
+                        for col in ("ai_executive_summary_json", "ai_findings_json", "ai_rector_config_json"):
+                            if col not in existing_cols:
+                                cur.execute(f"ALTER TABLE analysis_run ADD COLUMN {col} TEXT")
+                        conn_sql.commit()
+                        conn_sql.close()
+                        logger.info("Ensured AI columns present in analysis_run table")
+                    except Exception as e:
+                        logger.error(f"Failed to ensure AI columns in sqlite DB: {e}")
+        except Exception:
+            # Non-fatal: if dialect or path introspection fails, continue to schema versioning
+            pass
 
         # Enforce schema version on startup
         db = SessionLocal()
