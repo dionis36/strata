@@ -1,8 +1,1 @@
-<?php
-class UserView
-{
-    public function render()
-    {
-        return "<html>User Page</html>";
-    }
-}
+<?php class UserView { }

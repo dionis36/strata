@@ -1,12 +1,1 @@
-<?php
-class UserController
-{
-    public function showUser()
-    {
-        $db = new Database();
-        $data = $db->connect();
-
-        $view = new UserView();
-        $view->render();
-    }
-}
+<?php class UserController { public function index() { $db = new Database(); $view = new UserView(); } }

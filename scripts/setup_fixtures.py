@@ -32,7 +32,7 @@ FIXTURES = {
         "description": "CodeIgniter 3 (Structural Benchmark)"
     },
     "webgoat": {
-        "url": "https://github.com/OWASP/WebGoatPHP/archive/refs/heads/master.zip",
+        "url": "https://github.com/OWASP/OWASPWebGoatPHP/archive/refs/heads/master.zip",
         "target": os.path.join("data", "OWASPWebGoatPHP-master"),
         "extract_path": "", # Extract everything
         "description": "OWASP WebGoat PHP (Legacy Monolith)"
