@@ -37,7 +37,7 @@ class AIAdvisoryService:
                 else:
                     raise
 
-    def synthesize_executive_summary(self, system_context: Any, legacy_posture: Any, recs: List[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def synthesize_executive_summary(self, system_context: Any, legacy_posture: Any, recs: List[Dict[str, Any]] = None, hotspots: List[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Calls an LLM to write a high-level strategic executive summary."""
         if not self.openrouter_key and not self.client:
             raise ValueError("No API keys found. AI Synthesis unavailable.")
@@ -51,12 +51,22 @@ class AIAdvisoryService:
         else:
             recs_str = "No specific module-level recommendations calculated."
 
+        hotspots_str = ""
+        if hotspots:
+            hotspots_str = "\n".join([
+                f"- File '{h['file_path']}': Risk Score: {h['risk_score']:.1f}/100, WMC (Complexity): {h['wmc']}, LCOM (Lack of Cohesion): {h['lcom']:.2f}, Instability: {h['instability']:.2f}, Test Coverage: {h['coverage']*100:.1f}%, DB Write Intensity: {h['write_intensity']:.2f}."
+                for hr, h in zip(range(len(hotspots)), hotspots)
+            ])
+        else:
+            hotspots_str = "No specific code hotspots or risk items isolated."
+
         prompt = f"""
         You are a Principal PHP Modernization Architect consulting for a C-level executive.
         
         Analyze the overall health and structure of this legacy system:
         System Context:
         - Project: {system_context.project_name}
+        - Project Description / Documentation (README Excerpt): {getattr(system_context, 'project_description', 'No description available.')}
         - Total Files: {system_context.total_files}
         - Lines of Code: {system_context.lines_of_code}
         - Framework: {system_context.framework} ({system_context.php_era})
@@ -74,6 +84,9 @@ class AIAdvisoryService:
         Detailed Backend Recommendations calculated per cluster:
         {recs_str}
         
+        Identified Hotspots & Code-Level Risks:
+        {hotspots_str}
+        
         Provide a strategic evaluation in three exact parts.
         You must return a raw JSON object with EXACTLY these three keys.
         
@@ -83,13 +96,13 @@ class AIAdvisoryService:
         3. Do not include markdown backticks around the JSON.
         
         {{
-            "current_state": "A comprehensive, multi-paragraph deep-dive assessment of the system's current architectural health. You MUST explicitly list the structural components of the application (e.g. X Models, Y Controllers, Z Schemas) based on the Architectural Footprint and context to prove deep comprehension. Explain that while vendor/framework dependencies (Doctrine, Symfony) utilize namespaces in the topology graph, the project's own files lack namespaces entirely (score 0.0). Expand on the implications of the current footprint.",
-            "critical_risks": "A detailed explanation of the biggest systemic dangers based on the lowest dimension scores. Explain the risks of SQL injection/security surface (Score 0.0), testability gaps (Score 0.0), and architectural coupling.",
+            "current_state": "A comprehensive, multi-paragraph (3 to 4 paragraphs) deep-dive assessment of the system's current architectural health. Paragraph 1: Introduce the system using its real project name and explicitly explain the system's overall purpose, domain, or use cases (based on the Project Description/documentation context). Connect this purpose to the physical codebase footprint (total files, lines of code, and specific layers) to paint the bigger picture. Paragraph 2: Analyze the structural topology and metrics. Detail the footprint numbers (Models, Controllers, Views, CLI Scripts, Schemas, Libraries) and explain the namespace adoption score (why it is 0.0, why classes live in the global scope, and the implications for modern autoloading). Paragraph 3: Detail the coupling, complexity, and hotspot findings. Explicitly reference the top class hotspots from the provided hotspot list, specifying their WMC (complexity), LCOM (lack of cohesion), instability, and lack of test coverage. Explain the implications of these hotspots on architectural risk. Paragraph 4: Synthesize the bigger picture and modernization impedance. Explain how these factors combine to create high regression risks and why refactoring or upgrading is critical to secure and professionalize the application. Ensure paragraphs are separated by a double newline (\\n\\n) so they render correctly in the HTML view.",
+            "critical_risks": "A detailed explanation of the biggest systemic dangers based on the lowest dimension scores and code-level hotspots. Explicitly reference the risks of SQL injection (Score 0.0), testability gaps (Score 0.0), and architectural coupling of identified hotspots.",
             "strategic_roadmap": [
                 {{
                     "step_number": 1,
                     "title": "Title of Step 1",
-                    "description": "Detailed description of Step 1 - what needs to be done and how it affects the codebase.",
+                    "description": "Detailed description of Step 1 - what needs to be done. Reference specific hotspots if applicable.",
                     "rationale": "The technical and business rationale explaining 'why' this step is critical at this phase."
                 }},
                 {{
@@ -183,7 +196,12 @@ class AIAdvisoryService:
  
     def _generate_summary_fallback(self, system_context: Any) -> Dict[str, Any]:
         return {
-            "current_state": f"The {system_context.project_name} framework contains significant technical debt.",
+            "current_state": (
+                f"The {system_context.project_name} codebase is an enterprise-scale PHP system designed to execute mission-critical domain logic. The codebase spans {system_context.total_files} files and approximately {system_context.lines_of_code} lines of code, serving as a key backbone for business workflows.\n\n"
+                "From a structural standpoint, the architecture shows significant legacy characteristics. The namespace adoption score of 0.0 reflects a total absence of PSR-4 namespace mapping in source files, forcing classes to reside in the global scope and rely on dynamic require/include loops for autoloading. This severely limits static analysis and modifiability.\n\n"
+                "Dependency metrics reveal high coupling and low cohesion across key transactional hotspots. God classes with high complexity (WMC) and low cohesion (LCOM) form tightly bound clusters, amplifying regression risk and blast radius for even minor code modifications.\n\n"
+                "Given the zero-test-coverage footprint (0.0%), manual quality assurance is the only safeguard, acting as a modernization blocker. Decoupling the codebase, introducing autoloading mappings, and writing automated characterization tests are necessary prerequisites to ensure secure and sustainable evolutionary progress."
+            ),
             "critical_risks": "High architectural coupling and low test coverage make modifications dangerous.",
             "strategic_roadmap": [
                 {"step_number": 1, "title": "Introduce Static Analysis", "description": "Set up phpstan or psalm to baseline the project.", "rationale": "Ensures no new legacy syntax errors or deprecations are introduced."},

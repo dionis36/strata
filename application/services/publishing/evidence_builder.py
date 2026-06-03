@@ -17,6 +17,31 @@ class EvidenceBuilder:
         project = self.db.query(Project).filter(Project.id == run.project_id).first()
         legacy = self.db.query(LegacyMetrics).filter(LegacyMetrics.run_id == run_id).first()
         
+        # Load dynamic project identity and business domain documentation
+        import os
+        import json
+        project_description = "No project description available."
+        if project and project.root_path and os.path.exists(project.root_path):
+            readme_path = os.path.join(project.root_path, "README.md")
+            if not os.path.exists(readme_path):
+                readme_path = os.path.join(project.root_path, "readme.md")
+            
+            if os.path.exists(readme_path):
+                try:
+                    with open(readme_path, "r", encoding="utf-8") as f:
+                        project_description = f.read(2000)
+                except Exception:
+                    pass
+            else:
+                composer_path = os.path.join(project.root_path, "composer.json")
+                if os.path.exists(composer_path):
+                    try:
+                        with open(composer_path, "r", encoding="utf-8") as f:
+                            composer_data = json.load(f)
+                            project_description = composer_data.get("description", "No description in composer.json")
+                    except Exception:
+                        pass
+
         # 1. Hydrate System Context
         from application.services.layer_service import LayerService
         layer_service = LayerService(self.db)
@@ -47,6 +72,7 @@ class EvidenceBuilder:
 
         ctx = SystemContext(
             project_name=project.name if project else "Unknown Project",
+            project_description=project_description,
             total_files=run.total_files or 0,
             total_classes=run.total_classes or 0,
             lines_of_code=run.total_loc or 0,

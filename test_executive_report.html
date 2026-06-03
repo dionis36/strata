@@ -150,7 +150,7 @@
         <div class="flex items-center gap-6">
             <div class="hidden lg:flex flex-col items-end">
                 <span class="text-xs font-bold text-themeHeading">Analysis Generated</span>
-                <span class="text-xs font-mono text-themeDim">2026-06-02 21:51:28 UTC</span>
+                <span class="text-xs font-mono text-themeDim">2026-06-02 23:44:30 UTC</span>
             </div>
             <button @click="darkMode = !darkMode; document.body.classList.toggle('light-theme', !darkMode); window.dispatchEvent(new CustomEvent('theme-changed'))" 
                     class="p-2 rounded-lg border border-borderline hover:bg-surface-50 text-themeMuted hover:text-themeHeading transition-all shadow-glow-brand"
@@ -378,27 +378,27 @@
                         <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
                             
                             <div class="bg-surface-100 border border-borderline p-4 rounded-xl flex items-center justify-between">
-                                <span class="text-xs text-gray-400 font-medium">📦 Models</span>
+                                <span class="text-xs text-gray-400 font-medium">Models</span>
                                 <span class="text-lg font-black text-white">0</span>
                             </div>
                             <div class="bg-surface-100 border border-borderline p-4 rounded-xl flex items-center justify-between">
-                                <span class="text-xs text-gray-400 font-medium">🎛️ Controllers</span>
+                                <span class="text-xs text-gray-400 font-medium">Controllers</span>
                                 <span class="text-lg font-black text-white">0</span>
                             </div>
                             <div class="bg-surface-100 border border-borderline p-4 rounded-xl flex items-center justify-between">
-                                <span class="text-xs text-gray-400 font-medium">🖥️ Views</span>
+                                <span class="text-xs text-gray-400 font-medium">Views</span>
                                 <span class="text-lg font-black text-white">0</span>
                             </div>
                             <div class="bg-surface-100 border border-borderline p-4 rounded-xl flex items-center justify-between">
-                                <span class="text-xs text-gray-400 font-medium">⚙️ CLI Scripts</span>
+                                <span class="text-xs text-gray-400 font-medium">CLI Scripts</span>
                                 <span class="text-lg font-black text-white">0</span>
                             </div>
                             <div class="bg-surface-100 border border-borderline p-4 rounded-xl flex items-center justify-between">
-                                <span class="text-xs text-gray-400 font-medium">💾 Schemas</span>
+                                <span class="text-xs text-gray-400 font-medium">Schemas</span>
                                 <span class="text-lg font-black text-white">0</span>
                             </div>
                             <div class="bg-surface-100 border border-borderline p-4 rounded-xl flex items-center justify-between">
-                                <span class="text-xs text-gray-400 font-medium">🧩 Libraries</span>
+                                <span class="text-xs text-gray-400 font-medium">Libraries</span>
                                 <span class="text-lg font-black text-white">0</span>
                             </div>
                         </div>
@@ -426,7 +426,11 @@
                                 
                                 
                                     
-                                    <p>The Strata Analysis monolith consists of 51 Model classes and 63 View scripts, with no dedicated Controllers, reflecting a tightly‑coupled MVC‑like structure that predates modern frameworks. The codebase spans roughly 120k lines across 1,324 files, indicating a substantial legacy footprint. Versioning is at a middling score of 5.0, meaning the application likely runs on an older PHP version and lacks recent language features. Namespace usage is absent (score 0.0), so all classes reside in the global namespace, which hampers autoloading and leads to naming collisions. The database layer scores relatively well at 7.5, suggesting that data access patterns are at least somewhat organized, perhaps via custom ORM or raw queries. Security, testability and automated testing are essentially nonexistent (scores 0.0), exposing the system to injection, authentication, and regression hazards. The coupling score of 14.98 is far above the ideal range, confirming that business logic, presentation, and data access are heavily intertwined, making change propagation risky. Overall, the system is a classic legacy monolith: functionally operational but architecturally fragile, with a sparse separation of concerns and no modern development safeguards.</p>
+                                    <p>The Strata Analysis monolith is a sizable legacy codebase with 1324 files totalling roughly 120k lines of code. It contains 51 model classes, no explicit controller layer and 63 view templates, reflecting a tightly coupled MVC pattern that predates modern frameworks. Namespace adoption is effectively nonexistent – the entire project source is written without PSR‑4 namespaces, which explains the Namespace Score of 0.0 and forces every class to live in the global scope, complicating autoloading and static analysis.</p>
+                                    
+                                
+                                    
+                                    <p>Structural debt is pronounced: the overall Coupling Score of 14.98 signals extreme inter‑module dependencies, while the WMC values for key Doctrine components exceed 300, indicating heavyweight business logic and a lack of modular boundaries. LCOM approaching 0.9 for the same files shows poor cohesion, and test coverage is at 0.0%, meaning any change is high‑risk. The hotspot list highlights three Doctrine classes with massive complexity, high instability and zero test protection, all of which sit at the data‑access layer and form a critical failure point.</p>
                                     
                                 
                             </div>
@@ -443,7 +447,7 @@
                             <div class="text-sm text-gray-300 space-y-3 leading-relaxed">
                                 
                                     
-                                    <p>The absence of namespaces and a controller layer means any new feature or bug fix must navigate a tangled global namespace, increasing the probability of accidental overrides and making code navigation difficult. This lack of modularization also impedes any effort to adopt composer autoloading or PSR‑4 standards. Security being at zero indicates no input sanitisation, CSRF protection, or password hashing upgrades, leaving the application vulnerable to common web attacks and potentially non‑compliant with regulatory standards. Testability at zero means there are no unit, integration, or end‑to‑end tests; any change carries a high risk of regression, slowing delivery and inflating maintenance costs. The extreme coupling score signals that a change in one Model can ripple through many Views, causing unintended side effects and making refactoring dangerous. Together, these weaknesses create a brittle platform that cannot safely evolve to meet new business demands.</p>
+                                    <p>The most urgent dangers stem from the zero scores in security, testability and namespace use. With a Security Score of 0.0 the codebase lacks input sanitisation and parameterised queries, exposing it to SQL injection attacks – the identified sinks in the app, _japp and files modules confirm this exposure. Testability at 0.0% means defects cannot be detected early, raising operational risk for any refactor or feature addition. The absence of namespaces forces a flat class hierarchy that hampers static analysis, refactoring and modern dependency injection, further entangling the already high coupling. The hotspot classes (Doctrine\DBAL\Connection, AbstractPlatform, UnitOfWork) combine extreme complexity, near‑total instability and no test coverage, creating a single point of catastrophic failure for data integrity and performance.</p>
                                     
                                 
                             </div>
@@ -456,11 +460,62 @@
                         <div class="pt-8 border-t border-borderline">
                             <h4 class="text-sm font-bold uppercase tracking-widest text-emerald-400 mb-6">Strategic Roadmap</h4>
                             
-                                <div class="text-base text-gray-300 space-y-4 leading-relaxed">
+                                <!-- Render Premium Vertical Timeline -->
+                                <div class="relative pl-6 border-l border-borderline space-y-8">
                                     
-                                        
-                                        <p>Step 1: Introduce a lightweight front controller and routing layer using a micro‑framework (e.g. Slim or Lumen) while keeping existing Models intact. This isolates request handling, creates a clear entry point, and allows gradual migration of View scripts into route callbacks or template engines without stopping feature work. Step 2: Refactor core Models into PSR‑4 namespaced classes and adopt Composer autoloading. Start with high‑traffic or high‑risk Models, adding unit tests as they are refactored to build a safety net. Namespacing immediately reduces naming collisions and prepares the codebase for future modular services. Step 3: Implement a security hardening and testing program. Add input validation, output escaping, and modern password hashing to critical paths; integrate a CI pipeline with automated static analysis and a baseline test suite covering the newly namespaced Models and routing layer. This creates a defend‑in‑depth posture and establishes continuous quality checks while allowing ongoing feature development on the legacy sections.</p>
-                                        
+                                    <div class="relative">
+                                        <!-- Step Badge -->
+                                        <div class="absolute -left-[2.15rem] top-0 w-8 h-8 rounded-full bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400 text-sm font-black font-mono shadow-glow-brand">
+                                            1
+                                        </div>
+                                        <!-- Step Card -->
+                                        <div class="bg-surface-50 border border-borderline p-5 rounded-xl ml-2 shadow-sm transition-all hover:border-brand-500/30">
+                                            <h5 class="text-white font-bold text-base mb-2">Establish a Secure, Namespaced Foundation</h5>
+                                            <p class="text-sm text-gray-300 leading-relaxed mb-3">Introduce PSR‑4 autoloading and refactor core files into a namespaced layer. Apply a modern sanitisation library and enforce prepared statements across all data‑access points, starting with the identified security sinks in app, _japp and files modules.</p>
+                                            
+                                            <div class="text-xs bg-surface-100/50 p-2.5 rounded border border-borderline/50 text-themeMuted">
+                                                <strong class="text-brand-400 font-bold uppercase tracking-wider text-[9px] block mb-1">Modernization Rationale</strong>
+                                                Namespacing restores autoloading efficiency and enables static analysis tools, while immediate input sanitisation mitigates the immediate SQL injection risk and builds a secure baseline for all further work.
+                                            </div>
+                                            
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="relative">
+                                        <!-- Step Badge -->
+                                        <div class="absolute -left-[2.15rem] top-0 w-8 h-8 rounded-full bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400 text-sm font-black font-mono shadow-glow-brand">
+                                            2
+                                        </div>
+                                        <!-- Step Card -->
+                                        <div class="bg-surface-50 border border-borderline p-5 rounded-xl ml-2 shadow-sm transition-all hover:border-brand-500/30">
+                                            <h5 class="text-white font-bold text-base mb-2">Isolate and Replatform High‑Risk Data Layer</h5>
+                                            <p class="text-sm text-gray-300 leading-relaxed mb-3">Extract the Doctrine hotspot components into a dedicated microservice or migrate them to a modern ORM within a new framework. Replace the monolithic UnitOfWork, Connection and AbstractPlatform logic with curated, test‑covered equivalents, and add comprehensive unit and integration tests.</p>
+                                            
+                                            <div class="text-xs bg-surface-100/50 p-2.5 rounded border border-borderline/50 text-themeMuted">
+                                                <strong class="text-brand-400 font-bold uppercase tracking-wider text-[9px] block mb-1">Modernization Rationale</strong>
+                                                Reducing the complexity and instability of the data layer cuts coupling, improves cohesion and provides the first reliable test surface, directly addressing the highest coupling and complexity metrics.
+                                            </div>
+                                            
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="relative">
+                                        <!-- Step Badge -->
+                                        <div class="absolute -left-[2.15rem] top-0 w-8 h-8 rounded-full bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-400 text-sm font-black font-mono shadow-glow-brand">
+                                            3
+                                        </div>
+                                        <!-- Step Card -->
+                                        <div class="bg-surface-50 border border-borderline p-5 rounded-xl ml-2 shadow-sm transition-all hover:border-brand-500/30">
+                                            <h5 class="text-white font-bold text-base mb-2">Implement Automated Test Suite and Gradual Module Rehost</h5>
+                                            <p class="text-sm text-gray-300 leading-relaxed mb-3">Build a CI pipeline with unit, integration and security tests covering the newly namespaced core and replatformed data service. Then rehost the stable modules (Core/Root, challenges, script, style, install, template) onto a lightweight modern framework while keeping them functionally intact.</p>
+                                            
+                                            <div class="text-xs bg-surface-100/50 p-2.5 rounded border border-borderline/50 text-themeMuted">
+                                                <strong class="text-brand-400 font-bold uppercase tracking-wider text-[9px] block mb-1">Modernization Rationale</strong>
+                                                A robust test suite locks down regression risk, enabling safe incremental migration of remaining modules and delivering measurable ROI through reduced maintenance overhead and improved system resilience.
+                                            </div>
+                                            
+                                        </div>
+                                    </div>
                                     
                                 </div>
                             
@@ -1616,7 +1671,7 @@
                             <span class="text-brand-500 font-mono text-sm uppercase tracking-widest font-extrabold bg-brand-500/10 border border-brand-500/20 px-3 py-1 rounded inline-block w-max">Extraction Playbook</span>
                         </div>
                         <h3 class="text-3xl font-bold text-white mb-4">Phased Execution</h3>
-                        <p class="text-base text-gray-400 mb-8 leading-relaxed max-w-4xl whitespace-pre-wrap">Step 1: Introduce a lightweight front controller and routing layer using a micro‑framework (e.g. Slim or Lumen) while keeping existing Models intact. This isolates request handling, creates a clear entry point, and allows gradual migration of View scripts into route callbacks or template engines without stopping feature work. Step 2: Refactor core Models into PSR‑4 namespaced classes and adopt Composer autoloading. Start with high‑traffic or high‑risk Models, adding unit tests as they are refactored to build a safety net. Namespacing immediately reduces naming collisions and prepares the codebase for future modular services. Step 3: Implement a security hardening and testing program. Add input validation, output escaping, and modern password hashing to critical paths; integrate a CI pipeline with automated static analysis and a baseline test suite covering the newly namespaced Models and routing layer. This creates a defend‑in‑depth posture and establishes continuous quality checks while allowing ongoing feature development on the legacy sections.</p>
+                        <p class="text-base text-gray-400 mb-8 leading-relaxed max-w-4xl whitespace-pre-wrap">[{'step_number': 1, 'title': 'Establish a Secure, Namespaced Foundation', 'description': 'Introduce PSR‑4 autoloading and refactor core files into a namespaced layer. Apply a modern sanitisation library and enforce prepared statements across all data‑access points, starting with the identified security sinks in app, _japp and files modules.', 'rationale': 'Namespacing restores autoloading efficiency and enables static analysis tools, while immediate input sanitisation mitigates the immediate SQL injection risk and builds a secure baseline for all further work.'}, {'step_number': 2, 'title': 'Isolate and Replatform High‑Risk Data Layer', 'description': 'Extract the Doctrine hotspot components into a dedicated microservice or migrate them to a modern ORM within a new framework. Replace the monolithic UnitOfWork, Connection and AbstractPlatform logic with curated, test‑covered equivalents, and add comprehensive unit and integration tests.', 'rationale': 'Reducing the complexity and instability of the data layer cuts coupling, improves cohesion and provides the first reliable test surface, directly addressing the highest coupling and complexity metrics.'}, {'step_number': 3, 'title': 'Implement Automated Test Suite and Gradual Module Rehost', 'description': 'Build a CI pipeline with unit, integration and security tests covering the newly namespaced core and replatformed data service. Then rehost the stable modules (Core/Root, challenges, script, style, install, template) onto a lightweight modern framework while keeping them functionally intact.', 'rationale': 'A robust test suite locks down regression risk, enabling safe incremental migration of remaining modules and delivering measurable ROI through reduced maintenance overhead and improved system resilience.'}]</p>
 
                         <div class="bg-surface-100 border border-borderline rounded-xl overflow-hidden shadow-2xl max-w-4xl">
                             <div class="p-4 border-b border-borderline bg-surface-200 flex gap-2">

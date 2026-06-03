@@ -241,9 +241,10 @@ def health_check(db: Session = Depends(get_db)):
 
 def background_synthesize_intelligence(run_id: int):
     from infrastructure.persistence.database import SessionLocal
-    from infrastructure.persistence.models import AnalysisRun, ComponentRisk, LegacyMetrics
+    from infrastructure.persistence.models import AnalysisRun, ComponentRisk, LegacyMetrics, ComponentBehavior, Project
     from application.services.publishing.ai_advisory_service import AIAdvisoryService
     import json
+    import os
     
     db = SessionLocal()
     try:
@@ -253,16 +254,49 @@ def background_synthesize_intelligence(run_id: int):
         run.status = "synthesizing_summary"
         db.commit()
         
-        class DummyCtx:
-            project_name = "Strata Analysis"
-            total_files = run.total_files
-            lines_of_code = run.total_loc
-            framework = "Unknown"
-            php_era = "Unknown"
-            overall_readiness = 50.0
-            architectural_footprint = {}
-            
-        ctx = DummyCtx()
+        # Load dynamic project identity and business domain documentation
+        project_name = "Strata Analysis Monolith"
+        project_description = "No project description available."
+        
+        if run.project_id:
+            proj = db.query(Project).filter(Project.id == run.project_id).first()
+            if proj:
+                project_name = proj.name
+                if proj.root_path and os.path.exists(proj.root_path):
+                    # 1. Check README.md
+                    readme_path = os.path.join(proj.root_path, "README.md")
+                    if not os.path.exists(readme_path):
+                        readme_path = os.path.join(proj.root_path, "readme.md")
+                    
+                    if os.path.exists(readme_path):
+                        try:
+                            with open(readme_path, "r", encoding="utf-8") as f:
+                                project_description = f.read(2000)
+                        except Exception:
+                            pass
+                    else:
+                        # 2. Check composer.json description
+                        composer_path = os.path.join(proj.root_path, "composer.json")
+                        if os.path.exists(composer_path):
+                            try:
+                                with open(composer_path, "r", encoding="utf-8") as f:
+                                    composer_data = json.load(f)
+                                    project_description = composer_data.get("description", "No description in composer.json")
+                            except Exception:
+                                pass
+
+        class ProjectContext:
+            def __init__(self, name, description, total_files, loc):
+                self.project_name = name
+                self.project_description = description
+                self.total_files = total_files
+                self.lines_of_code = loc
+                self.framework = "Unknown"
+                self.php_era = "Unknown"
+                self.overall_readiness = 50.0
+                self.architectural_footprint = {}
+                
+        ctx = ProjectContext(project_name, project_description, run.total_files, run.total_loc)
         legacy = db.query(LegacyMetrics).filter(LegacyMetrics.run_id == run_id).first()
         if legacy:
             ctx.framework = legacy.detected_framework or "Unknown"
@@ -289,6 +323,29 @@ def background_synthesize_intelligence(run_id: int):
         except Exception:
             pass
             
+        # Fetch actual code-level hotspots & DB metrics to inject into LLM prompt
+        hotspots_data = []
+        try:
+            high_risk_objs = db.query(ComponentRisk).filter(
+                ComponentRisk.run_id == run_id
+            ).order_by(ComponentRisk.final_risk.desc()).limit(3).all()
+            for hr in high_risk_objs:
+                behav = db.query(ComponentBehavior).filter(
+                    ComponentBehavior.run_id == run_id,
+                    ComponentBehavior.component_name == hr.component_name
+                ).first()
+                hotspots_data.append({
+                    "file_path": hr.component_name,
+                    "risk_score": hr.final_risk,
+                    "lcom": hr.lcom,
+                    "wmc": hr.wmc,
+                    "instability": hr.instability,
+                    "coverage": hr.test_coverage if hr.test_coverage is not None else 0.0,
+                    "write_intensity": behav.write_intensity if behav else 0.0
+                })
+        except Exception as e:
+            logger.error(f"Failed to query database metrics for AI prompt: {e}")
+
         from application.services.advisory_service import AdvisoryService
         recs = []
         try:
@@ -299,7 +356,7 @@ def background_synthesize_intelligence(run_id: int):
             logger.error(f"Failed to fetch advisory roadmap for AI: {adv_e}")
 
         ai_service = AIAdvisoryService()
-        summary = ai_service.synthesize_executive_summary(ctx, legacy, recs)
+        summary = ai_service.synthesize_executive_summary(ctx, legacy, recs, hotspots_data)
         
         run.ai_executive_summary_json = json.dumps(summary)
         run.error_message = None
