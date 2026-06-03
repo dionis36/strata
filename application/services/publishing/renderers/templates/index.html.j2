@@ -303,7 +303,7 @@
                 <div class="space-y-6 mb-12">
                     <div>
                         <h3 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">System Vitality</h3>
-                        <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                             <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center">
                                 <div class="text-2xl font-black text-white">{{ "{:,}".format(model.system_context.total_files) }}</div>
                                 <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Total Files</div>
@@ -323,10 +323,6 @@
                             <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center">
                                 <div class="text-2xl font-black text-red-500">{{ "{:,}".format(model.system_context.connectivity) }}</div>
                                 <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Connectivity</div>
-                            </div>
-                            <div class="bg-surface-100 border border-borderline p-5 rounded-xl text-center">
-                                <div class="text-2xl font-black text-brand-500">{{ model.system_context.test_coverage }}</div>
-                                <div class="text-[10px] text-gray-500 uppercase mt-1 font-mono">Test Coverage</div>
                             </div>
                         </div>
                     </div>

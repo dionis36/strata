@@ -123,42 +123,49 @@ class AIAdvisoryService:
         
         try:
             if self.openrouter_key:
-                def _call_openrouter():
-                    headers = {
-                        "Authorization": f"Bearer {self.openrouter_key}",
-                        "Content-Type": "application/json"
-                    }
-                    data = {
-                        "model": self.openrouter_model,
-                        "messages": [{"role": "user", "content": prompt}],
-                        "response_format": {"type": "json_object"}
-                    }
-                    response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
-                    response.raise_for_status()
-                    result_json = response.json()
-                    content = result_json["choices"][0]["message"]["content"]
-                    
-                    # Extract clean JSON block if there is preamble/postamble
-                    content_str = content.strip()
-                    start_idx = content_str.find('{')
-                    end_idx = content_str.rfind('}')
-                    if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
-                        content_str = content_str[start_idx:end_idx+1]
+                try:
+                    def _call_openrouter():
+                        headers = {
+                            "Authorization": f"Bearer {self.openrouter_key}",
+                            "Content-Type": "application/json"
+                        }
+                        data = {
+                            "model": self.openrouter_model,
+                            "messages": [{"role": "user", "content": prompt}],
+                            "response_format": {"type": "json_object"}
+                        }
+                        response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
+                        response.raise_for_status()
+                        result_json = response.json()
+                        content = result_json["choices"][0]["message"]["content"]
                         
-                    try:
-                        return json.loads(content_str, strict=False)
-                    except Exception as parse_e:
-                        logger.warning(f"Initial JSON parse failed: {parse_e}. Trying to repair and parse using AST...")
-                        try:
-                            import ast
-                            py_str = content_str.replace('true', 'True').replace('false', 'False').replace('null', 'None')
-                            return ast.literal_eval(py_str)
-                        except Exception as ast_e:
-                            logger.error(f"AST parse also failed: {ast_e}")
-                            raise parse_e
+                        # Extract clean JSON block if there is preamble/postamble
+                        content_str = content.strip()
+                        start_idx = content_str.find('{')
+                        end_idx = content_str.rfind('}')
+                        if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+                            content_str = content_str[start_idx:end_idx+1]
                             
-                return self._invoke_with_retry(_call_openrouter)
-            else:
+                        try:
+                            return json.loads(content_str, strict=False)
+                        except Exception as parse_e:
+                            logger.warning(f"Initial JSON parse failed: {parse_e}. Trying to repair and parse using AST...")
+                            try:
+                                import ast
+                                py_str = content_str.replace('true', 'True').replace('false', 'False').replace('null', 'None')
+                                return ast.literal_eval(py_str)
+                            except Exception as ast_e:
+                                logger.error(f"AST parse also failed: {ast_e}")
+                                raise parse_e
+                                
+                    return self._invoke_with_retry(_call_openrouter)
+                except Exception as or_err:
+                    if self.client:
+                        logger.warning(f"OpenRouter synthesis failed ({or_err}). Falling back to native Gemini...")
+                    else:
+                        raise or_err
+
+            if self.client:
                 def _call_gemini():
                     res = self.client.models.generate_content(
                         model='gemini-flash-latest',

@@ -422,8 +422,6 @@ def analyze_project(req: AnalyzeRequest, background_tasks: BackgroundTasks, db: 
             run.status = "analysis_complete"
             db.commit()
             
-        background_tasks.add_task(background_synthesize_intelligence, run_id)
-        
         return result
     except Exception as e:
         logger.error(f"Analysis failed: {e}")

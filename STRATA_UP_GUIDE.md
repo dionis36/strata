@@ -48,6 +48,12 @@ docker compose up --build -d
 *   **API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
 *   **System Status**: Check the sidebar in the Streamlit UI to confirm "Database: connected".
 
+### Verify LLM/API Connectivity:
+To verify that your environment variables (`GEMINI_API_KEY`, `OPENROUTER_API_KEY`, etc.) are configured correctly and that the API container can reach the AI providers, run the built-in diagnostic test:
+```bash
+docker exec strata-api-1 python tests/test_llm_connectivity.py
+```
+
 ---
 
 ## 🔍 4. Running Your First Analysis
