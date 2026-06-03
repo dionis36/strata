@@ -511,55 +511,166 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
                     <!-- Presentation vs Logic -->
-                    <div class="bg-surface-100 border border-borderline rounded-2xl p-8 shadow-2xl flex flex-col justify-center">
-                        <h3 class="text-white font-bold text-lg mb-6">Presentation vs. Logic</h3>
-                        <p class="text-sm text-gray-400 mb-6">This metric assesses whether the codebase maintains a healthy separation of concerns. A high presentation ratio indicates a UI-heavy monolith.</p>
-                        <div class="space-y-5">
-                            <div>
-                                <div class="flex justify-between text-sm mb-2">
-                                    <span class="text-gray-300">Presentation / UI Files</span> 
-                                    <span class="text-white font-mono font-bold">{{ "%.1f"|format(model.layered_architecture.presentation_ratio) }}%</span>
+                    <div class="bg-surface-100 border border-borderline rounded-2xl p-8 shadow-2xl flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-white font-bold text-lg mb-2">Presentation vs. Logic</h3>
+                            <p class="text-xs text-gray-500 mb-6">Assesses whether the codebase maintains a healthy separation of concerns.</p>
+                            
+                            <div class="space-y-5 mb-8">
+                                <div>
+                                    <div class="flex justify-between text-sm mb-2">
+                                        <span class="text-gray-300">Presentation / UI Files</span> 
+                                        <span class="text-white font-mono font-bold">{{ "%.1f"|format(model.layered_architecture.presentation_ratio) }}%</span>
+                                    </div>
+                                    <div class="w-full h-2 bg-surface-200 rounded-full overflow-hidden">
+                                        <div class="h-full bg-brand-500 rounded-full shadow-glow-brand" style="width: {{ model.layered_architecture.presentation_ratio }}%"></div>
+                                    </div>
                                 </div>
-                                <div class="w-full h-2 bg-surface-200 rounded-full overflow-hidden">
-                                    <div class="h-full bg-brand-500 rounded-full shadow-glow-brand" style="width: {{ model.layered_architecture.presentation_ratio }}%"></div>
+                            </div>
+                            
+                            <div class="border-t border-borderline/50 pt-6 space-y-4">
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Separation Status</span>
+                                    {% if model.layered_architecture.presentation_ratio > 60 %}
+                                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 bg-red-500/10 px-2.5 py-1 rounded">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Highly UI-Coupled (Critical Debt)
+                                        </span>
+                                    {% elif model.layered_architecture.presentation_ratio > 40 %}
+                                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Procedural Monolith (Moderate Debt)
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Separated Concerns (Healthy)
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Architectural Impact</span>
+                                    <p class="text-xs text-gray-300 leading-relaxed">
+                                        {% if model.layered_architecture.presentation_ratio > 60 %}
+                                            The user interface (views/templates) is heavily intertwined with the routing or database backend logic. Modernizing or decoupling logic into independent APIs requires first extracting database queries and business rules from the templates.
+                                        {% elif model.layered_architecture.presentation_ratio > 40 %}
+                                            Significant page templating and direct request handling are mixed within the codebase, indicating classic MVC logic sprawl. Decoupling routes will require clean controller segregation.
+                                        {% else %}
+                                            The codebase maintains a healthy separation of presentation templates from system backend business logic, making it easier to expose backend service endpoints.
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Modernization Action Item</span>
+                                    <p class="text-xs text-gray-400 leading-relaxed italic">
+                                        {% if model.layered_architecture.presentation_ratio > 50 %}
+                                            Prioritize decoupling: extract inline queries and view generation into distinct controller routing files, transitioning to a clean JSON API interface before containerization.
+                                        {% else %}
+                                            Separation is manageable: focus on namespacing the backend business objects and wrapping them in automated unit tests.
+                                        {% endif %}
+                                    </p>
                                 </div>
                             </div>
                         </div>
-                        <p class="text-xs text-gray-500 mt-6 italic">{{ "%.1f"|format(model.layered_architecture.presentation_ratio) }}% of classified files handle Presentation/Routing directly. The remaining {{ "%.1f"|format(100 - model.layered_architecture.presentation_ratio) }}% represent pure backend logic or untyped scripts.</p>
                     </div>
 
                     <!-- Logical Domains Matrix -->
-                    <div class="bg-surface-100 border border-borderline rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-                        <div class="p-6 border-b border-borderline flex justify-between items-center bg-surface-50">
-                            <h3 class="text-white font-bold text-lg">Inferred Bounded Contexts</h3>
+                    <div class="bg-surface-100 border border-borderline rounded-2xl shadow-2xl flex flex-col justify-between overflow-hidden">
+                        <div>
+                            <div class="p-6 border-b border-borderline flex justify-between items-center bg-surface-50">
+                                <h3 class="text-white font-bold text-lg">Inferred Bounded Contexts</h3>
+                            </div>
+                            <div class="overflow-y-auto flex-1 max-h-60">
+                                <table class="w-full data-table">
+                                    <thead class="sticky top-0 z-10 bg-surface-200">
+                                        <tr><th>Semantic Domain</th><th>Files</th><th>Coupling</th><th>State Sinks</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for c in model.layered_architecture.bounded_contexts %}
+                                        <tr>
+                                            <td class="font-bold text-white flex items-center gap-3">
+                                                <div class="w-2 h-2 {% if loop.index % 3 == 0 %}bg-emerald-500{% elif loop.index % 2 == 0 %}bg-purple-500{% else %}bg-brand-500{% endif %} rounded-full"></div> {{ c.name }}
+                                            </td>
+                                            <td class="font-mono text-xs">{{ c.file_count }}</td>
+                                            <td>
+                                                <span class="{% if c.coupling_ratio|float > 10.0 %}text-red-400 bg-red-500/10{% elif c.coupling_ratio|float > 2.0 %}text-amber-400 bg-amber-500/10{% else %}text-green-500 bg-green-500/10{% endif %} font-mono px-2 py-1 rounded text-xs">
+                                                    {{ c.coupling_ratio }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="flex gap-2 text-[10px] font-bold uppercase tracking-widest">
+                                                {% if c.db_access %}<span class="text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 rounded">DB</span>{% endif %}
+                                                {% if c.auth_access %}<span class="text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 rounded">AUTH</span>{% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div class="overflow-y-auto flex-1 max-h-80">
-                            <table class="w-full data-table">
-                                <thead class="sticky top-0 z-10 bg-surface-200">
-                                    <tr><th>Semantic Domain</th><th>Files</th><th>Coupling</th><th>State Sinks</th></tr>
-                                </thead>
-                                <tbody>
-                                    {% for c in model.layered_architecture.bounded_contexts %}
-                                    <tr>
-                                        <td class="font-bold text-white flex items-center gap-3">
-                                            <div class="w-2 h-2 {% if loop.index % 3 == 0 %}bg-emerald-500{% elif loop.index % 2 == 0 %}bg-purple-500{% else %}bg-brand-500{% endif %} rounded-full"></div> {{ c.name }}
-                                        </td>
-                                        <td class="font-mono text-xs">{{ c.file_count }}</td>
-                                        <td>
-                                            <span class="{% if c.coupling_ratio|float > 100 %}text-red-400 bg-red-500/10{% elif c.coupling_ratio|float > 50 %}text-amber-400 bg-amber-500/10{% else %}text-green-500 bg-green-500/10{% endif %} font-mono px-2 py-1 rounded text-xs">
-                                                {{ c.coupling_ratio }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="flex gap-2 text-[10px] font-bold uppercase tracking-widest">
-                                            {% if c.db_access %}<span class="text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 rounded">DB</span>{% endif %}
-                                            {% if c.auth_access %}<span class="text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 rounded">AUTH</span>{% endif %}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                        
+                        <!-- Strategic Domain Extractability Panel -->
+                        <div class="p-6 border-t border-borderline bg-surface-50 space-y-4">
+                            {% set ns = namespace(best_candidate=none, best_coupling=999.0, tangled_core=none, max_coupling=0.0, db_domains=[], auth_domains=[]) %}
+                            {% for c in model.layered_architecture.bounded_contexts %}
+                                {% if c.name != "Global" and c.name != "Unknown" and c.name != "class" and c.name != "tmp" %}
+                                    {% if c.coupling_ratio < ns.best_coupling and c.file_count >= 2 %}
+                                        {% set ns.best_coupling = c.coupling_ratio %}
+                                        {% set ns.best_candidate = c %}
+                                    {% endif %}
+                                    {% if c.coupling_ratio > ns.max_coupling %}
+                                        {% set ns.max_coupling = c.coupling_ratio %}
+                                        {% set ns.tangled_core = c %}
+                                    {% endif %}
+                                {% endif %}
+                                {% if c.db_access %}
+                                    {% set _ = ns.db_domains.append(c.name) %}
+                                {% endif %}
+                                {% if c.auth_access %}
+                                    {% set _ = ns.auth_domains.append(c.name) %}
+                                {% endif %}
+                            {% endfor %}
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Extraction Candidate (Low-Hanging Fruit)</span>
+                                    {% if ns.best_candidate %}
+                                        <div class="text-white font-bold text-sm mb-1">{{ ns.best_candidate.name }}</div>
+                                        <p class="text-gray-400 leading-relaxed">
+                                            With a low coupling ratio of <strong class="text-emerald-400 font-mono">{{ ns.best_candidate.coupling_ratio }}</strong> across {{ ns.best_candidate.file_count }} files, this domain has clean semantic boundaries and represents the most immediate candidate for service extraction.
+                                        </p>
+                                    {% else %}
+                                        <p class="text-gray-400 italic">No isolated domains qualified as clear extraction candidates.</p>
+                                    {% endif %}
+                                </div>
+                                
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Tangled Core (High Coupling Risk)</span>
+                                    {% if ns.tangled_core %}
+                                        <div class="text-white font-bold text-sm mb-1">{{ ns.tangled_core.name }}</div>
+                                        <p class="text-gray-400 leading-relaxed">
+                                            This domain exhibits high coupling (<strong class="text-red-400 font-mono">{{ ns.tangled_core.coupling_ratio }}</strong>). It is deeply entangled with other contexts and must be refactored or decoupled incrementally rather than split outright.
+                                        </p>
+                                    {% else %}
+                                        <p class="text-gray-400 italic">No highly coupled domain outlier was flagged.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            {% if ns.db_domains or ns.auth_domains %}
+                            <div class="border-t border-borderline/50 pt-4 text-xs">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-amber-500 block mb-1">State & Auth Boundary Alerts</span>
+                                <p class="text-gray-400 leading-relaxed">
+                                    {% if ns.db_domains %}
+                                        Direct database access sinks detected: <span class="text-blue-400 font-mono">{{ ns.db_domains | join(', ') }}</span>.
+                                    {% endif %}
+                                    {% if ns.auth_domains %}
+                                        Direct auth/session state dependencies: <span class="text-orange-400 font-mono">{{ ns.auth_domains | join(', ') }}</span>.
+                                    {% endif %}
+                                    These boundaries bypass core abstractions, making unified repositories or API clients necessary during decoupling.
+                                </p>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

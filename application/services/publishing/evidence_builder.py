@@ -381,10 +381,86 @@ class EvidenceBuilder:
                     current[part]["_info"] = info
                 current = current[part]["_children"]
 
+        # Parse and downsample System Topology Graph for browser-safe Vis.js rendering
+        import os
+        import json
+        topology = {"nodes": [], "edges": []}
+        
+        # Try local data directory and fallback paths
+        graph_paths = [
+            f"data/graph_{run_id}.json",
+            f"/data/graph_{run_id}.json"
+        ]
+        graph_data = None
+        for gp in graph_paths:
+            if os.path.exists(gp):
+                try:
+                    with open(gp, "r", encoding="utf-8") as f:
+                        graph_data = json.load(f)
+                    break
+                except Exception:
+                    pass
+                    
+        if graph_data:
+            try:
+                links = graph_data.get("links", [])
+                nodes = graph_data.get("nodes", [])
+                
+                node_degree = {}
+                for l in links:
+                    s = l.get("source")
+                    t = l.get("target")
+                    if s: node_degree[s] = node_degree.get(s, 0) + 1
+                    if t: node_degree[t] = node_degree.get(t, 0) + 1
+                    
+                selected_types = {"class", "entry_point", "controller", "view", "job", "vendor"}
+                filtered_nodes = [n for n in nodes if n.get("type") in selected_types]
+                sorted_nodes = sorted(filtered_nodes, key=lambda n: node_degree.get(n["id"], 0), reverse=True)
+                top_nodes = sorted_nodes[:150]  # Downsample to top 150 nodes to avoid bloating HTML size and freezing browser Vis.js
+                top_node_ids = {n["id"] for n in top_nodes}
+                
+                role_colors = {
+                    "entry_point": "#ff4b4b", "controller": "#00d4ff", "view": "#00cc96",
+                    "config": "#f9a825", "bootstrap": "#ab47bc", "vendor": "#757575",
+                    "file": "#90a4ae", "class": "#5c6bc0", "job": "#ff1744"
+                }
+                
+                mapped_nodes = []
+                for n in top_nodes:
+                    ntype = n.get("type", "file")
+                    color = role_colors.get(ntype, "#90a4ae")
+                    deg = node_degree.get(n["id"], 1)
+                    size = 15 + (deg * 2) if deg > 5 else 15
+                    
+                    if n.get("domain_archetype") == "GOD_CLASS":
+                        color = "#ff1744"
+                        size += 10
+                        
+                    mapped_nodes.append({
+                        "id": n["id"],
+                        "label": n.get("name") or n["id"],
+                        "color": color,
+                        "size": min(size, 45)
+                    })
+                    
+                mapped_edges = []
+                for l in links:
+                    s = l.get("source")
+                    t = l.get("target")
+                    if s in top_node_ids and t in top_node_ids:
+                        mapped_edges.append({
+                            "source": s,
+                            "target": t
+                        })
+                
+                topology = {"nodes": mapped_nodes, "edges": mapped_edges}
+            except Exception:
+                pass
+
         return LayeredArchitecture(
             presentation_ratio=presentation_ratio,
             bounded_contexts=contexts,
             directory_tree=tree,
             file_type_distribution=l1.get("file_types", {}),
-            system_topology=l_data.get("layer_2", {})
+            system_topology=topology
         )

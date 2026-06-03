@@ -150,7 +150,7 @@
         <div class="flex items-center gap-6">
             <div class="hidden lg:flex flex-col items-end">
                 <span class="text-xs font-bold text-themeHeading">Analysis Generated</span>
-                <span class="text-xs font-mono text-themeDim">2026-06-02 23:44:30 UTC</span>
+                <span class="text-xs font-mono text-themeDim">2026-06-03 00:18:09 UTC</span>
             </div>
             <button @click="darkMode = !darkMode; document.body.classList.toggle('light-theme', !darkMode); window.dispatchEvent(new CustomEvent('theme-changed'))" 
                     class="p-2 rounded-lg border border-borderline hover:bg-surface-50 text-themeMuted hover:text-themeHeading transition-all shadow-glow-brand"
@@ -426,11 +426,13 @@
                                 
                                 
                                     
-                                    <p>The Strata Analysis monolith is a sizable legacy codebase with 1324 files totalling roughly 120k lines of code. It contains 51 model classes, no explicit controller layer and 63 view templates, reflecting a tightly coupled MVC pattern that predates modern frameworks. Namespace adoption is effectively nonexistent – the entire project source is written without PSR‑4 namespaces, which explains the Namespace Score of 0.0 and forces every class to live in the global scope, complicating autoloading and static analysis.</p>
+                                    <p>WebGoatPHP is an OWASP‑sponsored interactive security training platform written in PHP that presents a catalogue of intentionally vulnerable lessons for users to exploit and learn secure coding practices. The monolithic codebase currently comprises roughly fifty‑one model files, zero controller files and about sixty‑three view templates, with no PSR‑4 namespace usage, which explains the namespace score of zero.</p>
                                     
                                 
                                     
-                                    <p>Structural debt is pronounced: the overall Coupling Score of 14.98 signals extreme inter‑module dependencies, while the WMC values for key Doctrine components exceed 300, indicating heavyweight business logic and a lack of modular boundaries. LCOM approaching 0.9 for the same files shows poor cohesion, and test coverage is at 0.0%, meaning any change is high‑risk. The hotspot list highlights three Doctrine classes with massive complexity, high instability and zero test protection, all of which sit at the data‑access layer and form a critical failure point.</p>
+                                
+                                    
+                                    <p>The architecture exhibits high structural debt: coupling is extreme with a reported score near fifteen, and several core classes such as Doctrine\DBAL\Connection, Doctrine\DBAL\Platforms\AbstractPlatform and Doctrine\ORM\UnitOfWork show very high weighted method counts (88, 166 and 383 respectively) together with near‑maximum instability and low cohesion. Test coverage is absent across these hotspots, and the overall security score sits at zero, indicating unguarded input paths and likely SQL‑injection exposure.</p>
                                     
                                 
                             </div>
@@ -447,7 +449,7 @@
                             <div class="text-sm text-gray-300 space-y-3 leading-relaxed">
                                 
                                     
-                                    <p>The most urgent dangers stem from the zero scores in security, testability and namespace use. With a Security Score of 0.0 the codebase lacks input sanitisation and parameterised queries, exposing it to SQL injection attacks – the identified sinks in the app, _japp and files modules confirm this exposure. Testability at 0.0% means defects cannot be detected early, raising operational risk for any refactor or feature addition. The absence of namespaces forces a flat class hierarchy that hampers static analysis, refactoring and modern dependency injection, further entangling the already high coupling. The hotspot classes (Doctrine\DBAL\Connection, AbstractPlatform, UnitOfWork) combine extreme complexity, near‑total instability and no test coverage, creating a single point of catastrophic failure for data integrity and performance.</p>
+                                    <p>The most pressing dangers stem from the complete lack of input sanitisation and prepared‑statement usage, reflected in a security score of zero and multiple identified SQL‑injection sinks across the data‑access layer. Equally alarming is the total absence of automated tests, leaving regressions undetected and compounding the risk of silent failures. Finally, the extremely high coupling metric means changes in one module cascade throughout the monolith, making secure refactoring or isolation of vulnerable components hazardous.</p>
                                     
                                 
                             </div>
@@ -470,12 +472,12 @@
                                         </div>
                                         <!-- Step Card -->
                                         <div class="bg-surface-50 border border-borderline p-5 rounded-xl ml-2 shadow-sm transition-all hover:border-brand-500/30">
-                                            <h5 class="text-white font-bold text-base mb-2">Establish a Secure, Namespaced Foundation</h5>
-                                            <p class="text-sm text-gray-300 leading-relaxed mb-3">Introduce PSR‑4 autoloading and refactor core files into a namespaced layer. Apply a modern sanitisation library and enforce prepared statements across all data‑access points, starting with the identified security sinks in app, _japp and files modules.</p>
+                                            <h5 class="text-white font-bold text-base mb-2">Isolate and Replatform Core Data Layer</h5>
+                                            <p class="text-sm text-gray-300 leading-relaxed mb-3">Create a thin service façade around Doctrine components and migrate the data‑access code to a modern framework such as Laravel or Symfony that provides built‑in ORM safety, automatic query parameterisation and dependency injection. Address the hotspots in Connection, AbstractPlatform and UnitOfWork during this migration.</p>
                                             
                                             <div class="text-xs bg-surface-100/50 p-2.5 rounded border border-borderline/50 text-themeMuted">
                                                 <strong class="text-brand-400 font-bold uppercase tracking-wider text-[9px] block mb-1">Modernization Rationale</strong>
-                                                Namespacing restores autoloading efficiency and enables static analysis tools, while immediate input sanitisation mitigates the immediate SQL injection risk and builds a secure baseline for all further work.
+                                                Reducing the attack surface on the data layer eliminates the primary SQL‑injection vectors and lowers coupling by introducing clear service boundaries.
                                             </div>
                                             
                                         </div>
@@ -488,12 +490,12 @@
                                         </div>
                                         <!-- Step Card -->
                                         <div class="bg-surface-50 border border-borderline p-5 rounded-xl ml-2 shadow-sm transition-all hover:border-brand-500/30">
-                                            <h5 class="text-white font-bold text-base mb-2">Isolate and Replatform High‑Risk Data Layer</h5>
-                                            <p class="text-sm text-gray-300 leading-relaxed mb-3">Extract the Doctrine hotspot components into a dedicated microservice or migrate them to a modern ORM within a new framework. Replace the monolithic UnitOfWork, Connection and AbstractPlatform logic with curated, test‑covered equivalents, and add comprehensive unit and integration tests.</p>
+                                            <h5 class="text-white font-bold text-base mb-2">Introduce Automated Test Suite</h5>
+                                            <p class="text-sm text-gray-300 leading-relaxed mb-3">Build unit and integration tests for the newly created service façade and for representative challenge modules, targeting previously untested paths. Use PHPUnit and aim for at least 70 % coverage on the data‑access layer.</p>
                                             
                                             <div class="text-xs bg-surface-100/50 p-2.5 rounded border border-borderline/50 text-themeMuted">
                                                 <strong class="text-brand-400 font-bold uppercase tracking-wider text-[9px] block mb-1">Modernization Rationale</strong>
-                                                Reducing the complexity and instability of the data layer cuts coupling, improves cohesion and provides the first reliable test surface, directly addressing the highest coupling and complexity metrics.
+                                                Tests provide safety nets for future changes, enable refactoring with confidence and help detect security regressions early.
                                             </div>
                                             
                                         </div>
@@ -506,12 +508,12 @@
                                         </div>
                                         <!-- Step Card -->
                                         <div class="bg-surface-50 border border-borderline p-5 rounded-xl ml-2 shadow-sm transition-all hover:border-brand-500/30">
-                                            <h5 class="text-white font-bold text-base mb-2">Implement Automated Test Suite and Gradual Module Rehost</h5>
-                                            <p class="text-sm text-gray-300 leading-relaxed mb-3">Build a CI pipeline with unit, integration and security tests covering the newly namespaced core and replatformed data service. Then rehost the stable modules (Core/Root, challenges, script, style, install, template) onto a lightweight modern framework while keeping them functionally intact.</p>
+                                            <h5 class="text-white font-bold text-base mb-2">Adopt PSR‑4 Namespacing and Modularisation</h5>
+                                            <p class="text-sm text-gray-300 leading-relaxed mb-3">Refactor the remaining legacy code into namespaced packages following PSR‑4, split the monolith into logical modules (e.g., core, challenges, UI) and introduce composer autoloading. Gradually retire duplicated utilities and enforce coding standards.</p>
                                             
                                             <div class="text-xs bg-surface-100/50 p-2.5 rounded border border-borderline/50 text-themeMuted">
                                                 <strong class="text-brand-400 font-bold uppercase tracking-wider text-[9px] block mb-1">Modernization Rationale</strong>
-                                                A robust test suite locks down regression risk, enabling safe incremental migration of remaining modules and delivering measurable ROI through reduced maintenance overhead and improved system resilience.
+                                                Namespacing improves maintainability, reduces accidental coupling and paves the way for incremental migration to micro‑services or containerised deployment in the future.
                                             </div>
                                             
                                         </div>
@@ -551,7 +553,7 @@
                     <script>
                         document.addEventListener("DOMContentLoaded", function() {
                             
-                            var rawNodes = [];
+                            var rawNodes = [{"color": "#ff4b4b", "id": "7d2a3d989357a81c6130ff8b566f745a653435f402e0cc2517fcac7fedcb9294", "label": "index.php", "size": 27}];
                             var rawEdges = [];
                             
                             var nodes = new vis.DataSet(rawNodes.map(n => ({
@@ -585,55 +587,131 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
                     <!-- Presentation vs Logic -->
-                    <div class="bg-surface-100 border border-borderline rounded-2xl p-8 shadow-2xl flex flex-col justify-center">
-                        <h3 class="text-white font-bold text-lg mb-6">Presentation vs. Logic</h3>
-                        <p class="text-sm text-gray-400 mb-6">This metric assesses whether the codebase maintains a healthy separation of concerns. A high presentation ratio indicates a UI-heavy monolith.</p>
-                        <div class="space-y-5">
-                            <div>
-                                <div class="flex justify-between text-sm mb-2">
-                                    <span class="text-gray-300">Presentation / UI Files</span> 
-                                    <span class="text-white font-mono font-bold">0.0%</span>
+                    <div class="bg-surface-100 border border-borderline rounded-2xl p-8 shadow-2xl flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-white font-bold text-lg mb-2">Presentation vs. Logic</h3>
+                            <p class="text-xs text-gray-500 mb-6">Assesses whether the codebase maintains a healthy separation of concerns.</p>
+                            
+                            <div class="space-y-5 mb-8">
+                                <div>
+                                    <div class="flex justify-between text-sm mb-2">
+                                        <span class="text-gray-300">Presentation / UI Files</span> 
+                                        <span class="text-white font-mono font-bold">0.0%</span>
+                                    </div>
+                                    <div class="w-full h-2 bg-surface-200 rounded-full overflow-hidden">
+                                        <div class="h-full bg-brand-500 rounded-full shadow-glow-brand" style="width: 0.0%"></div>
+                                    </div>
                                 </div>
-                                <div class="w-full h-2 bg-surface-200 rounded-full overflow-hidden">
-                                    <div class="h-full bg-brand-500 rounded-full shadow-glow-brand" style="width: 0.0%"></div>
+                            </div>
+                            
+                            <div class="border-t border-borderline/50 pt-6 space-y-4">
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Separation Status</span>
+                                    
+                                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Separated Concerns (Healthy)
+                                        </span>
+                                    
+                                </div>
+                                
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Architectural Impact</span>
+                                    <p class="text-xs text-gray-300 leading-relaxed">
+                                        
+                                            The codebase maintains a healthy separation of presentation templates from system backend business logic, making it easier to expose backend service endpoints.
+                                        
+                                    </p>
+                                </div>
+                                
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Modernization Action Item</span>
+                                    <p class="text-xs text-gray-400 leading-relaxed italic">
+                                        
+                                            Separation is manageable: focus on namespacing the backend business objects and wrapping them in automated unit tests.
+                                        
+                                    </p>
                                 </div>
                             </div>
                         </div>
-                        <p class="text-xs text-gray-500 mt-6 italic">0.0% of classified files handle Presentation/Routing directly. The remaining 100.0% represent pure backend logic or untyped scripts.</p>
                     </div>
 
                     <!-- Logical Domains Matrix -->
-                    <div class="bg-surface-100 border border-borderline rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-                        <div class="p-6 border-b border-borderline flex justify-between items-center bg-surface-50">
-                            <h3 class="text-white font-bold text-lg">Inferred Bounded Contexts</h3>
+                    <div class="bg-surface-100 border border-borderline rounded-2xl shadow-2xl flex flex-col justify-between overflow-hidden">
+                        <div>
+                            <div class="p-6 border-b border-borderline flex justify-between items-center bg-surface-50">
+                                <h3 class="text-white font-bold text-lg">Inferred Bounded Contexts</h3>
+                            </div>
+                            <div class="overflow-y-auto flex-1 max-h-60">
+                                <table class="w-full data-table">
+                                    <thead class="sticky top-0 z-10 bg-surface-200">
+                                        <tr><th>Semantic Domain</th><th>Files</th><th>Coupling</th><th>State Sinks</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        
+                                        <tr>
+                                            <td class="font-bold text-white flex items-center gap-3">
+                                                <div class="w-2 h-2 bg-brand-500 rounded-full"></div> legacy_chaos
+                                            </td>
+                                            <td class="font-mono text-xs">5</td>
+                                            <td>
+                                                <span class="text-green-500 bg-green-500/10 font-mono px-2 py-1 rounded text-xs">
+                                                    1.17
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="flex gap-2 text-[10px] font-bold uppercase tracking-widest">
+                                                
+                                                
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div class="overflow-y-auto flex-1 max-h-80">
-                            <table class="w-full data-table">
-                                <thead class="sticky top-0 z-10 bg-surface-200">
-                                    <tr><th>Semantic Domain</th><th>Files</th><th>Coupling</th><th>State Sinks</th></tr>
-                                </thead>
-                                <tbody>
+                        
+                        <!-- Strategic Domain Extractability Panel -->
+                        <div class="p-6 border-t border-borderline bg-surface-50 space-y-4">
+                            
+                            
+                                
                                     
-                                    <tr>
-                                        <td class="font-bold text-white flex items-center gap-3">
-                                            <div class="w-2 h-2 bg-brand-500 rounded-full"></div> legacy_chaos
-                                        </td>
-                                        <td class="font-mono text-xs">5</td>
-                                        <td>
-                                            <span class="text-green-500 bg-green-500/10 font-mono px-2 py-1 rounded text-xs">
-                                                1.17
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="flex gap-2 text-[10px] font-bold uppercase tracking-widest">
-                                            
-                                            
-                                            </div>
-                                        </td>
-                                    </tr>
+                                        
+                                        
                                     
-                                </tbody>
-                            </table>
+                                    
+                                        
+                                        
+                                    
+                                
+                                
+                                
+                            
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Extraction Candidate (Low-Hanging Fruit)</span>
+                                    
+                                        <div class="text-white font-bold text-sm mb-1">legacy_chaos</div>
+                                        <p class="text-gray-400 leading-relaxed">
+                                            With a low coupling ratio of <strong class="text-emerald-400 font-mono">1.17</strong> across 5 files, this domain has clean semantic boundaries and represents the most immediate candidate for service extraction.
+                                        </p>
+                                    
+                                </div>
+                                
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Tangled Core (High Coupling Risk)</span>
+                                    
+                                        <div class="text-white font-bold text-sm mb-1">legacy_chaos</div>
+                                        <p class="text-gray-400 leading-relaxed">
+                                            This domain exhibits high coupling (<strong class="text-red-400 font-mono">1.17</strong>). It is deeply entangled with other contexts and must be refactored or decoupled incrementally rather than split outright.
+                                        </p>
+                                    
+                                </div>
+                            </div>
+                            
+                            
                         </div>
                     </div>
                 </div>
@@ -1671,7 +1749,7 @@
                             <span class="text-brand-500 font-mono text-sm uppercase tracking-widest font-extrabold bg-brand-500/10 border border-brand-500/20 px-3 py-1 rounded inline-block w-max">Extraction Playbook</span>
                         </div>
                         <h3 class="text-3xl font-bold text-white mb-4">Phased Execution</h3>
-                        <p class="text-base text-gray-400 mb-8 leading-relaxed max-w-4xl whitespace-pre-wrap">[{'step_number': 1, 'title': 'Establish a Secure, Namespaced Foundation', 'description': 'Introduce PSR‑4 autoloading and refactor core files into a namespaced layer. Apply a modern sanitisation library and enforce prepared statements across all data‑access points, starting with the identified security sinks in app, _japp and files modules.', 'rationale': 'Namespacing restores autoloading efficiency and enables static analysis tools, while immediate input sanitisation mitigates the immediate SQL injection risk and builds a secure baseline for all further work.'}, {'step_number': 2, 'title': 'Isolate and Replatform High‑Risk Data Layer', 'description': 'Extract the Doctrine hotspot components into a dedicated microservice or migrate them to a modern ORM within a new framework. Replace the monolithic UnitOfWork, Connection and AbstractPlatform logic with curated, test‑covered equivalents, and add comprehensive unit and integration tests.', 'rationale': 'Reducing the complexity and instability of the data layer cuts coupling, improves cohesion and provides the first reliable test surface, directly addressing the highest coupling and complexity metrics.'}, {'step_number': 3, 'title': 'Implement Automated Test Suite and Gradual Module Rehost', 'description': 'Build a CI pipeline with unit, integration and security tests covering the newly namespaced core and replatformed data service. Then rehost the stable modules (Core/Root, challenges, script, style, install, template) onto a lightweight modern framework while keeping them functionally intact.', 'rationale': 'A robust test suite locks down regression risk, enabling safe incremental migration of remaining modules and delivering measurable ROI through reduced maintenance overhead and improved system resilience.'}]</p>
+                        <p class="text-base text-gray-400 mb-8 leading-relaxed max-w-4xl whitespace-pre-wrap">[{'step_number': 1, 'title': 'Isolate and Replatform Core Data Layer', 'description': 'Create a thin service façade around Doctrine components and migrate the data‑access code to a modern framework such as Laravel or Symfony that provides built‑in ORM safety, automatic query parameterisation and dependency injection. Address the hotspots in Connection, AbstractPlatform and UnitOfWork during this migration.', 'rationale': 'Reducing the attack surface on the data layer eliminates the primary SQL‑injection vectors and lowers coupling by introducing clear service boundaries.'}, {'step_number': 2, 'title': 'Introduce Automated Test Suite', 'description': 'Build unit and integration tests for the newly created service façade and for representative challenge modules, targeting previously untested paths. Use PHPUnit and aim for at least 70\u202f% coverage on the data‑access layer.', 'rationale': 'Tests provide safety nets for future changes, enable refactoring with confidence and help detect security regressions early.'}, {'step_number': 3, 'title': 'Adopt PSR‑4 Namespacing and Modularisation', 'description': 'Refactor the remaining legacy code into namespaced packages following PSR‑4, split the monolith into logical modules (e.g., core, challenges, UI) and introduce composer autoloading. Gradually retire duplicated utilities and enforce coding standards.', 'rationale': 'Namespacing improves maintainability, reduces accidental coupling and paves the way for incremental migration to micro‑services or containerised deployment in the future.'}]</p>
 
                         <div class="bg-surface-100 border border-borderline rounded-xl overflow-hidden shadow-2xl max-w-4xl">
                             <div class="p-4 border-b border-borderline bg-surface-200 flex gap-2">
