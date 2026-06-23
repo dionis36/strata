@@ -30,7 +30,7 @@ class LegacyAnalysisService:
         root_path = project.root_path if project else None
         
         # 2. Aggregate signals for Era/Score calculation
-        stats = self._aggregate_signals(nodes, edges)
+        stats = self._aggregate_signals(nodes, edges, root_path)
         
         # 3. Framework Fingerprinting (Requirement 9) - Now parses composer.json
         framework = FrameworkFingerprinter.detect(nodes, edges, root_path)
@@ -65,9 +65,17 @@ class LegacyAnalysisService:
         
         return metrics
 
-    def _aggregate_signals(self, nodes: list, edges: list) -> dict:
+    def _aggregate_signals(self, nodes: list, edges: list, root_path: str = None) -> dict:
         """Helper to boil down graph nodes/edges into signal inputs."""
-        class_nodes = [n for n in nodes if n.get('node_type') == 'class' or n.get('node_type') == 'NodeType.CLASS']
+        
+        def is_first_party(n):
+            path = n.get('fqn') or n.get('file_path') or ''
+            if not path:
+                return True
+            path = path.lower()
+            return not any(v in path for v in ["/vendor/", "/plugin/", "/lib/", "/thirdparty/", "/tests/", "\\vendor\\", "\\plugin\\"])
+
+        class_nodes = [n for n in nodes if (n.get('node_type') == 'class' or n.get('node_type') == 'NodeType.CLASS') and is_first_party(n)]
         
         total_classes = len(class_nodes)
         namespaced_classes = sum(1 for n in class_nodes if n.get('namespace'))
@@ -122,11 +130,25 @@ class LegacyAnalysisService:
             return nt in file_types
 
         # Check for composer/htaccess
+        def is_root_composer(n):
+            name = (n.get('name') or '').lower()
+            if name != 'composer.json': return False
+            path = n.get('fqn') or n.get('file_path') or ''
+            if not path: return True
+            if root_path and path.startswith(root_path):
+                rel_path = path[len(root_path):].strip('/\\')
+                if rel_path == 'composer.json': return True
+                return False
+            # Fallback if no root_path: check if there are no slashes before composer.json
+            return '/' not in path.strip('/').replace('composer.json', '') and '\\' not in path.strip('\\').replace('composer.json', '')
+
         has_htaccess = any(n.get('name') == '.htaccess' for n in nodes if is_file_node(n))
-        has_composer = any(n.get('name') == 'composer.json' for n in nodes if is_file_node(n) or (n.get('name') or '').lower() == 'composer.json')
+        has_composer = any(is_root_composer(n) for n in nodes if is_file_node(n) or (n.get('name') or '').lower() == 'composer.json')
         
-        # PHP files only for structural calculations
-        php_files = [n for n in nodes if is_file_node(n) and n.get('name', '').lower().endswith(('.php', '.phtml', '.inc'))]
+        entry_points = sum(1 for n in nodes if n.get('node_type') == 'NodeType.ENTRY_POINT' or n.get('type') == 'entry_point')
+        
+        # PHP files only for structural calculations (First-party only)
+        php_files = [n for n in nodes if is_file_node(n) and n.get('name', '').lower().endswith(('.php', '.phtml', '.inc')) and is_first_party(n)]
         total_php_files = len(php_files)
         
         # Procedural ratio based on AST metadata within files
@@ -161,5 +183,6 @@ class LegacyAnalysisService:
             "has_htaccess": has_htaccess,
             "coupling_density": len(edges) / (len(nodes) * (len(nodes) - 1)) if len(nodes) > 1 else 0.0,
             "has_composer": has_composer,
-            "has_tests": has_tests
+            "has_tests": has_tests,
+            "entry_point_count": entry_points
         }

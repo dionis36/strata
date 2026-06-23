@@ -18,7 +18,7 @@ class ModernizationModel:
         """
         
         # 1. Version Compatibility (Base 20)
-        # Assuming if has composer and namespaces, it's fairly modern
+        # Assuming if has root composer and high namespaces, it's fairly modern
         version_score = 10 if stats.get('has_composer') else 5
         version_score += 10 if stats.get('namespace_ratio', 0) > 0.5 else 0
         
@@ -34,8 +34,9 @@ class ModernizationModel:
         security_score = max(0, 20 - (stats.get('security_risk_count', 0) * 2))
         
         # 5. Framework Alignment (Base 10)
-        # Heuristic: has composer + recognized structure
-        framework_score = 10 if stats.get('has_composer') else 2
+        # Heuristic: has composer + recognized structure + entry points
+        framework_score = 5 if stats.get('has_composer') else 2
+        framework_score += 5 if stats.get('entry_point_count', 0) == 1 else 0
         
         # 6. Testability (Base 10)
         testability_score = 10 if stats.get('has_tests') else 0
@@ -45,6 +46,10 @@ class ModernizationModel:
         
         total = (version_score + namespace_score + db_layer_score + 
                  security_score + framework_score + testability_score + coupling_score)
+                 
+        # 8. Safeguard: Hardcap score if critical legacy anchor detected
+        if stats.get('uses_mysql_legacy', False) and total > 50:
+            total = 50
         
         return {
             "version_score": round(version_score, 2),
