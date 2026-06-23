@@ -69,16 +69,31 @@ pages = {
     ]
 }
 
-pg = st.navigation(pages)
+@st.dialog("User Guide", width="large")
+def show_user_guide():
+    st.markdown("""
+    ### Welcome to Strata
+    Strata is an enterprise-grade static analysis platform built to untangle legacy monoliths and guide your modernization strategy.
+
+    #### Navigation Workflow
+    1. **A. Command Center:** Start here to initialize new code scans, switch between active projects, and view high-level system readiness scores.
+    2. **B. Architectural Discovery:** Use the interactive *System Topology* and *Bounded Contexts* graphs to visually identify "God Classes" and tangled dependencies.
+    3. **C. Intelligence Reports:** Deep-dive into specific architectural debts. The *Database Intelligence* and *Global State* tabs are critical for finding hidden couplings before extracting microservices.
+    4. **D. Strategic Advisory:** Use the *Extraction Simulator* to mathematically preview the risk impact of moving a class into its own service before you write any code.
+    5. **E. Artifact Center:** Export your findings into Executive PDFs, SARIF security logs, or automated `rector.php` refactoring rules.
+    """)
 
 # --- Global Context Sidebar ---
 with st.sidebar:
-    st.markdown("### Strata")
-    st.markdown("<span style='color: #8b949e; font-size: 0.8rem;'>v1.0.0 Enterprise</span>", unsafe_allow_html=True)
-    st.markdown("---")
+    st.markdown("<h1 style='font-size: 2.4rem; font-weight: 800; letter-spacing: -0.04em; margin-top: 0; padding-top: 0;'>Strata</h1>", unsafe_allow_html=True)
+    
+    if st.button("User Guide", use_container_width=True):
+        show_user_guide()
+        
+    st.write("") # Small spacer
     
     # ── Context Switcher ──
-    st.markdown("##### Global Context")
+    st.markdown("**Global Context**")
     FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
     import requests
     try:
@@ -86,34 +101,40 @@ with st.sidebar:
         if runs_res.status_code == 200:
             available_runs = runs_res.json()
             valid_statuses = ['COMPLETED', 'ANALYSIS_COMPLETE', 'INTELLIGENCE_READY', 'INTELLIGENCE_FAILED', 'SYNTHESIZING_FINDINGS', 'SYNTHESIZING_SUMMARY', 'SYNTHESIZING_RECTOR']
-            run_options = {f"Run {r['id']} ({r['started_at'][:10]})": r['id'] for r in available_runs if r['status'].upper() in valid_statuses}
+            run_options = {f"Run {r['id']} ({r['started_at'][:10]})": r['id'] for r in available_runs if r.get('status', '').upper() in valid_statuses}
             if run_options:
                 current_run_id = st.session_state.get("active_run_id")
-                # Find current index or default to 0
                 run_keys = list(run_options.keys())
                 try:
                     current_idx = next(i for i, k in enumerate(run_keys) if run_options[k] == current_run_id)
                 except StopIteration:
                     current_idx = 0
                 
-                selected_run_label = st.selectbox("Active Analysis Run", run_keys, index=current_idx)
-                if st.session_state.get("active_run_id") != run_options[selected_run_label]:
-                    st.session_state["active_run_id"] = run_options[selected_run_label]
-                    st.rerun()
-    except Exception:
-        st.caption("Unable to fetch run history.")
-    
-    st.markdown("---")
-    
-    # ── Process Flow Guide ──
-    st.markdown("##### Modernization Journey")
-    st.markdown("""
-    - **A. Dashboard**: Project Overview
-    - **B. Discovery**: Map the structure & Topology
-    - **C. Intelligence**: Audit deep risks
-    - **D. Roadmap**: Strategic Advisory
-    - **E. Artifacts**: Downloads & Exports
-    """)
-    st.markdown("---")
+                selected_run_label = st.selectbox("Active Analysis Run", run_keys, index=current_idx, label_visibility="collapsed")
+                selected_run_id = run_options[selected_run_label]
+                
+                # Always ensure project_id stays in sync with run_id
+                current_r = next((r for r in available_runs if r['id'] == selected_run_id), None)
+                if current_r and 'project_id' in current_r:
+                    st.session_state["active_project_id"] = current_r['project_id']
 
+                if st.session_state.get("active_run_id") != selected_run_id:
+                    st.session_state["active_run_id"] = selected_run_id
+                    st.rerun()
+    except requests.exceptions.RequestException:
+        st.caption("Unable to connect to API.")
+    except Exception as e:
+        if e.__class__.__name__ == "RerunException":
+            raise e
+        st.error(f"Error: {str(e)}")
+    
+    st.write("") # Small spacer
+    
+    # ── Page Navigations ──
+    for section, section_pages in pages.items():
+        st.markdown(f"**{section}**")
+        for page in section_pages:
+            st.page_link(page, icon=page.icon)
+
+pg = st.navigation(pages, position="hidden")
 pg.run()

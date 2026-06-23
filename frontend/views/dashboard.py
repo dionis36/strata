@@ -10,31 +10,7 @@ def show_dashboard():
     st.markdown("##### Strategic Modernization Command Center")
     st.markdown("---")
 
-    # ── Context & Project Management ──────────────────────────────────────────────
-    with st.sidebar:
-        st.markdown("##### Project Registry")
-        try:
-            # We should probably have a /projects endpoint, but for now we list runs and group by project_id
-            # Actually, let's just get all runs and find unique projects
-            runs_res = requests.get(f"{FASTAPI_URL}/runs", timeout=5)
-            if runs_res.status_code == 200:
-                all_runs = runs_res.json()
-                unique_projects = {}
-                for r in all_runs:
-                    pid = r['project_id']
-                    if pid not in unique_projects:
-                        unique_projects[pid] = f"Project {pid}"
-                
-                if unique_projects:
-                    selected_pid = st.selectbox("Select Active Project", options=list(unique_projects.keys()), 
-                                             format_func=lambda x: unique_projects[x])
-                    st.session_state["active_project_id"] = selected_pid
-                else:
-                    st.info("No projects found. Run a scan below.")
-        except Exception:
-            st.error("API Offline")
-
-    # ── Data Fetching ─────────────────────────────────────────────────────────────
+    # ── Context is managed globally in app.py ──
     project_id = st.session_state.get("active_project_id")
     dashboard_data = None
     if project_id:
