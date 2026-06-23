@@ -1,6 +1,7 @@
 services:
   api:
-    build: .
+    build:
+      context: .
     dns:
       - 8.8.8.8
       - 1.1.1.1
@@ -17,7 +18,8 @@ services:
       - PYTHONPATH=/app
 
   frontend:
-    build: .
+    build:
+      context: .
     ports:
       - "8501:8501"
     volumes:
