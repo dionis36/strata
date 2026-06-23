@@ -97,7 +97,7 @@ def show_artifact_center():
     
     col_a, col_b = st.columns(2)
     with col_a:
-        export_md = st.checkbox("Master Intelligence Report (.md)", value=True)
+        export_md = st.checkbox("Strategic Modernization Blueprint (.md)", value=True)
     with col_b:
         export_sarif = st.checkbox("SARIF Export", value=True)
     @st.cache_data(show_spinner=False)
@@ -128,7 +128,7 @@ def show_artifact_center():
         st.markdown("For planning, review, and communication.")
         
         # 1. Strategic Modernization Assessment
-        st.markdown("#### 1. Master Intelligence Report")
+        st.markdown("#### 1. Strategic Modernization Blueprint")
         st.caption("A comprehensive document covering system scope, KPIs, architectural risks, and dependency intelligence.")
         
         @st.cache_data(show_spinner=False)
@@ -141,9 +141,9 @@ def show_artifact_center():
         
         if md_content:
             st.download_button(
-                label="📥 Download Master_Intelligence_Report.md",
+                label="📥 Download Strategic_Modernization_Blueprint.md",
                 data=md_content,
-                file_name="Master_Intelligence_Report.md",
+                file_name="Strategic_Modernization_Blueprint.md",
                 mime="text/markdown"
             )
         else:

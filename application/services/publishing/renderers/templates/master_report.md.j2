@@ -1,4 +1,4 @@
-# Master Intelligence Report: {{ model.system_context.project_name }}
+# Strategic Modernization Blueprint: {{ model.system_context.project_name }}
 
 ## 1. Executive Command Center
 
@@ -28,7 +28,7 @@
 **AI Executive Assessment**
 *Current State:* {{ model.ai_executive_summary.get('current_state', '[Not Available]') }}
 
-*Critical Risks:* {{ model.ai_executive_summary.get('critical_risks', '[Not Available]') }}
+**Critical Risks:** {{ model.ai_executive_summary.get('critical_risks', '[Not Available]') }}
 
 *Strategic Roadmap:*
 {% for step in model.ai_executive_summary.get('strategic_roadmap', []) %}
@@ -53,8 +53,8 @@
 
 | File | Entanglement Ratio | DB Queries | Fat View Risk |
 | :--- | :--- | :--- | :--- |
-{% for f in model.boundary_intelligence.presentation_coupling -%}
-| `{{ f.file }}` | {{ f.entanglement_ratio }}% | {{ f.db_queries }} | {{ f.fat_view_risk }} |
+{% for p in model.boundary_intelligence.presentation_coupling -%}
+| <kbd>{{ p.file_path }}</kbd> | {{ p.ui_entanglement_ratio }}% | {{ p.db_queries }} | {{ '🔴 CRITICAL' if p.is_fat_view else '🟢 LOW' }} |
 {% endfor %}
 
 </details>
@@ -67,22 +67,22 @@
 
 | Entry Point | Classification |
 | :--- | :--- |
-{% for api in model.boundary_intelligence.api_surface -%}
-| `{{ api.endpoint }}` | {{ api.classification }} |
+{% for a in model.boundary_intelligence.api_surface -%}
+| <kbd>{{ a.path }}</kbd> | {{ a.type }} |
 {% endfor %}
 
 </details>
 
 ### Vendor & Shadow IT Intelligence
-- **Vendor Files Scanned:** {{ model.boundary_intelligence.vendor_intelligence | length }}
+- **Vendor Files Scanned:** {{ model.boundary_intelligence.vendor_inventory | length }}
 
 <details>
 <summary>View Shadow IT Inventory</summary>
 
 | File | Vendor Type | Status |
 | :--- | :--- | :--- |
-{% for v in model.boundary_intelligence.vendor_intelligence -%}
-| `{{ v.file }}` | {{ v.type }} | {{ v.status }} |
+{% for v in model.boundary_intelligence.vendor_inventory -%}
+| <kbd>{{ v.file_path }}</kbd> | {{ v.vendor_type }} | {{ v.status }} |
 {% endfor %}
 
 </details>
@@ -100,6 +100,15 @@
 {% if model.layered_architecture %}
 - **Presentation vs. Logic Ratio:** {{ model.layered_architecture.presentation_ratio }}% of classified files are UI/Routing related.
 
+<details>
+<summary>View Project Folder Structure</summary>
+
+```text
+{{ model.layered_architecture.directory_tree.ascii }}
+```
+
+</details>
+
 ### Bounded Contexts
 
 #### Top 5 Bounded Contexts by File Count
@@ -116,7 +125,7 @@ pie title Files per Context
 | Domain Name | Files | Internal Calls | External Calls | Coupling Ratio | DB Access | Auth Access |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 {% for c in model.layered_architecture.bounded_contexts -%}
-| `{{ c.name }}` | {{ c.file_count }} | {{ c.internal_calls }} | {{ c.external_calls }} | {{ c.coupling_ratio }} | {{ c.db_access }} | {{ c.auth_access }} |
+| <kbd>{{ c.name }}</kbd> | {{ c.file_count }} | {{ c.internal_calls }} | {{ c.external_calls }} | {{ c.coupling_ratio }} | {{ c.db_access }} | {{ c.auth_access }} |
 {% endfor %}
 
 </details>
@@ -142,7 +151,7 @@ pie title Files per Context
 | :--- | :--- | :--- | :--- |
 {% for file, metrics in model.database_intelligence.taxonomy.items() -%}
 {% if metrics.reads > 0 or metrics.writes > 0 or metrics.orm > 0 -%}
-| `{{ file }}` | {{ metrics.reads }} | {{ metrics.writes }} | {{ metrics.orm }} |
+| <kbd>{{ file }}</kbd> | {{ metrics.reads }} | {{ metrics.writes }} | {{ metrics.orm }} |
 {% endif -%}
 {% endfor %}
 
@@ -156,11 +165,11 @@ pie title Files per Context
 | Table Name | Primary Owner | Write Intensity | Shared Pressure |
 | :--- | :--- | :--- | :--- |
 {% for db in model.database_intelligence.table_ownership -%}
-| `{{ db.table }}` | `{{ db.primary_owner }}` | - | - |
+| <kbd>{{ db.table }}</kbd> | <kbd>{{ db.primary_owner }}</kbd> | - | - |
 {% endfor -%}
 {% for db in model.database_intelligence -%}
 {% if db is mapping -%}
-| `{{ db.table_name }}` | - | {{ db.write_intensity }} | {{ db.shared_table_pressure }} |
+| <kbd>{{ db.table_name }}</kbd> | - | {{ db.write_intensity }} | {{ db.shared_table_pressure }} |
 {% endif -%}
 {% endfor %}
 
@@ -193,7 +202,7 @@ pie title Superglobal Calls
 | Superglobal | Occurrences |
 | :--- | :--- |
 {% for var, count in model.global_state_intelligence.superglobal_totals.items() -%}
-| `{{ var }}` | {{ count }} |
+| <kbd>{{ var }}</kbd> | {{ count }} |
 {% endfor %}
 
 </details>
@@ -206,7 +215,7 @@ pie title Superglobal Calls
 | Effect Type | Count |
 | :--- | :--- |
 {% for effect, count in model.global_state_intelligence.side_effect_totals.items() -%}
-| `{{ effect }}` | {{ count }} |
+| <kbd>{{ effect }}</kbd> | {{ count }} |
 {% endfor %}
 
 </details>
@@ -222,7 +231,7 @@ pie title Superglobal Calls
 | :--- | :--- |
 {% for pattern, count in model.legacy_intelligence.pattern_totals.items() -%}
 {% if count > 0 %}
-| `{{ pattern }}` | {{ count }} |
+| <kbd>{{ pattern }}</kbd> | {{ count }} |
 {% endif %}
 {% endfor %}
 {% else %}
@@ -236,7 +245,7 @@ pie title Superglobal Calls
 | Module Context | Recommended Strategy | ROI Score | Migration Effort | Primary Blocker |
 | :--- | :--- | :--- | :--- | :--- |
 {% for rec in model.strategic_advisory.get('recommendations', []) -%}
-| `{{ rec.Context }}` | **{{ rec['Recommended Strategy'] }}** | {{ rec['Modernization ROI'] }}% | {{ rec['Migration Effort'] }} | {{ rec['Primary Blocker'] }} |
+| <kbd>{{ rec.Context }}</kbd> | **{{ rec['Recommended Strategy'] }}** | {{ rec['Modernization ROI'] }}% | {{ rec['Migration Effort'] }} | {{ rec['Primary Blocker'] }} |
 {% endfor %}
 {% else %}
 *Strategic advisory data is unavailable.*
@@ -265,7 +274,7 @@ pie title Superglobal Calls
 - **Strategic Action:** {{ f.recommended_action }} *(Confidence: {{ f.confidence }})*
 - **Evidence/Metrics:**
 {% for ev in f.evidence -%}
-  - `{{ ev.type }}`: {{ ev.target }} {% if ev.metric_value %}({{ ev.metric_value }}){% endif %}
+  - `{{ ev.type }}`: <kbd>{{ ev.target }}</kbd> {% if ev.metric_value %}({{ ev.metric_value }}){% endif %}
 {% endfor %}
 
 ---

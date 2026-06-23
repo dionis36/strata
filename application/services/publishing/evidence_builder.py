@@ -380,6 +380,27 @@ class EvidenceBuilder:
                 if i == len(parts) - 1:
                     current[part]["_info"] = info
                 current = current[part]["_children"]
+                
+        # Build an ASCII Tree for the Markdown report
+        ascii_tree_lines = ["."]
+        seen_dirs = set()
+        for path, info in sorted(dirs.items()):
+            if path == "/":
+                continue
+            parts = [p for p in path.split('/') if p]
+            for i in range(1, len(parts) + 1):
+                subpath = "/".join(parts[:i])
+                if subpath not in seen_dirs:
+                    seen_dirs.add(subpath)
+                    indent = "│   " * (i - 1)
+                    # Check if this exact subpath has info in dirs
+                    sub_info = dirs.get("/" + subpath, dirs.get(subpath))
+                    if sub_info:
+                        ascii_tree_lines.append(f"{indent}├── {parts[i-1]}/ ({sub_info.get('count', 0)} files, {sub_info.get('type', 'src')})")
+                    else:
+                        ascii_tree_lines.append(f"{indent}├── {parts[i-1]}/")
+                        
+        tree["ascii"] = "\n".join(ascii_tree_lines)
 
         # Parse and downsample System Topology Graph for browser-safe Vis.js rendering
         import os

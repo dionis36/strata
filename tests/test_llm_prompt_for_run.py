@@ -310,7 +310,24 @@ def main():
         print("="*50 + "\n")
 
     if args.invoke:
-        print("Invoking AI Advisory Service with full payload...")
+        import threading
+        import sys
+        import time
+
+        spinner_running = True
+        def spinner_task():
+            spinners = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+            idx = 0
+            while spinner_running:
+                sys.stdout.write(f"\rWaiting for AI response... {spinners[idx]} ")
+                sys.stdout.flush()
+                idx = (idx + 1) % len(spinners)
+                time.sleep(0.1)
+
+        print("\n")
+        spinner_thread = threading.Thread(target=spinner_task)
+        spinner_thread.start()
+        
         try:
             summary = ai_service.synthesize_executive_summary(
                 ctx, legacy, recs, hotspots_data,
@@ -319,6 +336,10 @@ def main():
                 architecture_data=architecture_data,
                 global_state_data=global_state_data
             )
+            spinner_running = False
+            spinner_thread.join()
+            sys.stdout.write("\r" + " "*60 + "\r✅ AI response received!\n")
+            
             print("\n=== AI RESPONSE ===")
             print(json.dumps(summary, indent=2))
             
@@ -329,6 +350,9 @@ def main():
                 print("\n(Dry run: Use --save to write this to the database and update the frontend UI)")
                 
         except Exception as e:
+            spinner_running = False
+            spinner_thread.join()
+            sys.stdout.write("\r" + " "*60 + "\r❌ Request failed!\n")
             print(f"\n❌ AI Synthesis Failed: {e}")
     else:
         print("Run with --invoke to actually hit the LLM API.")
