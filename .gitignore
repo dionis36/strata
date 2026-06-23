@@ -39,3 +39,6 @@ infrastructure/php/composer.lock
 /data/*.db
 /data/test_project_*
 /data/OWASPWebGoat*
+
+# Generated Reports
+AUDIT/
