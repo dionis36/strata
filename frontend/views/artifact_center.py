@@ -50,7 +50,7 @@ def show_artifact_center():
         st.rerun()
     elif run_status == "analysis_complete":
         st.markdown(
-            "<div style='padding:1rem;background-color:rgba(16, 185, 129, 0.1);border-left:4px solid #10b981;border-radius:4px;color:#e2e8f0;margin-bottom:1.5rem;'>"
+            "<div style='padding:1rem;background-color:rgba(16, 185, 129, 0.1);border-left:4px solid #10b981;border-radius:4px;color:var(--text-color);margin-bottom:1.5rem;'>"
             "<strong>Source Code Scan Complete!</strong> The technical analysis is ready. "
             "Click the button below to generate the executive reports and refactoring guides using the AI engine."
             "</div>", 
@@ -66,7 +66,7 @@ def show_artifact_center():
         st.stop()
     elif run_status == "analyzing":
         st.markdown(
-            "<div style='padding:1rem;background-color:rgba(14, 165, 233, 0.1);border-left:4px solid #0ea5e9;border-radius:4px;color:#e2e8f0;'>"
+            "<div style='padding:1rem;background-color:rgba(14, 165, 233, 0.1);border-left:4px solid #0ea5e9;border-radius:4px;color:var(--text-color);'>"
             "<strong>Core analysis is currently running. Please wait for completion.</strong>"
             "</div>", 
             unsafe_allow_html=True
@@ -79,7 +79,7 @@ def show_artifact_center():
         err_msg = current_run.get("error_message") if current_run else None
         err_detail = f"<div style='margin-top:0.5rem;font-family:monospace;font-size:0.85rem;color:#f87171;word-break:break-all;'><strong>Error detail:</strong> {err_msg}</div>" if err_msg else ""
         st.markdown(
-            f"<div style='padding:1rem;background-color:rgba(239, 68, 68, 0.1);border-left:4px solid #ef4444;border-radius:4px;color:#e2e8f0;margin-bottom:1rem;'>"
+            f"<div style='padding:1rem;background-color:rgba(239, 68, 68, 0.1);border-left:4px solid #ef4444;border-radius:4px;color:var(--text-color);margin-bottom:1rem;'>"
             f"<strong>AI Intelligence Synthesis Failed.</strong> The AI engine encountered an issue. Base metrics are available, but deep synthesis failed.{err_detail}"
             f"</div>", 
             unsafe_allow_html=True

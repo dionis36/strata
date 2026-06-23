@@ -11,35 +11,16 @@ st.set_page_config(
 # --- Global Style Overrides ---
 st.markdown("""
     <style>
-    /* Minimalist Dark Theme */
-    .main { background-color: #0e1117; color: #e0e0e0; font-family: 'Inter', sans-serif; }
-    h1, h2, h3 { color: #ffffff !important; font-weight: 600 !important; letter-spacing: -0.02em !important; }
-    .stMetric { background-color: #161b22; border-radius: 8px; padding: 15px; border: 1px solid #30363d; }
+    /* Typography and layout tweaks (No hardcoded colors) */
+    .main { font-family: 'Inter', sans-serif; }
+    h1, h2, h3 { font-weight: 600 !important; letter-spacing: -0.02em !important; }
+    .stMetric { border-radius: 8px; padding: 15px; }
     .stTabs [data-baseweb="tab-list"] { gap: 8px; }
-    .stTabs [data-baseweb="tab"] { 
-        background-color: #161b22; 
-        border-radius: 4px 4px 0 0; 
-        padding: 8px 16px; 
-        border: 1px solid #30363d;
-        color: #8b949e;
-    }
-    .stTabs [aria-selected="true"] { background-color: #1f2937 !important; color: #ffffff !important; border-bottom: 2px solid #58a6ff !important; }
+    .stTabs [data-baseweb="tab"] { border-radius: 4px 4px 0 0; padding: 8px 16px; }
     
-    /* Clean Buttons */
-    .stButton>button { 
-        border-radius: 6px !important; 
-        border: 1px solid #30363d !important; 
-        background-color: #21262d !important; 
-        color: #c9d1d9 !important;
-        font-weight: 500 !important;
-        transition: all 0.2s ease;
-    }
-    .stButton>button:hover { border-color: #8b949e !important; background-color: #30363d !important; }
+    .stButton>button { border-radius: 6px !important; font-weight: 500 !important; transition: all 0.2s ease; }
     
-    /* Hide Streamlit Top Bar but preserve Sidebar Headers */
-    [data-testid="stHeader"] {visibility: hidden;}
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
+    /* Streamlit Top Bar and Menu are enabled for Theme Switching */
     </style>
 """, unsafe_allow_html=True)
 

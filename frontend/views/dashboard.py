@@ -55,24 +55,24 @@ def show_dashboard():
         with col_gauge:
             score = run.get("risk_score", 0)
             st.markdown(f"""
-                <div style="text-align: center; background: #161b22; padding: 20px; border-radius: 12px; border: 1px solid #30363d;">
-                    <h2 style="margin:0; color: #58a6ff;">{round(score, 1)}%</h2>
-                    <p style="color: #8b949e; font-size: 0.9rem;">Modernization Readiness</p>
-                    <div style="background: #30363d; height: 8px; border-radius: 4px; margin-top: 10px;">
-                        <div style="background: #58a6ff; width: {score}%; height: 100%; border-radius: 4px;"></div>
+                <div style="text-align: center; background: var(--secondary-background-color); padding: 20px; border-radius: 12px; border: 1px solid rgba(128, 128, 128, 0.2);">
+                    <h2 style="margin:0; color: var(--primary-color);">{round(score, 1)}%</h2>
+                    <p style="color: var(--text-color); opacity: 0.8; font-size: 0.9rem;">Modernization Readiness</p>
+                    <div style="background: rgba(128, 128, 128, 0.2); height: 8px; border-radius: 4px; margin-top: 10px;">
+                        <div style="background: var(--primary-color); width: {score}%; height: 100%; border-radius: 4px;"></div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
             
         with col_strat:
             st.markdown(f"""
-                <div style="background: #161b22; padding: 20px; border-radius: 12px; border: 1px solid #30363d; height: 100%;">
-                    <h4 style="margin:0;">{proj['name']}</h4>
-                    <p style="color: #8b949e; font-size: 0.85rem; margin-bottom: 12px;">{proj['root_path']}</p>
+                <div style="background: var(--secondary-background-color); padding: 20px; border-radius: 12px; border: 1px solid rgba(128, 128, 128, 0.2); height: 100%;">
+                    <h4 style="margin:0; color: var(--text-color);">{proj['name']}</h4>
+                    <p style="color: var(--text-color); opacity: 0.7; font-size: 0.85rem; margin-bottom: 12px;">{proj['root_path']}</p>
                     <div style="display: flex; gap: 10px;">
                         <span style="background: #238636; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">ERA: {run['php_era']}</span>
                         <span style="background: #1f6feb; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">FW: {run['framework']}</span>
-                        <span style="background: #30363d; color: #c9d1d9; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">Last Scan: {run['completed_at'][:16]}</span>
+                        <span style="background: rgba(128, 128, 128, 0.2); color: var(--text-color); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">Last Scan: {run['completed_at'][:16]}</span>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
