@@ -77,6 +77,10 @@ class LegacyIntelligenceService:
         # ---------------------------------------------------------------
         total_files = 0
         files_with_classes = 0
+        files_with_namespace = 0
+        files_with_functions_only = 0
+        variable_variable_files = set()
+        hosting_signal_files = set()
         file_types = {"file", "entry_point", "bootstrap", "controller", "view", "config", "job", "model"}
 
         # Helper to check if a node type represents a file
