@@ -107,7 +107,48 @@ def get_run_prompt_data(run_id: int):
         except Exception as e:
             print(f"Warning: Failed to fetch advisory roadmap: {e}")
 
-        return ctx, legacy, recs, hotspots_data
+        from application.services.boundary_intelligence_service import BoundaryIntelligenceService
+        try:
+            bd = BoundaryIntelligenceService(db).get_boundary_intelligence(run_id)
+            boundary_data = {
+                "kpis": bd.get("kpis", {}),
+                "presentation_coupling_count": len(bd.get("presentation_coupling", [])),
+                "api_surface_count": len(bd.get("api_surface", [])),
+                "vendor_intelligence_count": len(bd.get("vendor_intelligence", [])),
+                "top_presentation_coupling": bd.get("presentation_coupling", [])[:5]
+            } if bd else None
+        except Exception:
+            boundary_data = None
+            
+        from application.services.database_intelligence_service import DatabaseIntelligenceService
+        try:
+            dbd = DatabaseIntelligenceService(db).get_db_intelligence(run_id)
+            database_data = {
+                "total_models": len(dbd.get("taxonomy", [])),
+                "top_active_models": sorted(dbd.get("taxonomy", []), key=lambda x: x.get("Writes", 0) + x.get("Reads", 0), reverse=True)[:5]
+            } if dbd else None
+        except Exception:
+            database_data = None
+            
+        try:
+            l_data = layer_service.get_layered_analysis(run_id)
+            architecture_data = {
+                "bounded_contexts": l_data.get("layer_3", {}).get("bounded_contexts", [])
+            } if l_data else None
+        except Exception:
+            architecture_data = None
+            
+        from application.services.global_state_service import GlobalStateService
+        try:
+            gsd = GlobalStateService(db).get_global_state_intelligence(run_id)
+            global_state_data = {
+                "superglobal_usage": gsd.get("superglobals", {}),
+                "singleton_count": len(gsd.get("singletons", []))
+            } if gsd else None
+        except Exception:
+            global_state_data = None
+
+        return ctx, legacy, recs, hotspots_data, boundary_data, database_data, architecture_data, global_state_data
     finally:
         db.close()
 
@@ -202,7 +243,7 @@ def main():
             sys.exit(1)
             
     print(f"\nExtracting context for Run ID {args.run_id}...")
-    ctx, legacy, recs, hotspots_data = get_run_prompt_data(args.run_id)
+    ctx, legacy, recs, hotspots_data, boundary_data, database_data, architecture_data, global_state_data = get_run_prompt_data(args.run_id)
     
     # We can reconstruct the prompt just to print it using the exact same logic as AIAdvisoryService
     if args.print_prompt or not args.invoke:
@@ -215,6 +256,11 @@ def main():
             f"- File '{h['file_path']}': Risk Score: {h['risk_score']:.1f}/100, WMC (Complexity): {h['wmc']}, LCOM (Lack of Cohesion): {h['lcom']:.2f}, Instability: {h['instability']:.2f}, Test Coverage: {h['coverage']*100:.1f}%, DB Write Intensity: {h['write_intensity']:.2f}."
             for hr, h in zip(range(len(hotspots_data)), hotspots_data)
         ]) if hotspots_data else "No specific code hotspots or risk items isolated."
+        
+        boundary_str = str(boundary_data) if boundary_data else "None"
+        database_str = str(database_data) if database_data else "None"
+        architecture_str = str(architecture_data) if architecture_data else "None"
+        global_state_str = str(global_state_data) if global_state_data else "None"
 
         prompt = f"""
         You are a Principal PHP Modernization Architect consulting for a C-level executive.
@@ -242,6 +288,18 @@ def main():
         
         Identified Hotspots & Code-Level Risks:
         {hotspots_str}
+        
+        Boundary Intelligence:
+        {boundary_str}
+        
+        Database Intelligence:
+        {database_str}
+        
+        Architecture Data:
+        {architecture_str}
+        
+        Global State Data:
+        {global_state_str}
         """
         print("\n" + "="*50)
         print("=== LLM PROMPT PAYLOAD ===")
@@ -254,7 +312,13 @@ def main():
     if args.invoke:
         print("Invoking AI Advisory Service with full payload...")
         try:
-            summary = ai_service.synthesize_executive_summary(ctx, legacy, recs, hotspots_data)
+            summary = ai_service.synthesize_executive_summary(
+                ctx, legacy, recs, hotspots_data,
+                boundary_data=boundary_data,
+                database_data=database_data,
+                architecture_data=architecture_data,
+                global_state_data=global_state_data
+            )
             print("\n=== AI RESPONSE ===")
             print(json.dumps(summary, indent=2))
             

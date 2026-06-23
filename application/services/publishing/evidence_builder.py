@@ -186,7 +186,7 @@ class EvidenceBuilder:
         risks = self.db.query(ComponentRisk).filter(ComponentRisk.run_id == run_id).order_by(ComponentRisk.final_risk.desc()).limit(50).all()
         findings = []
         
-        top_risks = [r for r in risks if r.risk_score >= 0.3][:5]
+        top_risks = [r for r in risks if r.risk_score >= 0.3]
         if not top_risks:
             return findings
             

@@ -39,49 +39,87 @@
 
 ## 2. Boundary Intelligence & External Surface
 
+{% if model.ai_executive_summary.get('boundary_layer_insights') %}
+{{ model.ai_executive_summary.get('boundary_layer_insights') }}
+{% endif %}
+
 {% if model.boundary_intelligence %}
 ### Presentation Layer Coupling
 - **Global UI Entanglement:** {{ model.boundary_intelligence.kpis.get('Global UI Entanglement', '0%') }}
 - **Fat Views (DB Coupled):** {{ model.boundary_intelligence.kpis.get('Fat Views (DB-Coupled UI)', 0) }}
 
+<details>
+<summary>View Fat Views & Entanglement Data</summary>
+
 | File | Entanglement Ratio | DB Queries | Fat View Risk |
 | :--- | :--- | :--- | :--- |
-{% for p in model.boundary_intelligence.presentation_coupling -%}
-| `{{ p.file_path }}` | {{ p.ui_entanglement_ratio }}% | {{ p.db_queries }} | {{ 'CRITICAL' if p.is_fat_view else 'LOW' }} |
+{% for f in model.boundary_intelligence.presentation_coupling -%}
+| `{{ f.file }}` | {{ f.entanglement_ratio }}% | {{ f.db_queries }} | {{ f.fat_view_risk }} |
 {% endfor %}
 
+</details>
+
 ### API & Endpoint Surface
-- **Total Endpoints:** {{ model.boundary_intelligence.kpis.get('Total Endpoints Detected', 0) }}
+- **Total Endpoints:** {{ model.boundary_intelligence.api_surface | length }}
+
+<details>
+<summary>View Discovered Endpoints</summary>
 
 | Entry Point | Classification |
 | :--- | :--- |
-{% for a in model.boundary_intelligence.api_surface -%}
-| `{{ a.path }}` | {{ a.type }} |
+{% for api in model.boundary_intelligence.api_surface -%}
+| `{{ api.endpoint }}` | {{ api.classification }} |
 {% endfor %}
 
+</details>
+
 ### Vendor & Shadow IT Intelligence
-- **Vendor Files Scanned:** {{ model.boundary_intelligence.kpis.get('Vendor Files Scanned', 0) }}
+- **Vendor Files Scanned:** {{ model.boundary_intelligence.vendor_intelligence | length }}
+
+<details>
+<summary>View Shadow IT Inventory</summary>
 
 | File | Vendor Type | Status |
 | :--- | :--- | :--- |
-{% for v in model.boundary_intelligence.vendor_inventory -%}
-| `{{ v.file_path }}` | {{ v.vendor_type }} | {{ v.status }} |
+{% for v in model.boundary_intelligence.vendor_intelligence -%}
+| `{{ v.file }}` | {{ v.type }} | {{ v.status }} |
 {% endfor %}
+
+</details>
+
 {% else %}
 *Boundary Intelligence data is unavailable.*
 {% endif %}
 
 ## 3. Layered Architecture & Topology
 
+{% if model.ai_executive_summary.get('architecture_insights') %}
+{{ model.ai_executive_summary.get('architecture_insights') }}
+{% endif %}
+
 {% if model.layered_architecture %}
 - **Presentation vs. Logic Ratio:** {{ model.layered_architecture.presentation_ratio }}% of classified files are UI/Routing related.
 
 ### Bounded Contexts
+
+#### Top 5 Bounded Contexts by File Count
+```mermaid
+pie title Files per Context
+{% for c in model.layered_architecture.bounded_contexts[:5] -%}
+    "{{ c.name }}" : {{ c.file_count }}
+{% endfor %}
+```
+
+<details>
+<summary>View Complete Context Coupling Data</summary>
+
 | Domain Name | Files | Internal Calls | External Calls | Coupling Ratio | DB Access | Auth Access |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 {% for c in model.layered_architecture.bounded_contexts -%}
 | `{{ c.name }}` | {{ c.file_count }} | {{ c.internal_calls }} | {{ c.external_calls }} | {{ c.coupling_ratio }} | {{ c.db_access }} | {{ c.auth_access }} |
 {% endfor %}
+
+</details>
 
 *(Note: System topology graph JSON is available in the SARIF/JSON data bundle).*
 {% else %}
@@ -90,47 +128,88 @@
 
 ## 4. Database Intelligence
 
+{% if model.ai_executive_summary.get('database_coupling_insights') %}
+{{ model.ai_executive_summary.get('database_coupling_insights') }}
+{% endif %}
+
 {% if model.database_intelligence %}
 ### CRUD Access Taxonomy
+
+<details>
+<summary>View Database Taxonomy Data</summary>
+
 | File Path | Reads | Writes | ORM Usage |
 | :--- | :--- | :--- | :--- |
 {% for file, metrics in model.database_intelligence.taxonomy.items() -%}
-{% if metrics.reads > 0 or metrics.writes > 0 or metrics.orm > 0 %}
+{% if metrics.reads > 0 or metrics.writes > 0 or metrics.orm > 0 -%}
 | `{{ file }}` | {{ metrics.reads }} | {{ metrics.writes }} | {{ metrics.orm }} |
-{% endif %}
+{% endif -%}
 {% endfor %}
 
+</details>
+
 ### Table Ownership & Pressure
+
+<details>
+<summary>View Database Pressure Metrics</summary>
+
 | Table Name | Primary Owner | Write Intensity | Shared Pressure |
 | :--- | :--- | :--- | :--- |
 {% for db in model.database_intelligence.table_ownership -%}
 | `{{ db.table }}` | `{{ db.primary_owner }}` | - | - |
-{% endfor %}
+{% endfor -%}
 {% for db in model.database_intelligence -%}
-{% if db is mapping %}
+{% if db is mapping -%}
 | `{{ db.table_name }}` | - | {{ db.write_intensity }} | {{ db.shared_table_pressure }} |
-{% endif %}
+{% endif -%}
 {% endfor %}
+
+</details>
 {% else %}
 *No database intelligence data found.*
 {% endif %}
 
 ## 5. Runtime & Global State Intelligence
 
+{% if model.ai_executive_summary.get('global_state_insights') %}
+{{ model.ai_executive_summary.get('global_state_insights') }}
+{% endif %}
+
 {% if model.global_state_intelligence %}
 ### Superglobal Usage Distribution
+
+```mermaid
+pie title Superglobal Calls
+{% for var, count in model.global_state_intelligence.superglobal_totals.items() -%}
+{% if count > 0 -%}
+    "{{ var }}" : {{ count }}
+{% endif -%}
+{% endfor %}
+```
+
+<details>
+<summary>View Raw Variables List</summary>
+
 | Superglobal | Occurrences |
 | :--- | :--- |
 {% for var, count in model.global_state_intelligence.superglobal_totals.items() -%}
 | `{{ var }}` | {{ count }} |
 {% endfor %}
 
+</details>
+
 ### Side-Effect Breakdown
+
+<details>
+<summary>View Side-Effect Totals</summary>
+
 | Effect Type | Count |
 | :--- | :--- |
 {% for effect, count in model.global_state_intelligence.side_effect_totals.items() -%}
 | `{{ effect }}` | {{ count }} |
 {% endfor %}
+
+</details>
 {% else %}
 *No global state intelligence data found.*
 {% endif %}
@@ -163,7 +242,22 @@
 *Strategic advisory data is unavailable.*
 {% endif %}
 
-## 8. Risk Audit & Remediation
+## 8. Security Posture
+{{ model.ai_executive_summary.get('security_posture', 'No security posture data available.') }}
+
+## 9. Testing Strategy
+{{ model.ai_executive_summary.get('testing_strategy', 'No testing strategy available.') }}
+
+## 10. Quick Wins
+{% if model.ai_executive_summary.get('quick_wins') %}
+{% for qw in model.ai_executive_summary.get('quick_wins', []) %}
+- **{{ qw.title }}**: {{ qw.impact }}
+{% endfor %}
+{% else %}
+*No quick wins identified.*
+{% endif %}
+
+## 11. Risk Audit & Remediation
 
 {% for f in model.findings -%}
 ### [{{ f.priority }}] {{ f.observation }}
@@ -174,12 +268,6 @@
   - `{{ ev.type }}`: {{ ev.target }} {% if ev.metric_value %}({{ ev.metric_value }}){% endif %}
 {% endfor %}
 
-{% if f.mermaid_diagram %}
-#### Topology Diagram
-```mermaid
-{{ f.mermaid_diagram }}
-```
-{% endif %}
 ---
 {% else %}
 *No critical risks identified.*

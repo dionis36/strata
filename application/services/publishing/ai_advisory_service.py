@@ -38,7 +38,7 @@ class AIAdvisoryService:
                 else:
                     raise
 
-    def synthesize_executive_summary(self, system_context: Any, legacy_posture: Any, recs: List[Dict[str, Any]] = None, hotspots: List[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def synthesize_executive_summary(self, system_context: Any, legacy_posture: Any, recs: List[Dict[str, Any]] = None, hotspots: List[Dict[str, Any]] = None, boundary_data: Any = None, database_data: Any = None, architecture_data: Any = None, global_state_data: Any = None) -> Dict[str, Any]:
         """Calls an LLM to write a high-level strategic executive summary."""
         if not self.openrouter_key and not self.client:
             raise ValueError("No API keys found. AI Synthesis unavailable.")
@@ -60,6 +60,11 @@ class AIAdvisoryService:
             ])
         else:
             hotspots_str = "No specific code hotspots or risk items isolated."
+            
+        boundary_str = str(boundary_data) if boundary_data else "None"
+        database_str = str(database_data) if database_data else "None"
+        architecture_str = str(architecture_data) if architecture_data else "None"
+        global_state_str = str(global_state_data) if global_state_data else "None"
 
         prompt = f"""
         You are a Principal PHP Modernization Architect consulting for a C-level executive.
@@ -88,17 +93,38 @@ class AIAdvisoryService:
         Identified Hotspots & Code-Level Risks:
         {hotspots_str}
         
-        Provide a strategic evaluation in three exact parts.
-        You must return a raw JSON object with EXACTLY these three keys.
+        Boundary Intelligence:
+        {boundary_str}
+        
+        Database Intelligence:
+        {database_str}
+        
+        Architecture Data:
+        {architecture_str}
+        
+        Global State Data:
+        {global_state_str}
+        
+        Provide a strategic evaluation in exact JSON format.
+        You must return a raw JSON object with EXACTLY these keys.
         
         CRITICAL FORMATTING RULES:
-        1. Do NOT use double quotes (") anywhere inside the text values of current_state, critical_risks, or the roadmap step fields. If you need to quote anything, use single quotes (') or backticks (`) instead.
+        1. Do NOT use double quotes (") anywhere inside the text values. If you need to quote anything, use single quotes (') or backticks (`) instead.
         2. All double quotes (") must strictly be used ONLY for JSON keys and JSON value boundaries.
         3. Do not include markdown backticks around the JSON.
         
         {{
             "current_state": "A comprehensive, multi-paragraph (3 to 4 paragraphs) deep-dive assessment of the system's current architectural health. Paragraph 1: Introduce the system using its real project name and explicitly explain the system's overall purpose, domain, or use cases (based on the Project Description/documentation context). Connect this purpose to the physical codebase footprint (total files, lines of code, and specific layers) to paint the bigger picture. Paragraph 2: Analyze the structural topology and metrics. Detail the footprint numbers (Models, Controllers, Views, CLI Scripts, Schemas, Libraries) and explain the namespace adoption score (why it is 0.0, why classes live in the global scope, and the implications for modern autoloading). Paragraph 3: Detail the coupling, complexity, and hotspot findings. Explicitly reference the top class hotspots from the provided hotspot list, specifying their WMC (complexity), LCOM (lack of cohesion), instability, and lack of test coverage. Explain the implications of these hotspots on architectural risk. Paragraph 4: Synthesize the bigger picture and modernization impedance. Explain how these factors combine to create high regression risks and why refactoring or upgrading is critical to secure and professionalize the application. Ensure paragraphs are separated by a double newline (\\n\\n) so they render correctly in the HTML view.",
             "critical_risks": "A detailed explanation of the biggest systemic dangers based on the lowest dimension scores and code-level hotspots. Explicitly reference the risks of SQL injection (Score 0.0), testability gaps (Score 0.0), and architectural coupling of identified hotspots.",
+            "boundary_layer_insights": "Insight into the boundary layer coupling, API endpoints, and vendor footprint based on the provided Boundary Intelligence data.",
+            "architecture_insights": "Insights into the layered architecture and bounded contexts.",
+            "database_coupling_insights": "Insight into database ownership and CRUD access patterns.",
+            "global_state_insights": "Insight into the usage of superglobals and side-effects.",
+            "quick_wins": [
+                {{ "title": "Title of quick win", "impact": "High/Medium/Low impact description" }}
+            ],
+            "security_posture": "Narrative evaluating the overall security risks (e.g. SQL injection, unprotected endpoints).",
+            "testing_strategy": "A recommendation for writing the first tests for the system.",
             "strategic_roadmap": [
                 {{
                     "step_number": 1,
@@ -132,8 +158,7 @@ class AIAdvisoryService:
                         }
                         data = {
                             "model": self.openrouter_model,
-                            "messages": [{"role": "user", "content": prompt}],
-                            "response_format": {"type": "json_object"}
+                            "messages": [{"role": "user", "content": prompt}]
                         }
                         response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
                         response.raise_for_status()
@@ -174,6 +199,23 @@ class AIAdvisoryService:
                                 "properties": {
                                     "current_state": {"type": "STRING"},
                                     "critical_risks": {"type": "STRING"},
+                                    "boundary_layer_insights": {"type": "STRING"},
+                                    "architecture_insights": {"type": "STRING"},
+                                    "database_coupling_insights": {"type": "STRING"},
+                                    "global_state_insights": {"type": "STRING"},
+                                    "security_posture": {"type": "STRING"},
+                                    "testing_strategy": {"type": "STRING"},
+                                    "quick_wins": {
+                                        "type": "ARRAY",
+                                        "items": {
+                                            "type": "OBJECT",
+                                            "properties": {
+                                                "title": {"type": "STRING"},
+                                                "impact": {"type": "STRING"}
+                                            },
+                                            "required": ["title", "impact"]
+                                        }
+                                    },
                                     "strategic_roadmap": {
                                         "type": "ARRAY",
                                         "items": {
@@ -188,7 +230,7 @@ class AIAdvisoryService:
                                         }
                                     }
                                 },
-                                "required": ["current_state", "critical_risks", "strategic_roadmap"]
+                                "required": ["current_state", "critical_risks", "boundary_layer_insights", "architecture_insights", "database_coupling_insights", "global_state_insights", "security_posture", "testing_strategy", "quick_wins", "strategic_roadmap"]
                             },
                         ),
                     )
@@ -207,6 +249,15 @@ class AIAdvisoryService:
                 "Given the zero-test-coverage footprint (0.0%), manual quality assurance is the only safeguard, acting as a modernization blocker. Decoupling the codebase, introducing autoloading mappings, and writing automated characterization tests are necessary prerequisites to ensure secure and sustainable evolutionary progress."
             ),
             "critical_risks": "High architectural coupling and low test coverage make modifications dangerous.",
+            "boundary_layer_insights": "Fallback boundary insights not available.",
+            "architecture_insights": "Fallback architecture insights not available.",
+            "database_coupling_insights": "Fallback database insights not available.",
+            "global_state_insights": "Fallback global state insights not available.",
+            "security_posture": "Fallback security posture not available.",
+            "testing_strategy": "Fallback testing strategy not available.",
+            "quick_wins": [
+                {"title": "Automate Code Linting", "impact": "Low effort, high readability improvement."}
+            ],
             "strategic_roadmap": [
                 {"step_number": 1, "title": "Introduce Static Analysis", "description": "Set up phpstan or psalm to baseline the project.", "rationale": "Ensures no new legacy syntax errors or deprecations are introduced."},
                 {"step_number": 2, "title": "Add Characterization Tests", "description": "Create integration testing suites around critical endpoints.", "rationale": "Guarantees logic preservation during active refactoring."},

@@ -355,8 +355,55 @@ def background_synthesize_intelligence(run_id: int):
         except Exception as adv_e:
             logger.error(f"Failed to fetch advisory roadmap for AI: {adv_e}")
 
+        from application.services.boundary_intelligence_service import BoundaryIntelligenceService
+        try:
+            bd = BoundaryIntelligenceService(db).get_boundary_intelligence(run_id)
+            boundary_data = {
+                "kpis": bd.get("kpis", {}),
+                "presentation_coupling_count": len(bd.get("presentation_coupling", [])),
+                "api_surface_count": len(bd.get("api_surface", [])),
+                "vendor_intelligence_count": len(bd.get("vendor_intelligence", [])),
+                "top_presentation_coupling": bd.get("presentation_coupling", [])[:5]
+            } if bd else None
+        except Exception:
+            boundary_data = None
+            
+        from application.services.database_intelligence_service import DatabaseIntelligenceService
+        try:
+            dbd = DatabaseIntelligenceService(db).get_db_intelligence(run_id)
+            database_data = {
+                "total_models": len(dbd.get("taxonomy", [])),
+                "top_active_models": sorted(dbd.get("taxonomy", []), key=lambda x: x.get("Writes", 0) + x.get("Reads", 0), reverse=True)[:5]
+            } if dbd else None
+        except Exception:
+            database_data = None
+            
+        try:
+            l_data = layer_service.get_layered_analysis(run_id)
+            architecture_data = {
+                "bounded_contexts": l_data.get("layer_3", {}).get("bounded_contexts", [])
+            } if l_data else None
+        except Exception:
+            architecture_data = None
+            
+        from application.services.global_state_service import GlobalStateService
+        try:
+            gsd = GlobalStateService(db).get_global_state_intelligence(run_id)
+            global_state_data = {
+                "superglobal_usage": gsd.get("superglobals", {}),
+                "singleton_count": len(gsd.get("singletons", []))
+            } if gsd else None
+        except Exception:
+            global_state_data = None
+
         ai_service = AIAdvisoryService()
-        summary = ai_service.synthesize_executive_summary(ctx, legacy, recs, hotspots_data)
+        summary = ai_service.synthesize_executive_summary(
+            ctx, legacy, recs, hotspots_data,
+            boundary_data=boundary_data,
+            database_data=database_data,
+            architecture_data=architecture_data,
+            global_state_data=global_state_data
+        )
         
         run.ai_executive_summary_json = json.dumps(summary)
         run.error_message = None

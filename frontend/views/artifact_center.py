@@ -91,6 +91,10 @@ def show_artifact_center():
     st.markdown("### Workspace Export Bundle")
     st.caption("Download all selected artifacts packaged in a structured ZIP archive.")
     
+    if st.button("Sync with Database", help="Clear cache and fetch latest artifacts if you used the CLI Override tool"):
+        st.cache_data.clear()
+        st.rerun()
+    
     col_a, col_b = st.columns(2)
     with col_a:
         export_md = st.checkbox("Master Intelligence Report (.md)", value=True)
@@ -110,8 +114,7 @@ def show_artifact_center():
             label="📥 Download strata_workspace.zip",
             data=bundle_content,
             file_name=f"strata_workspace_{run_id}.zip",
-            mime="application/zip",
-            use_container_width=True
+            mime="application/zip"
         )
     else:
         st.error("Failed to generate Workspace Bundle.")
@@ -141,8 +144,7 @@ def show_artifact_center():
                 label="📥 Download Master_Intelligence_Report.md",
                 data=md_content,
                 file_name="Master_Intelligence_Report.md",
-                mime="text/markdown",
-                use_container_width=True
+                mime="text/markdown"
             )
         else:
             st.error("Failed to load report.")
@@ -168,8 +170,7 @@ def show_artifact_center():
                 label="📥 Download results.sarif",
                 data=sarif_content,
                 file_name="results.sarif",
-                mime="application/json",
-                use_container_width=True
+                mime="application/json"
             )
         else:
             st.error("Failed to load SARIF.")
