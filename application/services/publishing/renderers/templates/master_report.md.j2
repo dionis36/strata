@@ -9,6 +9,16 @@
 - **Test Coverage:** {{ model.system_context.test_coverage }}
 - **Lines of Code:** {{ model.system_context.lines_of_code }}
 - **Connectivity:** {{ model.system_context.connectivity }} Edges
+- **Avg Complexity (WMC):** {{ model.system_context.avg_complexity }}
+
+**Architecture Modernization Scorecard**
+{% if model.legacy_intelligence and model.legacy_intelligence.score_dimensions %}
+{% for key, val in model.legacy_intelligence.score_dimensions.items() -%}
+- **{{ key }}:** {{ (val * 10) | round(1) }}/10
+{% endfor %}
+{% else %}
+- *Scorecard Data Unavailable*
+{% endif %}
 
 **Architectural Footprint**
 {% for key, val in model.system_context.architectural_footprint.items() -%}
@@ -17,9 +27,15 @@
 
 **AI Executive Assessment**
 *Current State:* {{ model.ai_executive_summary.get('current_state', '[Not Available]') }}
+
 *Critical Risks:* {{ model.ai_executive_summary.get('critical_risks', '[Not Available]') }}
-*Strategic Roadmap:* 
-{{ model.ai_executive_summary.get('strategic_roadmap', '[Not Available]') }}
+
+*Strategic Roadmap:*
+{% for step in model.ai_executive_summary.get('strategic_roadmap', []) %}
+**Step {{ step.step_number }}: {{ step.title }}**
+- *Description:* {{ step.description }}
+- *Rationale:* {{ step.rationale }}
+{% endfor %}
 
 ## 2. Boundary Intelligence & External Surface
 
@@ -67,22 +83,87 @@
 | `{{ c.name }}` | {{ c.file_count }} | {{ c.internal_calls }} | {{ c.external_calls }} | {{ c.coupling_ratio }} | {{ c.db_access }} | {{ c.auth_access }} |
 {% endfor %}
 
-*(Note: The full interactive system topology graph is available in the accompanying `index.html` application or raw `raw_data/graph_{{ run_id }}.json` export).*
+*(Note: System topology graph JSON is available in the SARIF/JSON data bundle).*
 {% else %}
 *Layered Architecture data is unavailable.*
 {% endif %}
 
-## 4. Database & State Intelligence
+## 4. Database Intelligence
 
-| Table Name | Write Intensity | Shared Pressure |
-| :--- | :--- | :--- |
-{% for db in model.database_intelligence -%}
-| `{{ db.table_name }}` | {{ db.write_intensity }} | {{ db.shared_table_pressure }} |
-{% else %}
-| *No database sinks found.* | - | - |
+{% if model.database_intelligence %}
+### CRUD Access Taxonomy
+| File Path | Reads | Writes | ORM Usage |
+| :--- | :--- | :--- | :--- |
+{% for file, metrics in model.database_intelligence.taxonomy.items() -%}
+{% if metrics.reads > 0 or metrics.writes > 0 or metrics.orm > 0 %}
+| `{{ file }}` | {{ metrics.reads }} | {{ metrics.writes }} | {{ metrics.orm }} |
+{% endif %}
 {% endfor %}
 
-## 5. Risk Audit & Remediation
+### Table Ownership & Pressure
+| Table Name | Primary Owner | Write Intensity | Shared Pressure |
+| :--- | :--- | :--- | :--- |
+{% for db in model.database_intelligence.table_ownership -%}
+| `{{ db.table }}` | `{{ db.primary_owner }}` | - | - |
+{% endfor %}
+{% for db in model.database_intelligence -%}
+{% if db is mapping %}
+| `{{ db.table_name }}` | - | {{ db.write_intensity }} | {{ db.shared_table_pressure }} |
+{% endif %}
+{% endfor %}
+{% else %}
+*No database intelligence data found.*
+{% endif %}
+
+## 5. Runtime & Global State Intelligence
+
+{% if model.global_state_intelligence %}
+### Superglobal Usage Distribution
+| Superglobal | Occurrences |
+| :--- | :--- |
+{% for var, count in model.global_state_intelligence.superglobal_totals.items() -%}
+| `{{ var }}` | {{ count }} |
+{% endfor %}
+
+### Side-Effect Breakdown
+| Effect Type | Count |
+| :--- | :--- |
+{% for effect, count in model.global_state_intelligence.side_effect_totals.items() -%}
+| `{{ effect }}` | {{ count }} |
+{% endfor %}
+{% else %}
+*No global state intelligence data found.*
+{% endif %}
+
+## 6. Legacy PHP Intelligence
+
+{% if model.legacy_intelligence and model.legacy_intelligence.pattern_totals %}
+### Legacy Anti-Pattern Inventory
+| Pattern | Occurrences |
+| :--- | :--- |
+{% for pattern, count in model.legacy_intelligence.pattern_totals.items() -%}
+{% if count > 0 %}
+| `{{ pattern }}` | {{ count }} |
+{% endif %}
+{% endfor %}
+{% else %}
+*No legacy anti-patterns found.*
+{% endif %}
+
+## 7. Strategic Advisory
+
+{% if model.strategic_advisory %}
+### Modernization ROI Matrix
+| Module Context | Recommended Strategy | ROI Score | Migration Effort | Primary Blocker |
+| :--- | :--- | :--- | :--- | :--- |
+{% for rec in model.strategic_advisory.get('recommendations', []) -%}
+| `{{ rec.Context }}` | **{{ rec['Recommended Strategy'] }}** | {{ rec['Modernization ROI'] }}% | {{ rec['Migration Effort'] }} | {{ rec['Primary Blocker'] }} |
+{% endfor %}
+{% else %}
+*Strategic advisory data is unavailable.*
+{% endif %}
+
+## 8. Risk Audit & Remediation
 
 {% for f in model.findings -%}
 ### [{{ f.priority }}] {{ f.observation }}

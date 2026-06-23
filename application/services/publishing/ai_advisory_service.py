@@ -6,6 +6,7 @@ from typing import List, Dict, Any
 from pydantic import BaseModel, Field
 from google import genai
 from google.genai import types
+import json_repair
 
 logger = logging.getLogger(__name__)
 
@@ -137,8 +138,10 @@ class AIAdvisoryService:
                         response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
                         response.raise_for_status()
                         result_json = response.json()
-                        content = result_json["choices"][0]["message"]["content"]
-                        
+                        content = result_json.get("choices", [{}])[0].get("message", {}).get("content")
+                        if not content:
+                            raise ValueError(f"Model {self.openrouter_model} returned empty or null content. Response: {result_json}")
+                            
                         # Extract clean JSON block if there is preamble/postamble
                         content_str = content.strip()
                         start_idx = content_str.find('{')
@@ -147,16 +150,10 @@ class AIAdvisoryService:
                             content_str = content_str[start_idx:end_idx+1]
                             
                         try:
-                            return json.loads(content_str, strict=False)
+                            return json_repair.loads(content_str)
                         except Exception as parse_e:
-                            logger.warning(f"Initial JSON parse failed: {parse_e}. Trying to repair and parse using AST...")
-                            try:
-                                import ast
-                                py_str = content_str.replace('true', 'True').replace('false', 'False').replace('null', 'None')
-                                return ast.literal_eval(py_str)
-                            except Exception as ast_e:
-                                logger.error(f"AST parse also failed: {ast_e}")
-                                raise parse_e
+                            logger.error(f"json_repair parse failed: {parse_e}")
+                            raise parse_e
                                 
                     return self._invoke_with_retry(_call_openrouter)
                 except Exception as or_err:
@@ -195,7 +192,7 @@ class AIAdvisoryService:
                             },
                         ),
                     )
-                    return json.loads(res.text, strict=False)
+                    return json_repair.loads(res.text)
                 return self._invoke_with_retry(_call_gemini)
         except Exception as e:
             logger.error(f"API Error (Summary): {e}")

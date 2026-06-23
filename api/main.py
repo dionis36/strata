@@ -949,9 +949,9 @@ def get_human_assessment(run_id: int, format: str = "html", db: Session = Depend
 @app.get("/artifacts/bundle/{run_id}", tags=["Artifacts"], summary="Download Full Workspace Bundle")
 def get_artifact_bundle(
     run_id: int, 
-    html: bool = True, md: bool = True, csv: bool = True,
-    sarif: bool = True, rector: bool = True, deptrac: bool = True,
-    pdf: bool = True, docx: bool = True,
+    html: bool = False, md: bool = True, csv: bool = False,
+    sarif: bool = True, rector: bool = False, deptrac: bool = False,
+    pdf: bool = False, docx: bool = False,
     db: Session = Depends(get_db)
 ):
     from application.services.artifact_service import ArtifactService

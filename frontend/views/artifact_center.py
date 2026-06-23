@@ -51,18 +51,13 @@ def show_artifact_center():
     elif run_status == "analysis_complete":
         st.markdown(
             "<div style='padding:1rem;background-color:rgba(16, 185, 129, 0.1);border-left:4px solid #10b981;border-radius:4px;color:var(--text-color);margin-bottom:1.5rem;'>"
-            "<strong>Source Code Scan Complete!</strong> The technical analysis is ready. "
-            "Click the button below to generate the executive reports and refactoring guides using the AI engine."
+            "<strong>Source Code Scan Complete!</strong> Auto-starting the AI engine for executive reports..."
             "</div>", 
             unsafe_allow_html=True
         )
-        if st.button("Generate Reports & Guides", type="primary", use_container_width=True):
-            res = requests.post(f"{FASTAPI_URL}/runs/{run_id}/retry_intelligence")
-            if res.status_code == 200:
-                st.success("Started! Generating summaries...")
-                st.rerun()
-            else:
-                st.error("Failed to start Engine.")
+        with st.spinner("Initializing AI Synthesis..."):
+            requests.post(f"{FASTAPI_URL}/runs/{run_id}/retry_intelligence")
+            st.rerun()
         st.stop()
     elif run_status == "analyzing":
         st.markdown(
@@ -96,48 +91,30 @@ def show_artifact_center():
     st.markdown("### Workspace Export Bundle")
     st.caption("Download all selected artifacts packaged in a structured ZIP archive.")
     
-    with st.form("export_bundle_form"):
-        col_a, col_b = st.columns(2)
-        with col_a:
-            export_pdf = st.checkbox("Master Intelligence Report (PDF)", value=True)
-            export_docx = st.checkbox("Master Intelligence Report (DOCX)", value=True)
-            export_html = st.checkbox("Master Navigatable HTML App", value=True)
-            export_md = st.checkbox("Master Intelligence Report (.md)", value=False)
-            export_csv = st.checkbox("Complete Risk Inventory (CSV)", value=True)
-        with col_b:
-            export_sarif = st.checkbox("SARIF Export", value=True)
-            export_rector = st.checkbox("Rector Config", value=True)
-            export_deptrac = st.checkbox("Deptrac Config", value=True)
-            
-        submit_bundle = st.form_submit_button("Generate Full Bundle (.zip)")
+    col_a, col_b = st.columns(2)
+    with col_a:
+        export_md = st.checkbox("Master Intelligence Report (.md)", value=True)
+    with col_b:
+        export_sarif = st.checkbox("SARIF Export", value=True)
+    @st.cache_data(show_spinner=False)
+    def fetch_bundle_cached(run_id_val, md_val, sarif_val):
+        params = {"html": False, "md": md_val, "csv": False, "sarif": sarif_val, "rector": False, "deptrac": False, "pdf": False, "docx": False}
+        res = requests.get(f"{FASTAPI_URL}/artifacts/bundle/{run_id_val}", params=params)
+        return res.content if res.status_code == 200 else None
+
+    with st.spinner("Compiling Workspace Bundle..."):
+        bundle_content = fetch_bundle_cached(run_id, export_md, export_sarif)
         
-    zip_key = f"zip_bundle_data_{run_id}"
-    if submit_bundle or st.session_state.get(zip_key) is not None:
-        if submit_bundle:
-            with st.spinner("Compiling Workspace Bundle..."):
-                params = {
-                    "html": export_html,
-                    "md": export_md,
-                    "csv": export_csv,
-                    "sarif": export_sarif,
-                    "rector": export_rector,
-                    "deptrac": export_deptrac,
-                    "pdf": export_pdf,
-                    "docx": export_docx
-                }
-                res = requests.get(f"{FASTAPI_URL}/artifacts/bundle/{run_id}", params=params)
-                if res.status_code == 200:
-                    st.session_state[zip_key] = res.content
-                else:
-                    st.error("Failed to generate Workspace Bundle.")
-                    
-        if st.session_state.get(zip_key) is not None:
-            st.download_button(
-                label="📥 Download strata_workspace.zip",
-                data=st.session_state[zip_key],
-                file_name=f"strata_workspace_{run_id}.zip",
-                mime="application/zip"
-            )
+    if bundle_content:
+        st.download_button(
+            label="📥 Download strata_workspace.zip",
+            data=bundle_content,
+            file_name=f"strata_workspace_{run_id}.zip",
+            mime="application/zip",
+            use_container_width=True
+        )
+    else:
+        st.error("Failed to generate Workspace Bundle.")
                 
     st.markdown("---")
 
@@ -151,66 +128,24 @@ def show_artifact_center():
         st.markdown("#### 1. Master Intelligence Report")
         st.caption("A comprehensive document covering system scope, KPIs, architectural risks, and dependency intelligence.")
         
-        format_options = {
-            "PDF Document (.pdf)": "pdf",
-            "Word Document (.docx)": "docx",
-            "Web Page (.html)": "html",
-            "Raw Markdown (.md)": "md"
-        }
-        selected_format_label = st.selectbox("Select Export Format", list(format_options.keys()))
-        selected_format = format_options[selected_format_label]
+        @st.cache_data(show_spinner=False)
+        def fetch_human_cached(run_id_val):
+            res = requests.get(f"{FASTAPI_URL}/artifacts/human/{run_id_val}?format=md")
+            return res.content if res.status_code == 200 else None
+
+        with st.spinner("Preparing MD Report..."):
+            md_content = fetch_human_cached(run_id)
         
-        btn_compile = st.button("Generate Assessment")
-        cached_human_key = f"cached_human_{selected_format}_{run_id}"
-        
-        if btn_compile:
-            with st.spinner(f"Generating {selected_format.upper()} Report..."):
-                res = requests.get(f"{FASTAPI_URL}/artifacts/human/{run_id}?format={selected_format}")
-                if res.status_code == 200:
-                    st.session_state[cached_human_key] = res.content
-                    st.success(f"{selected_format.upper()} report generated!")
-                else:
-                    st.error("Failed to generate report.")
-        
-        if st.session_state.get(cached_human_key) is not None:
-            mime_types = {
-                "pdf": "application/pdf",
-                "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                "html": "text/html",
-                "md": "text/markdown"
-            }
+        if md_content:
             st.download_button(
-                label=f"📥 Download Master_Intelligence_Report.{selected_format}",
-                data=st.session_state[cached_human_key],
-                file_name=f"Master_Intelligence_Report.{selected_format}",
-                mime=mime_types[selected_format]
+                label="📥 Download Master_Intelligence_Report.md",
+                data=md_content,
+                file_name="Master_Intelligence_Report.md",
+                mime="text/markdown",
+                use_container_width=True
             )
-                     
-        st.markdown("---")
-        
-        # 2. Risk CSV
-        st.markdown("#### 2. Risk Summary (CSV)")
-        st.caption("A flat CSV of all component risk scores for Jira or Excel.")
-        
-        btn_csv = st.button("Generate CSV Export")
-        csv_key = f"cached_csv_data_{run_id}"
-        
-        if btn_csv:
-            with st.spinner("Generating CSV..."):
-                res = requests.get(f"{FASTAPI_URL}/artifacts/csv/{run_id}")
-                if res.status_code == 200:
-                    st.session_state[csv_key] = res.text
-                    st.success("CSV generated!")
-                else:
-                    st.error("Failed to generate CSV.")
-                    
-        if st.session_state.get(csv_key) is not None:
-            st.download_button(
-                label="📥 Download risks.csv",
-                data=st.session_state[csv_key],
-                file_name="risks.csv",
-                mime="text/csv"
-            )
+        else:
+            st.error("Failed to load report.")
 
     with col2:
         st.markdown("### Machine Artifacts")
@@ -220,104 +155,26 @@ def show_artifact_center():
         st.markdown("#### 1. SARIF Export")
         st.caption("OASIS standard JSON format for static analysis findings. Ready for GitHub Code Scanning.")
         
-        btn_sarif = st.button("Generate SARIF JSON")
-        sarif_key = f"cached_sarif_data_{run_id}"
-        
-        if btn_sarif:
-            with st.spinner("Generating SARIF..."):
-                res = requests.get(f"{FASTAPI_URL}/artifacts/sarif/{run_id}")
-                if res.status_code == 200:
-                    st.session_state[sarif_key] = json.dumps(res.json(), indent=2)
-                    st.success("SARIF generated!")
-                else:
-                    st.error("Failed to generate SARIF.")
-                    
-        if st.session_state.get(sarif_key) is not None:
+        @st.cache_data(show_spinner=False)
+        def fetch_sarif_cached(run_id_val):
+            res = requests.get(f"{FASTAPI_URL}/artifacts/sarif/{run_id_val}")
+            return json.dumps(res.json(), indent=2) if res.status_code == 200 else None
+
+        with st.spinner("Preparing SARIF Export..."):
+            sarif_content = fetch_sarif_cached(run_id)
+            
+        if sarif_content:
             st.download_button(
                 label="📥 Download results.sarif",
-                data=st.session_state[sarif_key],
+                data=sarif_content,
                 file_name="results.sarif",
-                mime="application/json"
+                mime="application/json",
+                use_container_width=True
             )
+        else:
+            st.error("Failed to load SARIF.")
 
-        st.markdown("---")
-        
-        # 2. Rector Config
-        st.markdown("#### 2. AI-Synthesized Rector Configuration")
-        st.caption("Automated PHP refactoring rules synthesized by the LLM based on detected legacy patterns (`rector.php`).")
-        
-        btn_rector = st.button("Generate rector.php")
-        rector_key = f"cached_rector_data_{run_id}"
-        
-        if btn_rector:
-            with st.spinner("Synthesizing custom Rector rules via AI..."):
-                res = requests.get(f"{FASTAPI_URL}/artifacts/rector/{run_id}")
-                if res.status_code == 200:
-                    st.session_state[rector_key] = res.text
-                    st.success("Rector Configuration Synthesized")
-                else:
-                    st.error("Failed to generate Rector config.")
-                    
-        if st.session_state.get(rector_key) is not None:
-            with st.expander("View AI-Generated rector.php", expanded=True):
-                st.code(st.session_state[rector_key], language="php")
-            st.download_button(
-                label="📥 Download rector.php",
-                data=st.session_state[rector_key],
-                file_name="rector.php",
-                mime="text/php"
-            )
-                    
-        st.markdown("---")
-        
-        # 3. Deptrac Config
-        st.markdown("#### 3. Deptrac Layer Config")
-        st.caption("Architectural boundary enforcement rules based on inferred layers (`deptrac.yaml`).")
-        
-        btn_deptrac = st.button("Generate deptrac.yaml")
-        deptrac_key = f"cached_deptrac_data_{run_id}"
-        
-        if btn_deptrac:
-            with st.spinner("Generating Deptrac rules..."):
-                res = requests.get(f"{FASTAPI_URL}/artifacts/deptrac/{run_id}")
-                if res.status_code == 200:
-                    st.session_state[deptrac_key] = res.text
-                    st.success("Deptrac generated!")
-                else:
-                    st.error("Failed to generate Deptrac config.")
-                    
-        if st.session_state.get(deptrac_key) is not None:
-            st.download_button(
-                label="📥 Download deptrac.yaml",
-                data=st.session_state[deptrac_key],
-                file_name="deptrac.yaml",
-                mime="application/yaml"
-            )
-                    
-        st.markdown("---")
-        
-        # 4. Strict JSON
-        st.markdown("#### 4. Machine Data Dump")
-        st.caption("A comprehensive, strict JSON schema dump of all system nodes, edges, and scores.")
-        
-        btn_json = st.button("Generate Strict JSON")
-        json_key = f"cached_json_data_{run_id}"
-        
-        if btn_json:
-            with st.spinner("Generating JSON Dump..."):
-                res = requests.get(f"{FASTAPI_URL}/artifacts/json/{run_id}")
-                if res.status_code == 200:
-                    st.session_state[json_key] = json.dumps(res.json(), indent=2)
-                    st.success("Strict JSON generated!")
-                else:
-                    st.error("Failed to generate JSON dump.")
-        if st.session_state.get(json_key) is not None:
-            st.download_button(
-                label="📥 Download system_dump.json",
-                data=st.session_state[json_key],
-                file_name="system_dump.json",
-                mime="application/json"
-            )
+
 
 if __name__ == "__main__":
     show_artifact_center()
