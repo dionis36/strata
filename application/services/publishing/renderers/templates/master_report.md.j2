@@ -14,7 +14,11 @@
 **Architecture Modernization Scorecard**
 {% if model.legacy_intelligence and model.legacy_intelligence.score_dimensions %}
 {% for key, val in model.legacy_intelligence.score_dimensions.items() -%}
+{% if val is number %}
 - **{{ key }}:** {{ (val * 10) | round(1) }}/10
+{% else %}
+- **{{ key }}:** {{ val }}
+{% endif %}
 {% endfor %}
 {% else %}
 - *Scorecard Data Unavailable*

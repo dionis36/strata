@@ -435,7 +435,7 @@ def retry_intelligence(run_id: int, background_tasks: BackgroundTasks, db: Sessi
     if not run:
         raise HTTPException(status_code=404, detail="Run not found")
         
-    run.status = "analysis_complete"
+    run.status = "synthesizing_findings"
     db.commit()
     
     background_tasks.add_task(background_synthesize_intelligence, run_id)

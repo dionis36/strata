@@ -50,14 +50,15 @@ def show_artifact_center():
         st.rerun()
     elif run_status == "analysis_complete":
         st.markdown(
-            "<div style='padding:1rem;background-color:rgba(16, 185, 129, 0.1);border-left:4px solid #10b981;border-radius:4px;color:var(--text-color);margin-bottom:1.5rem;'>"
-            "<strong>Source Code Scan Complete!</strong> Auto-starting the AI engine for executive reports..."
+            "<div style='padding:1rem;background-color:rgba(14, 165, 233, 0.1);border-left:4px solid #0ea5e9;border-radius:4px;color:var(--text-color);margin-bottom:1.5rem;'>"
+            "<strong>Core Metrics Ready.</strong> The baseline architectural scan is complete. To unlock the full Strategic Modernization Blueprint, you must synthesize the AI Executive Insights."
             "</div>", 
             unsafe_allow_html=True
         )
-        with st.spinner("Initializing AI Synthesis..."):
-            requests.post(f"{FASTAPI_URL}/runs/{run_id}/retry_intelligence")
-            st.rerun()
+        if st.button("Generate AI Executive Summary", type="primary"):
+            with st.spinner("Initializing AI Synthesis..."):
+                requests.post(f"{FASTAPI_URL}/runs/{run_id}/retry_intelligence")
+                st.rerun()
         st.stop()
     elif run_status == "analyzing":
         st.markdown(
@@ -86,6 +87,9 @@ def show_artifact_center():
                 st.rerun()
             else:
                 st.error("Failed to queue retry.")
+        
+        st.divider()
+        st.markdown("<div style='opacity:0.6;margin-bottom:1rem;'><em>Note: Since AI synthesis failed, your Workspace Export Bundle will be incomplete. You can still download the available machine artifacts below.</em></div>", unsafe_allow_html=True)
 
 
     st.markdown("### Workspace Export Bundle")
@@ -97,7 +101,8 @@ def show_artifact_center():
     
     col_a, col_b = st.columns(2)
     with col_a:
-        export_md = st.checkbox("Strategic Modernization Blueprint (.md)", value=True)
+        is_md_disabled = run_status != "intelligence_ready"
+        export_md = st.checkbox("Strategic Modernization Blueprint (.md)", value=not is_md_disabled, disabled=is_md_disabled)
     with col_b:
         export_sarif = st.checkbox("SARIF Export", value=True)
     @st.cache_data(show_spinner=False)
@@ -139,7 +144,9 @@ def show_artifact_center():
         with st.spinner("Preparing MD Report..."):
             md_content = fetch_human_cached(run_id)
         
-        if md_content:
+        if is_md_disabled:
+            st.info("Generate the AI Executive Summary above to unlock this artifact.")
+        elif md_content:
             st.download_button(
                 label="📥 Download Strategic_Modernization_Blueprint.md",
                 data=md_content,
