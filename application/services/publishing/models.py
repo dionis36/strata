@@ -71,8 +71,9 @@ class LegacyPosture(BaseModel):
 class PresentationCoupling(BaseModel):
     file_path: str
     ui_entanglement_ratio: float
-    is_fat_view: bool
+    html_echo_nodes: int
     db_queries: int
+    severity: str
 
 class ApiEndpoint(BaseModel):
     path: str
@@ -118,4 +119,5 @@ class CanonicalModel(BaseModel):
     modules: List[Module] = Field(default_factory=list)
     findings: List[Finding] = Field(default_factory=list)
     full_risk_register: List[Finding] = Field(default_factory=list)
+    file_matrix: List[Dict[str, Any]] = Field(default_factory=list)
     ai_executive_summary: Dict[str, Any] = Field(default_factory=dict)

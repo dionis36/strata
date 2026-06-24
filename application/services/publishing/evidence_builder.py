@@ -124,6 +124,18 @@ class EvidenceBuilder:
                 ai_exec_summary = json.loads(run.ai_executive_summary_json)
             except Exception:
                 pass
+                
+        # 9. Extract File Matrix (Risk Matrix)
+        from application.services.security_risk_service import SecurityRiskService
+        file_matrix = []
+        try:
+            sec_service = SecurityRiskService(self.db)
+            sec_data = sec_service.get_security_risk_audit(run_id)
+            full_matrix = sec_data.get("file_matrix", [])
+            # Cap the matrix to the top 100 most critical files for the Markdown report
+            file_matrix = full_matrix[:100]
+        except Exception:
+            pass
         
         return CanonicalModel(
             system_context=ctx,
@@ -137,6 +149,7 @@ class EvidenceBuilder:
             modules=modules,
             findings=findings,
             full_risk_register=full_risk_register,
+            file_matrix=file_matrix,
             ai_executive_summary=ai_exec_summary
         )
 
@@ -303,8 +316,9 @@ class EvidenceBuilder:
             presentation_coupling.append(PresentationCoupling(
                 file_path=p.get("File", ""),
                 ui_entanglement_ratio=ratio_float,
-                is_fat_view="CRITICAL" in p.get("Severity", ""),
-                db_queries=p.get("DB Operations", 0)
+                html_echo_nodes=p.get("HTML/Echo Nodes", 0),
+                db_queries=p.get("DB Operations", 0),
+                severity=p.get("Severity", "🟢 LOW")
             ))
             
         api_surface = []

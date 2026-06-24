@@ -196,7 +196,11 @@ class SecurityRiskService:
                 "God File": max_cc_file.split("/")[-1] if "/" in max_cc_file else max_cc_file,
                 "God File CC": max_cc
             },
-            "file_matrix": sorted(file_matrix, key=lambda x: x["Cyclomatic Complexity"], reverse=True),
+            "file_matrix": sorted(file_matrix, key=lambda x: (
+                {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}.get(x.get("Overall Risk", "LOW"), 4),
+                x.get("Maintainability Index", 100),
+                -x.get("Cyclomatic Complexity", 0)
+            )),
             "vulnerabilities": sorted(vulnerabilities, key=lambda x: 0 if x["Risk Magnitude"] == "CRITICAL" else 1),
             "architectural_rot": sorted(architectural_rot, key=lambda x: 0 if x["Risk Magnitude"] == "CRITICAL" else 1)
         }

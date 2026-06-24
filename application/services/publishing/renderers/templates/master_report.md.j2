@@ -13,13 +13,9 @@
 
 **Architecture Modernization Scorecard**
 {% if model.legacy_intelligence and model.legacy_intelligence.score_dimensions %}
-{% for key, val in model.legacy_intelligence.score_dimensions.items() -%}
-{% if val is number %}
-- **{{ key }}:** {{ (val * 10) | round(1) }}/10
-{% else %}
-- **{{ key }}:** {{ val }}
-{% endif %}
-{% endfor %}
+{% for key, val in model.legacy_intelligence.score_dimensions.items() %}
+- **{{ key }}:** {% if val is number %}{{ (val * 10) | round(1) }}/10{% else %}{{ val }}{% endif %}
+{%- endfor %}
 {% else %}
 - *Scorecard Data Unavailable*
 {% endif %}
@@ -55,10 +51,10 @@
 <details>
 <summary>View Fat Views & Entanglement Data</summary>
 
-| File | Entanglement Ratio | DB Queries | Fat View Risk |
-| :--- | :--- | :--- | :--- |
+| File | Entanglement Ratio | HTML/Echo Nodes | DB Operations | Severity |
+| :--- | :--- | :--- | :--- | :--- |
 {% for p in model.boundary_intelligence.presentation_coupling -%}
-| <kbd>{{ p.file_path }}</kbd> | {{ p.ui_entanglement_ratio }}% | {{ p.db_queries }} | {{ '🔴 CRITICAL' if p.is_fat_view else '🟢 LOW' }} |
+| <kbd>{{ p.file_path }}</kbd> | {{ p.ui_entanglement_ratio }}% | {{ p.html_echo_nodes }} | {{ p.db_queries }} | {{ p.severity }} |
 {% endfor %}
 
 </details>
@@ -270,10 +266,32 @@ pie title Superglobal Calls
 *No quick wins identified.*
 {% endif %}
 
-## 11. Risk Audit & Remediation
+## 11. Security & Risk Audit
 
+{{ model.ai_executive_summary.get('security_posture', '*No executive security posture analysis available.*') }}
+
+{% if model.file_matrix and model.file_matrix | length > 0 %}
+### The Risk Matrix (Top 100 Highest Risk Files)
+*Every file is scored against the Maintainability Index and Cyclomatic Complexity standards. To prevent report bloat, this matrix is capped at the 100 most structurally dangerous components. (For the complete inventory, refer to the CSV export).*
+
+| File Path | Overall Risk | MI (0-100) | Cyclomatic Complexity | Nesting | Method LOC | Fan-Out | Security Sinks | Global Accesses |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+{% for f in model.file_matrix -%}
+{% set risk = f.get('Overall Risk', f.get('Overall File Risk', 'LOW')) -%}
+{% if risk == 'CRITICAL' %}{% set risk_emoji = '🔴 CRITICAL' -%}
+{% elif risk == 'HIGH' %}{% set risk_emoji = '🟠 HIGH' -%}
+{% elif risk == 'MEDIUM' %}{% set risk_emoji = '🟡 MEDIUM' -%}
+{% else %}{% set risk_emoji = '🟢 LOW' %}{% endif -%}
+| <kbd>{{ f.get('File Name', 'Unknown') }}</kbd> | {{ risk_emoji }} | {{ f.get('Maintainability Index', 0) }} | {{ f.get('Cyclomatic Complexity', 0) }} | {{ f.get('Max Nesting Depth', 0) }} | {{ f.get('Max Method LOC', 0) }} | {{ f.get('Fan-Out', 0) }} | {{ f.get('Security Sinks', 0) }} | {{ f.get('Global Accesses', 0) }} |
+{% endfor %}
+{% else %}
+*No file-level risk matrix available.*
+{% endif %}
+
+### Critical Incident Registry
+{% if model.findings and model.findings | length > 0 %}
 {% for f in model.findings -%}
-### [{{ f.priority }}] {{ f.observation }}
+#### [{{ f.priority }}] {{ f.observation }}
 - **Business Impact:** {{ f.impact }}
 - **Strategic Action:** {{ f.recommended_action }} *(Confidence: {{ f.confidence }})*
 - **Evidence/Metrics:**
@@ -282,6 +300,7 @@ pie title Superglobal Calls
 {% endfor %}
 
 ---
+{% endfor %}
 {% else %}
 *No critical risks identified.*
-{% endfor %}
+{% endif %}
