@@ -187,6 +187,8 @@ pie title Files per Context
 {% if model.global_state_intelligence %}
 ### Superglobal Usage Distribution
 
+{% set total_globals = model.global_state_intelligence.superglobal_totals.values() | sum %}
+{% if total_globals > 0 %}
 ```mermaid
 pie title Superglobal Calls
 {% for var, count in model.global_state_intelligence.superglobal_totals.items() -%}
@@ -202,40 +204,84 @@ pie title Superglobal Calls
 | Superglobal | Occurrences |
 | :--- | :--- |
 {% for var, count in model.global_state_intelligence.superglobal_totals.items() -%}
+{% if count > 0 -%}
 | <kbd>{{ var }}</kbd> | {{ count }} |
+{% endif -%}
 {% endfor %}
 
 </details>
+{% else %}
+> **No superglobal accesses detected.**
+{% endif %}
 
 ### Side-Effect Breakdown
 
+{% set total_effects = model.global_state_intelligence.side_effect_totals.values() | sum %}
+{% if total_effects > 0 %}
 <details>
 <summary>View Side-Effect Totals</summary>
 
 | Effect Type | Count |
 | :--- | :--- |
 {% for effect, count in model.global_state_intelligence.side_effect_totals.items() -%}
+{% if count > 0 -%}
 | <kbd>{{ effect }}</kbd> | {{ count }} |
+{% endif -%}
 {% endfor %}
 
 </details>
+{% else %}
+> **No direct state mutations detected.**
+{% endif %}
 {% else %}
 *No global state intelligence data found.*
 {% endif %}
 
 ## 6. Legacy PHP Intelligence
 
-{% if model.legacy_intelligence and model.legacy_intelligence.pattern_totals %}
+{% if model.legacy_intelligence %}
+
+### Era Classification
+- **Classified Era:** {{ model.legacy_intelligence.classified_era }}
+- **Procedural Ratio:** {{ "%.1f"|format(model.legacy_intelligence.procedural_ratio * 100) }}%
+- **Namespace Coverage:** {{ "%.1f"|format(model.legacy_intelligence.namespace_ratio * 100) }}%
+
+#### Era Signals Detected
+{% if model.legacy_intelligence.era_signals %}
+| Severity | Estimated Era | Occurrences | Detail |
+| :--- | :--- | :--- | :--- |
+{% for signal in model.legacy_intelligence.era_signals -%}
+| <kbd>{{ signal.severity }}</kbd> | {{ signal.era }} | {{ signal.count }} | {{ signal.detail }} |
+{% endfor %}
+{% else %}
+*No legacy era signals detected. The codebase appears to use modern PHP patterns.*
+{% endif %}
+
+### Structural Composition
+| Category | Count |
+| :--- | :--- |
+| **Total Files Scanned** | {{ model.legacy_intelligence.total_files_scanned }} |
+| **OOP Files (has classes)** | {{ model.legacy_intelligence.files_with_classes }} |
+| **Namespace-aware Files** | {{ model.legacy_intelligence.files_namespace_aware }} |
+| **Procedural-only Files** | {{ model.legacy_intelligence.files_procedural_only }} |
+| **Variable Variables ($$var)** | {{ model.legacy_intelligence.variable_variable_count }} |
+| **Hosting Assumption Calls** | {{ model.legacy_intelligence.hosting_signal_count }} |
+
 ### Legacy Anti-Pattern Inventory
+{% if model.legacy_intelligence.pattern_totals %}
 | Pattern | Occurrences |
 | :--- | :--- |
 {% for pattern, count in model.legacy_intelligence.pattern_totals.items() -%}
-{% if count > 0 %}
+{% if count > 0 -%}
 | <kbd>{{ pattern }}</kbd> | {{ count }} |
-{% endif %}
+{% endif -%}
 {% endfor %}
 {% else %}
 *No legacy anti-patterns found.*
+{% endif %}
+
+{% else %}
+*Legacy Intelligence data is unavailable.*
 {% endif %}
 
 ## 7. Strategic Advisory
