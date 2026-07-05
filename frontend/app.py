@@ -117,6 +117,8 @@ with st.sidebar:
                 current_r = next((r for r in available_runs if r['id'] == selected_run_id), None)
                 if current_r and 'project_id' in current_r:
                     st.session_state["active_project_id"] = current_r['project_id']
+                else:
+                    st.session_state["active_project_id"] = None
 
                 if st.session_state.get("active_run_id") != selected_run_id:
                     st.session_state["active_run_id"] = selected_run_id

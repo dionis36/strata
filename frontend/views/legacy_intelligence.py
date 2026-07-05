@@ -329,7 +329,7 @@ def show_legacy_intelligence():
             f"4. `{host_signals}` file(s) contain hosting assumption calls (ini_set, header, set_time_limit)."
         )
         st.markdown(
-            "**RECOMMENDATION**: The `{proc_only}` procedural function files are the primary target "
+            f"**RECOMMENDATION**: The `{proc_only}` procedural function files are the primary target "
             "for wrapping into stateless service classes. Review them against the **Pattern Detection** tab — "
             "those containing `MYSQL_LEGACY` or `INLINE_HTML` are the highest-priority refactoring candidates."
         )

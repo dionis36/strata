@@ -49,7 +49,7 @@ def show_extraction_simulator():
                 "Select Extraction Target", 
                 unique_files,
                 index=0,
-                format_func=lambda x: f"{os.path.basename(x)} ({os.path.dirname(x).replace('/data/OWASPWebGoatPHP-master', '')})",
+                format_func=lambda x: f"{os.path.basename(x)} ({os.path.dirname(x).replace('/data/', '', 1)})",
                 help="Search and select any file to calculate its blast radius within the monolith."
             )
         else:
