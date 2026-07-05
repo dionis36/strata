@@ -119,21 +119,91 @@ def show_extraction_simulator():
                 st.markdown("### Extraction Blast Radius")
                 total_nodes = len(sim["blast_radius"]["files"]) + len(sim["dependency_payload"]["files"])
                 if total_nodes > 500:
-                    st.warning(f"Graph too large for interactive rendering ({total_nodes} nodes). Displaying tabular fallback.", icon=":material/warning:")
+                    st.warning(f"Graph too large for interactive rendering ({total_nodes} nodes). Displaying Adjacency Matrix fallback.", icon=":material/warning:")
                     
-                    st.markdown("##### 🔌 Upstream Dependencies (What this needs)")
-                    upstream = [f for f in sim["dependency_payload"]["files"] if f != sim["target"]]
-                    if upstream:
-                        st.dataframe(pd.DataFrame({"File Path": upstream}), hide_index=True, use_container_width=True)
-                    else:
-                        st.info("No upstream dependencies detected.")
+                    import plotly.graph_objects as go
+                    
+                    target_file = sim["target"]
+                    upstream = [f for f in sim["dependency_payload"]["files"] if f != target_file]
+                    downstream = [f for f in sim["blast_radius"]["files"] if f != target_file]
+                    
+                    x_vals = []
+                    y_vals = []
+                    colors = []
+                    hover_texts = []
+                    
+                    for f in upstream:
+                        x_vals.append(f)
+                        y_vals.append(target_file)
+                        colors.append('#58a6ff')
+                        hover_texts.append(f"Dependant: {target_file}<br>Dependency: {f}")
                         
-                    st.markdown("##### 💥 Blast Radius (What breaks if this is removed)")
-                    downstream = [f for f in sim["blast_radius"]["files"] if f != sim["target"]]
-                    if downstream:
-                        st.dataframe(pd.DataFrame({"File Path": downstream}), hide_index=True, use_container_width=True)
-                    else:
-                        st.info("No downstream blast radius detected.")
+                    for f in downstream:
+                        x_vals.append(target_file)
+                        y_vals.append(f)
+                        colors.append('#d29922')
+                        hover_texts.append(f"Dependant: {f}<br>Dependency: {target_file}")
+                        
+                    x_vals.append(target_file)
+                    y_vals.append(target_file)
+                    colors.append('#f85149')
+                    hover_texts.append(f"Target: {target_file}")
+                    
+                    all_nodes = list(dict.fromkeys([target_file] + upstream + downstream))
+                    
+                    fig = go.Figure(data=go.Scatter(
+                        x=x_vals,
+                        y=y_vals,
+                        mode='markers',
+                        marker=dict(
+                            symbol='square',
+                            size=4,
+                            color=colors,
+                            line=dict(width=0)
+                        ),
+                        text=hover_texts,
+                        hoverinfo='text'
+                    ))
+                    
+                    fig.update_layout(
+                        plot_bgcolor='#0e1117',
+                        paper_bgcolor='#0e1117',
+                        font_color='#e0e0e0',
+                        margin=dict(l=0, r=0, t=10, b=0),
+                        height=500,
+                        xaxis=dict(
+                            title="Dependency",
+                            showgrid=False,
+                            zeroline=False,
+                            showticklabels=False,
+                            categoryorder='array',
+                            categoryarray=all_nodes
+                        ),
+                        yaxis=dict(
+                            title="Dependant",
+                            showgrid=False,
+                            zeroline=False,
+                            showticklabels=False,
+                            categoryorder='array',
+                            categoryarray=all_nodes,
+                            autorange="reversed"
+                        )
+                    )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    with st.expander("View Raw Dependency Tables"):
+                        st.markdown("##### 🔌 Upstream Dependencies (What this needs)")
+                        if upstream:
+                            st.dataframe(pd.DataFrame({"File Path": upstream}), hide_index=True, use_container_width=True)
+                        else:
+                            st.info("No upstream dependencies detected.")
+                            
+                        st.markdown("##### 💥 Blast Radius (What breaks if this is removed)")
+                        if downstream:
+                            st.dataframe(pd.DataFrame({"File Path": downstream}), hide_index=True, use_container_width=True)
+                        else:
+                            st.info("No downstream blast radius detected.")
                 else:
                     net = Network(height="500px", width="100%", bgcolor="#0e1117", font_color="#e0e0e0", directed=True)
                     net.toggle_physics(True)
