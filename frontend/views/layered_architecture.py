@@ -71,6 +71,8 @@ def show_layered_architecture():
                     current[part]["_info"] = info
                 current = current[part]["_children"]
             
+        search_term = st.text_input("🔍 Search files or directories...", "").lower()
+        
         def generate_html_tree(node, depth=0):
             html = ""
             # Role Icon Mapping
@@ -111,11 +113,19 @@ def show_layered_architecture():
                             fname = f_obj
                             frole = "file"
                         
+                        if search_term and search_term not in fname.lower() and search_term not in name.lower():
+                            continue
+                        
                         ficon = role_icons.get(frole, "")
                         files_html += f"<div style='color:#aaa; padding-left: 20px; font-size: 0.85rem;'>{ficon} {fname} <span style='color:#555; font-size:0.75em;'>({frole})</span></div>"
 
+                    if search_term and not files_html and not children_html and search_term not in name.lower():
+                        continue
+
                     html += f"<details {open_attr} style='margin-left: 10px; margin-bottom: 5px;'><summary style='cursor: pointer;'>{summary}</summary><div style='border-left: 1px dashed #444; margin-left: 7px; padding-top: 4px;'>{files_html}{children_html}</div></details>"
                 else:
+                    if search_term and not children_html and search_term not in name.lower():
+                        continue
                     html += f"<details {open_attr} style='margin-left: 10px;'><summary style='cursor: pointer;'><b>{name}/</b></summary><div style='border-left: 1px dashed #444; margin-left: 7px;'>{children_html}</div></details>"
             return html
 

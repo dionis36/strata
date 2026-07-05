@@ -82,7 +82,8 @@ def show_extraction_simulator():
     ghost = st.session_state.get(ghost_key)
     
     if sim and sim.get("target") == target_fqn:
-        tab_as_is, tab_to_be = st.tabs(["As-Is Blast Radius", "To-Be Ghost Graph"])
+        total_nodes = len(sim["blast_radius"]["files"]) + len(sim["dependency_payload"]["files"])
+        tab_as_is, tab_to_be = st.tabs([f"As-Is Blast Radius ({total_nodes} nodes)", "To-Be Ghost Graph"])
         
         with tab_as_is:
             col1, col2 = st.columns([1, 2])

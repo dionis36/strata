@@ -60,11 +60,14 @@ def show_dashboard():
         st.markdown("### System Vitality")
         kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
         
-        kpi1.metric("Total Files", f"{run.get('total_files', 0):,}", help="Total number of files scanned in the target directory.")
-        kpi2.metric("Lines of Code", f"{run.get('total_loc', 0):,}", help="Total lines of code excluding empty lines and standard comments.")
-        kpi3.metric("Avg Complexity", round(run.get('avg_complexity', 0), 2), help="Average cyclomatic complexity per function/method.")
-        kpi4.metric("Total Classes", f"{run.get('total_classes', 0):,}", help="Total number of object-oriented classes discovered.")
-        kpi5.metric("Connectivity", f"{run.get('total_edges', 0):,}", help="Total number of internal function/method calls mapping the system.")
+        kpi1.metric("Total Files", f"{run.get('total_files', 0):,}", delta="System Scale", delta_color="off", help="Total number of files scanned in the target directory.")
+        kpi2.metric("Lines of Code", f"{run.get('total_loc', 0):,}", delta="Codebase Weight", delta_color="off", help="Total lines of code excluding empty lines and standard comments.")
+        
+        avg_comp = run.get('avg_complexity', 0)
+        kpi3.metric("Avg Complexity", round(avg_comp, 2), delta="Healthy" if avg_comp < 5 else "Elevated", delta_color="normal" if avg_comp < 5 else "inverse", help="Average cyclomatic complexity per function/method.")
+        
+        kpi4.metric("Total Classes", f"{run.get('total_classes', 0):,}", delta="OOP Entities", delta_color="off", help="Total number of object-oriented classes discovered.")
+        kpi5.metric("Connectivity", f"{run.get('total_edges', 0):,}", delta="Coupling Degree", delta_color="off", help="Total number of internal function/method calls mapping the system.")
 
         st.markdown("---")
 

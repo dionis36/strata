@@ -98,22 +98,33 @@ def show_risk_audit():
 
         if file_matrix:
             df_matrix = pd.DataFrame(file_matrix)
+            st.markdown("##### Core Risk Profile")
             st.dataframe(
-                df_matrix,
+                df_matrix[["File Name", "Overall File Risk", "Maintainability Index", "Test Coverage", "Security Sinks"]],
                 hide_index=True,
                 use_container_width=True,
                 column_config={
                     "File Name": st.column_config.TextColumn("File Path", width="large"),
                     "Overall File Risk": st.column_config.TextColumn("Overall File Risk", help="CRITICAL if Security Sinks > 0 or CC > 20"),
                     "Maintainability Index": st.column_config.ProgressColumn("Maintainability (0-100)", min_value=0, max_value=100, format="%d"),
+                    "Test Coverage": st.column_config.TextColumn("Coverage"),
+                    "Security Sinks": st.column_config.NumberColumn("Sinks")
+                }
+            )
+            
+            st.markdown("##### Detailed Complexity Metrics")
+            st.dataframe(
+                df_matrix[["File Name", "Cyclomatic Complexity", "Max Nesting Depth", "Max Method LOC", "Fan-Out", "Global Accesses", "Domain Archetype", "Semantic Multiplier"]],
+                hide_index=True,
+                use_container_width=True,
+                column_config={
+                    "File Name": st.column_config.TextColumn("File Path", width="large"),
                     "Cyclomatic Complexity": st.column_config.NumberColumn("Cyclomatic Complexity"),
                     "Max Nesting Depth": st.column_config.NumberColumn("Nesting Depth", help="Max nesting depth of loops/conditionals."),
                     "Max Method LOC": st.column_config.NumberColumn("Method LOC", help="Lines of Code in the largest method."),
                     "Fan-Out": st.column_config.NumberColumn("Fan-Out", help="Number of external dependencies."),
-                    "Security Sinks": st.column_config.NumberColumn("Sinks"),
                     "Global Accesses": st.column_config.NumberColumn("Global Accesses"),
                     "Domain Archetype": st.column_config.TextColumn("Archetype"),
-                    "Test Coverage": st.column_config.TextColumn("Coverage"),
                     "Semantic Multiplier": st.column_config.NumberColumn("Risk Multiplier", help="Semantic AI Adjustment")
                 }
             )

@@ -71,8 +71,8 @@ def show_legacy_intelligence():
     st.markdown("---")
 
     tabs = st.tabs([
-        "Era Classification",
-        "Pattern Detection",
+        f"Era Classification ({len(era_signals)})",
+        f"Pattern Detection ({sum(pattern_totals.values())})",
         "Modernization Scorecard",
         "File Composition",
     ])

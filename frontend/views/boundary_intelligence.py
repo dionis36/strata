@@ -68,9 +68,9 @@ def show_boundary_intelligence():
     st.markdown("---")
 
     tabs = st.tabs([
-        "Presentation Layer Coupling",
-        "Endpoint & API Surface",
-        "Vendor Inventory & Dependency Graph"
+        f"Presentation Layer Coupling ({len(mvc)})",
+        f"Endpoint & API Surface ({len(api)})",
+        f"Vendor Inventory & Dependency Graph ({len(vendor.get('nodes', [])) if isinstance(vendor, dict) else len(vendor)})"
     ])
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

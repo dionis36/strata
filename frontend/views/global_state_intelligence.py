@@ -62,10 +62,10 @@ def show_global_state_intelligence():
     st.markdown("---")
 
     tabs = st.tabs([
-        "Superglobal Map",
-        "Session Flows",
-        "Side-Effect Registry",
-        "Explicit Globals",
+        f"Superglobal Map ({sum(sg_totals.values())})",
+        f"Session Flows ({len(sess_write) + len(sess_read)})",
+        f"Side-Effect Registry ({len(se_files)})",
+        f"Explicit Globals ({len(explicit_g)})",
     ])
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
