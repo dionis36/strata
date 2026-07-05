@@ -134,6 +134,8 @@ with st.sidebar:
                 if st.session_state.get("active_run_id") != selected_run_id:
                     st.session_state["active_run_id"] = selected_run_id
                     st.rerun()
+            else:
+                st.selectbox("Select Workspace / Run", ["No active runs"], disabled=True)
     except requests.exceptions.RequestException:
         st.error("API Unreachable. Please check backend connection.")
         if st.button("Retry Connection"):

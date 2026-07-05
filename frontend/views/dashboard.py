@@ -177,7 +177,7 @@ def show_dashboard():
                                         break
                                     else:
                                         # Add some visual spin to the state
-                                        status_placeholder.info(f"Status: {state} ... please wait", icon="⏳")
+                                        status_placeholder.info(f"Status: {state} ... please wait")
                                 else:
                                     status_placeholder.error("Lost connection to status endpoint.")
                                     break
@@ -240,7 +240,7 @@ def show_dashboard():
                                         status_placeholder.error(f"Analysis Failed: {s_data.get('error_message')}", icon=":material/error:")
                                         break
                                     else:
-                                        status_placeholder.info(f"Status: {state} ... please wait", icon="⏳")
+                                        status_placeholder.info(f"Status: {state} ... please wait")
                                 else:
                                     status_placeholder.error("Lost connection to status endpoint.")
                                     break
@@ -285,7 +285,8 @@ def show_dashboard():
                 st.info("Uploaded snapshots cannot be re-scanned. Upload a new zip to analyze changes.")
             elif i_type == "git":
                 repo = proj.get("repo_url", "Unknown repo")
-                st.markdown(f"**Method:** Git Repository  \n**Repository:** `{repo}`  \n**Branch:** `main` *(Default)*")
+                active_branch = proj.get("branch", "main")
+                st.markdown(f"**Method:** Git Repository  \n**Repository:** `{repo}`  \n**Branch:** `{active_branch}`")
                 st.markdown("---")
                 if st.button("Pull & Re-Scan", use_container_width=True):
                     import time
@@ -294,7 +295,7 @@ def show_dashboard():
                     res = requests.post(f"{FASTAPI_URL}/ingest/git", json={
                         "project_name": proj['name'],
                         "repo_url": repo,
-                        "branch": "main"
+                        "branch": active_branch
                     })
                     if res.status_code == 200:
                         job_id = res.json().get("job_id")
@@ -317,7 +318,7 @@ def show_dashboard():
                                     status_placeholder.error(f"Failed: {s_data.get('error_message')}")
                                     break
                                 else:
-                                    status_placeholder.info(f"Status: {state} ... please wait", icon="⏳")
+                                    status_placeholder.info(f"Status: {state} ... please wait")
                             else:
                                 break
                             time.sleep(2)
