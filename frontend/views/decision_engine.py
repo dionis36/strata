@@ -5,6 +5,8 @@ import pandas as pd
 import plotly.express as px
 
 FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
+from views import page_registry
+from views.severity import SEVERITY_CRITICAL, SEVERITY_HIGH, SEVERITY_MEDIUM, SEVERITY_LOW
 
 def fetch_strategic_roadmap(run_id: int):
     try:
@@ -26,7 +28,7 @@ def fetch_ai_advisory(run_id: int):
     return None
 
 def show_modernization_decision_engine():
-    st.markdown("## Modernization Decision Engine")
+    st.title("Modernization Decision Engine")
     st.caption("Strategic advisory based on structural risk, domain coupling, and modernization ROI.")
 
     with st.expander("Decision Engine Blueprint Key", expanded=False):
@@ -50,7 +52,8 @@ def show_modernization_decision_engine():
 
     run_id = st.session_state.get("active_run_id")
     if not run_id:
-        st.warning("Please select a valid analysis run in the sidebar.")
+        st.warning("No active analysis run detected. Please start a scan from the Executive Dashboard.")
+        st.page_link(page_registry.PAGE_DASHBOARD, label="← Go to Executive Dashboard", icon=":material/dashboard:")
         return
 
     data = fetch_strategic_roadmap(run_id)
@@ -177,7 +180,8 @@ def show_modernization_decision_engine():
     if ai_data and ai_data.get("findings"):
         findings = ai_data["findings"]
         for f in findings:
-            priority_color = "CRITICAL" if f.get("priority") == "Critical" else "HIGH" if f.get("priority") == "High" else "MEDIUM"
+            p = str(f.get("priority", "")).upper()
+            priority_color = SEVERITY_CRITICAL if p == SEVERITY_CRITICAL else SEVERITY_HIGH if p == SEVERITY_HIGH else SEVERITY_MEDIUM
             
             with st.expander(f"[{priority_color}] {f.get('observation', 'Architecture Finding')}"):
                 c1, c2 = st.columns([2, 1])

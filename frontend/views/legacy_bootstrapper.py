@@ -1,17 +1,19 @@
 import streamlit as st
 import requests
 import os
+from views import page_registry
 
 def show_legacy_bootstrapper():
-    st.title("Modernization Factory")
-    st.markdown("### Legacy System Bootstrapping")
+    st.title("Legacy Bootstrapper")
+    st.markdown("##### Circular Dependency Audit · PSR-4 Autoloading · Bootstrap Hierarchy")
     st.markdown("---")
 
     FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
     run_id = st.session_state.get("active_run_id")
     
     if not run_id:
-        st.warning("No active analysis run detected. Please execute a scan from the Dashboard.")
+        st.warning("No active analysis run detected. Please start a scan from the Executive Dashboard.")
+        st.page_link(page_registry.PAGE_DASHBOARD, label="← Go to Executive Dashboard", icon=":material/dashboard:")
         return
 
     @st.cache_data(ttl=60)

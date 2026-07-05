@@ -2,6 +2,8 @@ import streamlit as st
 import requests
 import pandas as pd
 import os
+from views import page_registry
+from views.severity import SEVERITY_CRITICAL, SEVERITY_HIGH
 
 def show_legacy_intelligence():
     st.title("Legacy PHP Intelligence")
@@ -30,7 +32,8 @@ def show_legacy_intelligence():
     run_id = st.session_state.get("active_run_id")
 
     if not run_id:
-        st.warning("No active analysis run detected. Please execute a scan from the Dashboard.")
+        st.warning("No active analysis run detected. Please start a scan from the Executive Dashboard.")
+        st.page_link(page_registry.PAGE_DASHBOARD, label="← Go to Executive Dashboard", icon=":material/dashboard:")
         return
 
     @st.cache_data(ttl=60)
@@ -117,8 +120,8 @@ def show_legacy_intelligence():
         st.markdown("---")
 
         # Insight
-        critical = sum(1 for s in era_signals if s["severity"] == "CRITICAL")
-        high     = sum(1 for s in era_signals if s["severity"] == "HIGH")
+        critical = sum(1 for s in era_signals if str(s.get("severity", "")).upper() == SEVERITY_CRITICAL)
+        high     = sum(1 for s in era_signals if str(s.get("severity", "")).upper() == SEVERITY_HIGH)
 
         st.info("#### Era Classification Assessment", icon=":material/info:")
         st.markdown("**METRIC**: PHP Era Classification based on AST pattern density")

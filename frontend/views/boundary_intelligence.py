@@ -4,6 +4,7 @@ import requests
 import pandas as pd
 import streamlit.components.v1 as components
 from pyvis.network import Network
+from views import page_registry
 
 FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
 
@@ -21,8 +22,7 @@ def fetch_boundary_intelligence(run_id: int):
     return None
 
 def show_boundary_intelligence():
-    from views.risk_audit import show_risk_audit
-    st.markdown("## Boundary Intelligence")
+    st.title("Boundary Intelligence")
     st.caption("Map the external surface area of the legacy monolith: UI Entanglement, Network Endpoints, and Vendor Dependencies.")
 
     with st.expander("Boundary Intelligence Blueprint Key", expanded=False):
@@ -43,7 +43,8 @@ def show_boundary_intelligence():
 
     active_run_id = st.session_state.get("active_run_id")
     if not active_run_id:
-        st.warning("Please select an active Analysis Run from the Command Center.")
+        st.warning("No active analysis run detected. Please start a scan from the Executive Dashboard.")
+        st.page_link(page_registry.PAGE_DASHBOARD, label="← Go to Executive Dashboard", icon=":material/dashboard:")
         return
 
     with st.spinner("Analyzing application boundaries..."):
@@ -105,7 +106,7 @@ def show_boundary_intelligence():
                 "That pattern is the difference between a targeted refactor and a wholesale rewrite of the presentation tier."
             )
             if st.button("Analyze Structural Risk of these Views"):
-                st.switch_page(st.Page(show_risk_audit))
+                st.switch_page(page_registry.PAGE_RISK_AUDIT)
         else:
             st.success("No presentation coupling detected. HTML output is not mixed with backend logic in this scan.")
 
@@ -145,7 +146,7 @@ def show_boundary_intelligence():
                 "That distinction changes the scope of work significantly — a system with 50 entry points but 10 active ones has a much smaller viable extraction surface than the raw count suggests."
             )
             if st.button("Audit Architectural Rot"):
-                st.switch_page(st.Page(show_risk_audit))
+                st.switch_page(page_registry.PAGE_RISK_AUDIT)
         else:
             st.warning("No entry points detected. This may indicate the scan covered only a library or internal module, rather than a web-facing application.")
 
@@ -167,8 +168,8 @@ def show_boundary_intelligence():
             for e in vendor_graph["edges"]:
                 net.add_edge(e["source"], e["target"], color="rgba(150, 150, 150, 0.4)")
                 
-            net.save_graph("/tmp/vendor_graph.html")
-            with open("/tmp/vendor_graph.html", "r", encoding="utf-8") as f:
+            net.save_graph(f"/tmp/vendor_graph_{active_run_id}.html")
+            with open(f"/tmp/vendor_graph_{active_run_id}.html", "r", encoding="utf-8") as f:
                 html = f.read()
             html = html.replace("</head>", "<style>#loadingBar { display: none !important; }</style></head>")
             

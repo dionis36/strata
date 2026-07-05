@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import pandas as pd
 import os
+from views import page_registry
 
 def show_database_intelligence():
     st.title("Database Intelligence")
@@ -28,7 +29,8 @@ def show_database_intelligence():
     run_id = st.session_state.get("active_run_id")
 
     if not run_id:
-        st.warning("No active analysis run detected. Please execute a scan from the Dashboard.")
+        st.warning("No active analysis run detected. Please start a scan from the Executive Dashboard.")
+        st.page_link(page_registry.PAGE_DASHBOARD, label="← Go to Executive Dashboard", icon=":material/dashboard:")
         return
 
     @st.cache_data(ttl=60)
@@ -72,9 +74,9 @@ def show_database_intelligence():
     st.markdown("---")
 
     tabs = st.tabs([
-        "Access Taxonomy (CRUD Patterns)",
-        "Risk Audit (Security & Integrity)",
-        "Table Ownership (DB-per-Service)",
+        f"Access Taxonomy (CRUD Patterns) ({len(taxonomy)})",
+        f"Risk Audit (Security & Integrity) ({total_risk_items})",
+        f"Table Ownership (DB-per-Service) ({len(ownership)})",
         "Domain Model (ERD Visualization)",
     ])
 

@@ -11,7 +11,9 @@ def show_executive_roadmap():
     run_id = st.session_state.get("active_run_id")
     
     if not run_id:
-        st.warning("No active analysis run detected. Please execute a scan from the Dashboard.")
+        st.warning("No active analysis run detected. Please start a scan from the Executive Dashboard.")
+        from views import page_registry
+        st.page_link(page_registry.PAGE_DASHBOARD, label="← Go to Executive Dashboard", icon=":material/dashboard:")
         return
 
     tabs = st.tabs([
@@ -57,8 +59,8 @@ def show_executive_roadmap():
                             for edge in edges:
                                 net.add_edge(edge["source"], edge["target"], color="#9ca3af")
                                 
-                            net.save_graph("/tmp/summary_net.html")
-                            with open("/tmp/summary_net.html", "r", encoding="utf-8") as f:
+                            net.save_graph(f"/tmp/summary_net_{run_id}.html")
+                            with open(f"/tmp/summary_net_{run_id}.html", "r", encoding="utf-8") as f:
                                 html = f.read()
                             components.html(html, height=650)
                         else:

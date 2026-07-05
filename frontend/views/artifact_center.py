@@ -67,10 +67,10 @@ def show_artifact_center():
             "</div>", 
             unsafe_allow_html=True
         )
-        st.write("")
-        if st.button("Refresh Status"):
-            st.rerun()
-        st.stop()
+        st.write("*(Auto-refreshing status every 3 seconds...)*")
+        import time
+        time.sleep(3)
+        st.rerun()
     elif run_status == "intelligence_failed":
         err_msg = current_run.get("error_message") if current_run else None
         err_detail = f"<div style='margin-top:0.5rem;font-family:monospace;font-size:0.85rem;color:#f87171;word-break:break-all;'><strong>Error detail:</strong> {err_msg}</div>" if err_msg else ""
@@ -95,9 +95,15 @@ def show_artifact_center():
     st.markdown("### Workspace Export Bundle")
     st.caption("Download all selected artifacts packaged in a structured ZIP archive.")
     
+    @st.dialog("Confirm Database Sync")
+    def confirm_sync():
+        st.warning("This will clear the local cache and fetch the latest artifacts from the database. Are you sure?")
+        if st.button("Yes, Sync Database", type="primary", use_container_width=True):
+            st.cache_data.clear()
+            st.rerun()
+
     if st.button("Sync with Database", help="Clear cache and fetch latest artifacts if you used the CLI Override tool"):
-        st.cache_data.clear()
-        st.rerun()
+        confirm_sync()
     
     col_a, col_b = st.columns(2)
     with col_a:

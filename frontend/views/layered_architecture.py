@@ -5,6 +5,7 @@ import os
 import json
 import streamlit.components.v1 as components
 from pyvis.network import Network
+from views import page_registry
 
 def show_layered_architecture():
     st.title("Layered Structure")
@@ -35,7 +36,8 @@ def show_layered_architecture():
     run_id = st.session_state.get("active_run_id")
     
     if not run_id:
-        st.warning("No active analysis run detected. Please execute a scan from the Dashboard.")
+        st.warning("No active analysis run detected. Please start a scan from the Executive Dashboard.")
+        st.page_link(page_registry.PAGE_DASHBOARD, label="← Go to Executive Dashboard", icon=":material/dashboard:")
         return
 
     @st.cache_data(ttl=60)
@@ -191,7 +193,8 @@ def show_system_topology():
 
     run_id = st.session_state.get("active_run_id")
     if not run_id:
-        st.warning("No active analysis run detected.")
+        st.warning("No active analysis run detected. Please start a scan from the Executive Dashboard.")
+        st.page_link(page_registry.PAGE_DASHBOARD, label="← Go to Executive Dashboard", icon=":material/dashboard:")
         return
 
     # --- Filtering Logic ---
@@ -209,7 +212,8 @@ def show_system_topology():
         max_nodes = st.slider("Node Limit", 50, 500, 250)
 
     try:
-        graph_path = f"/data/graph_{run_id}.json"
+        data_dir = os.getenv("DATA_DIR", "/data")
+        graph_path = os.path.join(data_dir, f"graph_{run_id}.json")
         if os.path.exists(graph_path):
             with st.spinner("Re-calculating Force-Directed Physics & Semantic Edges..."):
                 with open(graph_path, "r") as f:
@@ -307,8 +311,8 @@ def show_system_topology():
                         
                     net.add_edge(link["source"], link["target"], color=e_color, width=e_width, dashes=e_dashes)
             
-            net.save_graph("/tmp/topology_graph.html")
-            with open("/tmp/topology_graph.html", "r", encoding="utf-8") as f:
+            net.save_graph(f"/tmp/topology_graph_{run_id}.html")
+            with open(f"/tmp/topology_graph_{run_id}.html", "r", encoding="utf-8") as f:
                 html = f.read()
                 
             # Inject custom CSS to remove PyVis default white borders and margins
@@ -428,7 +432,8 @@ def show_bounded_contexts():
     run_id = st.session_state.get("active_run_id")
     
     if not run_id:
-        st.warning("No active analysis run detected.")
+        st.warning("No active analysis run detected. Please start a scan from the Executive Dashboard.")
+        st.page_link(page_registry.PAGE_DASHBOARD, label="← Go to Executive Dashboard", icon=":material/dashboard:")
         return
 
     res = requests.get(f"{FASTAPI_URL}/layer-analysis/{run_id}")

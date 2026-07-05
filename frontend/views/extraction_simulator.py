@@ -4,8 +4,10 @@ import requests
 import json
 import streamlit.components.v1 as components
 from pyvis.network import Network
+import pandas as pd
 
 FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
+from views import page_registry
 
 def fetch_simulation(run_id: int, fqn: str):
     try:
@@ -26,12 +28,13 @@ def fetch_ghost_graph(run_id: int, fqn: str):
     return None
 
 def show_extraction_simulator():
-    st.markdown("## Extraction & Impact Simulator")
+    st.title("Extraction & Impact Simulator")
     st.caption("Perform simulated topological rewiring to preview the 'To-Be' network boundaries and systemic risk shift.")
 
     run_id = st.session_state.get("active_run_id")
     if not run_id:
-        st.warning("Please select a valid analysis run in the sidebar.")
+        st.warning("No active analysis run detected. Please start a scan from the Executive Dashboard.")
+        st.page_link(page_registry.PAGE_DASHBOARD, label="← Go to Executive Dashboard", icon=":material/dashboard:")
         return
 
     # Let user select a target for simulation
@@ -115,7 +118,21 @@ def show_extraction_simulator():
                 st.markdown("### Extraction Blast Radius")
                 total_nodes = len(sim["blast_radius"]["files"]) + len(sim["dependency_payload"]["files"])
                 if total_nodes > 500:
-                    st.warning(f"Graph too large for interactive rendering ({total_nodes} nodes). Please rely on the metrics panel.", icon=":material/warning:")
+                    st.warning(f"Graph too large for interactive rendering ({total_nodes} nodes). Displaying tabular fallback.", icon=":material/warning:")
+                    
+                    st.markdown("##### 🔌 Upstream Dependencies (What this needs)")
+                    upstream = [f for f in sim["dependency_payload"]["files"] if f != sim["target"]]
+                    if upstream:
+                        st.dataframe(pd.DataFrame({"File Path": upstream}), hide_index=True, use_container_width=True)
+                    else:
+                        st.info("No upstream dependencies detected.")
+                        
+                    st.markdown("##### 💥 Blast Radius (What breaks if this is removed)")
+                    downstream = [f for f in sim["blast_radius"]["files"] if f != sim["target"]]
+                    if downstream:
+                        st.dataframe(pd.DataFrame({"File Path": downstream}), hide_index=True, use_container_width=True)
+                    else:
+                        st.info("No downstream blast radius detected.")
                 else:
                     net = Network(height="500px", width="100%", bgcolor="#0e1117", font_color="#e0e0e0", directed=True)
                     net.toggle_physics(True)
@@ -143,8 +160,8 @@ def show_extraction_simulator():
                             except: pass
                             net.add_edge(sim["target"], f, title="calls", color="#58a6ff")
 
-                    net.save_graph("/tmp/extraction_sim.html")
-                    with open("/tmp/extraction_sim.html", "r", encoding="utf-8") as f:
+                    net.save_graph(f"/tmp/extraction_sim_{run_id}.html")
+                    with open(f"/tmp/extraction_sim_{run_id}.html", "r", encoding="utf-8") as f:
                         html = f.read()
                         
                     custom_css = """
@@ -243,8 +260,8 @@ def show_extraction_simulator():
                         # Style boundary edges nicely
                         net_g.add_edge(e["source"], e["target"], color="#388bfd", width=2, title=e["type"])
                         
-                    net_g.save_graph("/tmp/ghost_sim.html")
-                    with open("/tmp/ghost_sim.html", "r", encoding="utf-8") as f:
+                    net_g.save_graph(f"/tmp/ghost_sim_{run_id}.html")
+                    with open(f"/tmp/ghost_sim_{run_id}.html", "r", encoding="utf-8") as f:
                         html_g = f.read()
                         
                     custom_css = """
@@ -308,7 +325,7 @@ def show_extraction_simulator():
                         mermaid_lines.append(f"    {e['source']} -->|{e['type']}| {e['target']}")
                         
                     mermaid_code = "\n".join(mermaid_lines)
-                    st.code(mermaid_code, language="mermaid")
+                    st.markdown(f"```mermaid\n{mermaid_code}\n```")
             else:
                 st.info("Simulating target decoupled architecture... Please run simulation above.")
 

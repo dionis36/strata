@@ -58,17 +58,13 @@ def show_dashboard():
         # ── KPI Bento Grid ───────────────────────────────────────────────────────
         # --- Primary KPI Row ---
         st.markdown("### System Vitality")
-        kpi1, kpi2, kpi3, kpi4, kpi5, kpi6 = st.columns(6)
+        kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
         
-        kpi1.metric("Total Files", f"{run.get('total_files', 0):,}")
-        kpi2.metric("Lines of Code", f"{run.get('total_loc', 0):,}")
-        kpi3.metric("Avg Complexity", round(run.get('avg_complexity', 0), 2))
-        kpi4.metric("Total Classes", f"{run.get('total_classes', 0):,}")
-        kpi5.metric("Connectivity", f"{run.get('total_edges', 0):,}")
-        
-        # cov = run.get('test_coverage')
-        # cov_str = f"{round(cov * 100, 1)}%" if cov is not None else "N/A"
-        # kpi6.metric("Test Coverage", cov_str, help="Overall Code Coverage from Clover/PHPUnit reports.")
+        kpi1.metric("Total Files", f"{run.get('total_files', 0):,}", help="Total number of files scanned in the target directory.")
+        kpi2.metric("Lines of Code", f"{run.get('total_loc', 0):,}", help="Total lines of code excluding empty lines and standard comments.")
+        kpi3.metric("Avg Complexity", round(run.get('avg_complexity', 0), 2), help="Average cyclomatic complexity per function/method.")
+        kpi4.metric("Total Classes", f"{run.get('total_classes', 0):,}", help="Total number of object-oriented classes discovered.")
+        kpi5.metric("Connectivity", f"{run.get('total_edges', 0):,}", help="Total number of internal function/method calls mapping the system.")
 
         st.markdown("---")
 
@@ -263,17 +259,23 @@ def show_dashboard():
             if i_type == "local":
                 st.markdown(f"**Method:** Local Directory  \n**Directory:** `{proj['root_path']}`")
                 st.markdown("---")
+                @st.dialog("Confirm Re-Scan")
+                def confirm_rescan(p_name, p_path):
+                    st.warning(f"Are you sure you want to trigger a full re-scan of `{p_name}`? This may take a few minutes depending on the codebase size.")
+                    if st.button("Yes, Re-Scan", type="primary", use_container_width=True):
+                        with st.spinner("Analyzing changes..."):
+                            res = requests.post(f"{FASTAPI_URL}/analyze", json={
+                                "project_name": p_name, 
+                                "project_path": p_path
+                            })
+                            if res.status_code == 200:
+                                data = res.json()
+                                st.session_state["active_run_id"] = data.get("run_id")
+                                st.success("Re-scan Successful!", icon=":material/check_circle:")
+                                st.rerun()
+
                 if st.button("Re-Scan", use_container_width=True):
-                    with st.spinner("Analyzing changes..."):
-                        res = requests.post(f"{FASTAPI_URL}/analyze", json={
-                            "project_name": proj['name'], 
-                            "project_path": proj['root_path']
-                        })
-                        if res.status_code == 200:
-                            data = res.json()
-                            st.session_state["active_run_id"] = data.get("run_id")
-                            st.success("Re-scan Successful!", icon=":material/check_circle:")
-                            st.rerun()
+                    confirm_rescan(proj['name'], proj['root_path'])
             elif i_type == "zip":
                 st.markdown(f"**Method:** Zip Upload  \n**Snapshot Path:** `{proj['root_path']}`")
                 st.markdown("---")

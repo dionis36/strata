@@ -3,10 +3,11 @@ import requests
 import pandas as pd
 import os
 import json
+from views import page_registry
+from views.severity import SEVERITY_CRITICAL, SEVERITY_HIGH, SEVERITY_MEDIUM, SEVERITY_LOW
 
 def show_risk_audit():
-    from views.boundary_intelligence import show_boundary_intelligence
-    st.title("Security & Risk Audit")
+    st.title("Modernization Risk")
     st.markdown("##### Maintainability Index · Security Sinks · Architectural Deficits")
 
     with st.expander("Security & Risk Audit Blueprint Key", expanded=False):
@@ -30,7 +31,8 @@ def show_risk_audit():
     run_id = st.session_state.get("active_run_id")
 
     if not run_id:
-        st.warning("No active analysis run detected. Please execute a scan from the Dashboard.")
+        st.warning("No active analysis run detected. Please start a scan from the Executive Dashboard.")
+        st.page_link(page_registry.PAGE_DASHBOARD, label="← Go to Executive Dashboard", icon=":material/dashboard:")
         return
 
     @st.cache_data(ttl=60)
@@ -51,11 +53,11 @@ def show_risk_audit():
     rot = data.get("architectural_rot", [])
 
     # Text labels for Risk Magnitudes
-    LEVEL_ICON = {"CRITICAL": "CRITICAL", "HIGH": "HIGH", "MEDIUM": "MEDIUM", "LOW": "LOW"}
+    LEVEL_ICON = {SEVERITY_CRITICAL: SEVERITY_CRITICAL, SEVERITY_HIGH: SEVERITY_HIGH, SEVERITY_MEDIUM: SEVERITY_MEDIUM, SEVERITY_LOW: SEVERITY_LOW}
     
-    lvl_counts = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
+    lvl_counts = {SEVERITY_CRITICAL: 0, SEVERITY_HIGH: 0, SEVERITY_MEDIUM: 0, SEVERITY_LOW: 0}
     for f in file_matrix:
-        raw_risk = f.get("Overall Risk", "LOW")
+        raw_risk = f.get("Overall Risk", SEVERITY_LOW)
         if raw_risk in lvl_counts:
             lvl_counts[raw_risk] += 1
         f["Overall File Risk"] = LEVEL_ICON.get(raw_risk, raw_risk)
@@ -71,17 +73,17 @@ def show_risk_audit():
 
     # ── Top-level KPI strip ───────────────────────────────────────────────
     k1, k2, k3, k4 = st.columns(4)
-    k1.metric("Critical Risk Files", lvl_counts["CRITICAL"], delta="Urgent Action", delta_color="inverse", help="Files containing active security sinks or extreme complexity.")
-    k2.metric("High Risk Files", lvl_counts["HIGH"], delta="Careful Extraction", delta_color="inverse", help="Files with high structural complexity.")
-    k3.metric("Moderate Risk Files", lvl_counts["MEDIUM"])
-    k4.metric("Stable Files", lvl_counts["LOW"], delta="Safe Candidate", delta_color="normal")
+    k1.metric("Critical Risk Files", lvl_counts[SEVERITY_CRITICAL], delta="Urgent Action", delta_color="inverse", help="Files containing active security sinks or extreme complexity.")
+    k2.metric("High Risk Files", lvl_counts[SEVERITY_HIGH], delta="Careful Extraction", delta_color="inverse", help="Files with high structural complexity.")
+    k3.metric("Medium Risk Files", lvl_counts[SEVERITY_MEDIUM])
+    k4.metric("Stable Files", lvl_counts[SEVERITY_LOW], delta="Safe Candidate", delta_color="normal")
 
     st.markdown("---")
 
     tabs = st.tabs([
-        "The File-Level Risk Matrix",
-        "Security Vulnerability Log",
-        "Architectural Rot & Extensibility",
+        f"The File-Level Risk Matrix ({len(file_matrix)})",
+        f"Security Vulnerability Log ({len(vulns)})",
+        f"Architectural Rot & Extensibility ({len(rot)})",
     ])
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -260,7 +262,7 @@ def show_risk_audit():
             "If so, those files reveal the minimum set of dependencies you must untangle *first* — understanding their structure is the prerequisite for planning extraction in the Strategic Advisory module."
         )
         if st.button("Map External Boundaries"):
-            st.switch_page(st.Page(show_boundary_intelligence))
+            st.switch_page(page_registry.PAGE_BOUNDARY_INTELLIGENCE)
 
 if __name__ == "__main__":
     show_risk_audit()

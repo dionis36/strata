@@ -2,6 +2,8 @@ import streamlit as st
 import requests
 import pandas as pd
 import os
+from views import page_registry
+from views.severity import SEVERITY_CRITICAL, SEVERITY_HIGH, SEVERITY_MEDIUM, SEVERITY_LOW
 
 def show_monolith_navigator():
     st.title("Monolith Navigator")
@@ -21,7 +23,8 @@ def show_monolith_navigator():
     run_id = st.session_state.get("active_run_id")
     
     if not run_id:
-        st.warning("No active analysis run detected. Please execute a scan from the Dashboard.")
+        st.warning("No active analysis run detected. Please start a scan from the Executive Dashboard.")
+        st.page_link(page_registry.PAGE_DASHBOARD, label="← Go to Executive Dashboard", icon=":material/dashboard:")
         return
 
     @st.cache_data(ttl=60)
@@ -94,7 +97,7 @@ def show_monolith_navigator():
         
         # UI Prettification
         df_oop["Interactions"] = df_oop["side_effects"].apply(lambda x: ", ".join([s.split("::")[-1] for s in x]) if x else "none")
-        df_oop["Complexity"] = df_oop["methods_count"].apply(lambda x: "High" if x > 20 else ("Medium" if x > 10 else "Low"))
+        df_oop["Complexity"] = df_oop["methods_count"].apply(lambda x: SEVERITY_CRITICAL if x > 20 else (SEVERITY_HIGH if x > 15 else (SEVERITY_MEDIUM if x > 10 else SEVERITY_LOW)))
         
         # Rename for clarity and replace empty boolean columns with concrete metrics
         df_oop["parent_class"] = df_oop["parent_class"].fillna("None")
@@ -138,5 +141,4 @@ def show_monolith_navigator():
 if __name__ == "__main__":
     show_monolith_navigator()
 
-if __name__ == "__main__":
-    show_monolith_navigator()
+

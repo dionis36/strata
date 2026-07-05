@@ -39,11 +39,22 @@ from views.legacy_bootstrapper import show_legacy_bootstrapper
 
 from views.boundary_intelligence import show_boundary_intelligence
 from views.artifact_center import show_artifact_center
+from views import page_registry
+
+# Named Page objects for pages that are cross-referenced by in-page navigation
+# buttons. Populated into page_registry so view files can import the exact same
+# registered object — avoids the st.switch_page(st.Page(...)) anti-pattern.
+_page_dashboard = st.Page(show_dashboard, title="Executive Dashboard", icon=":material/dashboard:")
+_page_risk_audit = st.Page(show_risk_audit, title="Modernization Risk", icon=":material/gpp_maybe:")
+_page_boundary_intelligence = st.Page(show_boundary_intelligence, title="Boundary Intelligence", icon=":material/public:")
+page_registry.PAGE_DASHBOARD = _page_dashboard
+page_registry.PAGE_RISK_AUDIT = _page_risk_audit
+page_registry.PAGE_BOUNDARY_INTELLIGENCE = _page_boundary_intelligence
 
 # Modern Streamlit Navigation (v1.31+)
 pages = {
     "A. Command Center": [
-        st.Page(show_dashboard, title="Executive Dashboard", icon=":material/dashboard:"),
+        _page_dashboard,
     ],
     "B. Architectural Discovery": [
         st.Page(show_monolith_navigator, title="Monolith Navigator", icon=":material/hub:"),
@@ -55,8 +66,8 @@ pages = {
         st.Page(show_database_intelligence, title="Database Intelligence", icon=":material/storage:"),
         st.Page(show_global_state_intelligence, title="Runtime & Global State", icon=":material/memory:"),
         st.Page(show_legacy_intelligence, title="Legacy PHP Intelligence", icon=":material/history:"),
-        st.Page(show_risk_audit, title="Modernization Risk", icon=":material/gpp_maybe:"),
-        st.Page(show_boundary_intelligence, title="Boundary Intelligence", icon=":material/public:"),
+        _page_risk_audit,
+        _page_boundary_intelligence,
     ],
     "D. Strategic Advisory": [
         st.Page(show_modernization_decision_engine, title="Modernization Decision Engine", icon=":material/psychology:"),
@@ -93,7 +104,7 @@ with st.sidebar:
     st.write("") # Small spacer
     
     # ── Context Switcher ──
-    st.markdown("**Global Context**")
+    st.divider()
     FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
     import requests
     try:
@@ -110,7 +121,7 @@ with st.sidebar:
                 except StopIteration:
                     current_idx = 0
                 
-                selected_run_label = st.selectbox("Active Analysis Run", run_keys, index=current_idx, label_visibility="collapsed")
+                selected_run_label = st.selectbox("Select Workspace / Run", run_keys, index=current_idx)
                 selected_run_id = run_options[selected_run_label]
                 
                 # Always ensure project_id stays in sync with run_id
@@ -124,13 +135,15 @@ with st.sidebar:
                     st.session_state["active_run_id"] = selected_run_id
                     st.rerun()
     except requests.exceptions.RequestException:
-        st.caption("Unable to connect to API.")
+        st.error("API Unreachable. Please check backend connection.")
+        if st.button("Retry Connection"):
+            st.rerun()
     except Exception as e:
         if e.__class__.__name__ == "RerunException":
             raise e
         st.error(f"Error: {str(e)}")
     
-    st.write("") # Small spacer
+    st.divider()
     
     # ── Page Navigations ──
     for section, section_pages in pages.items():
