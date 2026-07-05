@@ -8,6 +8,8 @@ class Project(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
     root_path = Column(String, nullable=True)  # Persisted for one-click rescanning
+    ingest_type = Column(String, nullable=False, default="local") # local, zip, git
+    repo_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=func.now(), nullable=False)
 
 class AnalysisRun(Base):

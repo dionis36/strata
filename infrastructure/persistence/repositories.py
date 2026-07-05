@@ -9,17 +9,27 @@ class ProjectRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_or_create(self, name: str, root_path: str = None) -> Project:
+    def get_or_create(self, name: str, root_path: str = None, ingest_type: str = "local", repo_url: str = None) -> Project:
         project = self.db.query(Project).filter(Project.name == name).first()
         if not project:
-            project = Project(name=name, root_path=root_path)
+            project = Project(name=name, root_path=root_path, ingest_type=ingest_type, repo_url=repo_url)
             self.db.add(project)
             self.db.commit()
             self.db.refresh(project)
-        elif root_path and project.root_path != root_path:
-            project.root_path = root_path
-            self.db.commit()
-            self.db.refresh(project)
+        else:
+            changed = False
+            if root_path and project.root_path != root_path:
+                project.root_path = root_path
+                changed = True
+            if ingest_type and project.ingest_type != ingest_type:
+                project.ingest_type = ingest_type
+                changed = True
+            if repo_url and project.repo_url != repo_url:
+                project.repo_url = repo_url
+                changed = True
+            if changed:
+                self.db.commit()
+                self.db.refresh(project)
         return project
 
 class IngestionJobRepository:

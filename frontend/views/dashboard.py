@@ -117,8 +117,14 @@ def show_dashboard():
 
         with tab_zip:
             st.markdown("Upload a compressed archive of your codebase.")
-            p_name_zip = st.text_input("Project Name", value="Uploaded_Monolith", key="zip_p_name")
+            
             uploaded_file = st.file_uploader("Upload Codebase", type=["zip"])
+            
+            default_zip_name = "Uploaded_Monolith"
+            if uploaded_file is not None:
+                default_zip_name = uploaded_file.name.replace(".zip", "").replace("-", "_").replace(".", "_")
+                
+            p_name_zip = st.text_input("Project Name", value=default_zip_name, key="zip_p_name")
             
             if uploaded_file is not None:
                 if st.button("Upload & Analyze", use_container_width=True, key="btn_zip_analyze"):
@@ -164,6 +170,8 @@ def show_dashboard():
                         else:
                             status_placeholder.error(f"Failed to start upload: {res.text}")
                     except Exception as e:
+                        if type(e).__name__ == 'RerunException':
+                            raise
                         status_placeholder.error(f"Upload error: {e}")
 
         with tab_git:
@@ -222,23 +230,69 @@ def show_dashboard():
                         else:
                             status_placeholder.error(f"Failed to start clone: {res.text}")
                     except Exception as e:
+                        if type(e).__name__ == 'RerunException':
+                            raise
                         status_placeholder.error(f"Git Ingestion error: {e}")
 
     with c2:
         if dashboard_data and dashboard_data.get("project"):
             st.markdown("#### Project Management")
-            st.write(f"Active Root: `{dashboard_data['project']['root_path']}`")
-            if st.button("Re-Scan", use_container_width=True):
-                with st.spinner("Analyzing changes..."):
-                    res = requests.post(f"{FASTAPI_URL}/analyze", json={
-                        "project_name": dashboard_data['project']['name'], 
-                        "project_path": dashboard_data['project']['root_path']
+            proj = dashboard_data["project"]
+            i_type = proj.get("ingest_type", "local")
+            
+            if i_type == "local":
+                st.write(f"Active Root: `{proj['root_path']}`")
+                if st.button("Re-Scan", use_container_width=True):
+                    with st.spinner("Analyzing changes..."):
+                        res = requests.post(f"{FASTAPI_URL}/analyze", json={
+                            "project_name": proj['name'], 
+                            "project_path": proj['root_path']
+                        })
+                        if res.status_code == 200:
+                            data = res.json()
+                            st.session_state["active_run_id"] = data.get("run_id")
+                            st.success("Re-scan Successful!", icon=":material/check_circle:")
+                            st.rerun()
+            elif i_type == "zip":
+                st.write(f"Source: `Zip Upload`")
+                st.info("Uploaded snapshots cannot be re-scanned. Upload a new zip to analyze changes.")
+            elif i_type == "git":
+                repo = proj.get("repo_url", "Unknown repo")
+                st.write(f"Repository: `{repo}`")
+                if st.button("Pull & Re-Scan", use_container_width=True):
+                    import time
+                    status_placeholder = st.empty()
+                    status_placeholder.info("Cloning fresh code...")
+                    res = requests.post(f"{FASTAPI_URL}/ingest/git", json={
+                        "project_name": proj['name'],
+                        "repo_url": repo,
+                        "branch": "main"
                     })
                     if res.status_code == 200:
-                        data = res.json()
-                        st.session_state["active_run_id"] = data.get("run_id")
-                        st.success("Re-scan Successful!", icon=":material/check_circle:")
-                        st.rerun()
+                        job_id = res.json().get("job_id")
+                        while True:
+                            status_res = requests.get(f"{FASTAPI_URL}/ingest/status/{job_id}")
+                            if status_res.status_code == 200:
+                                s_data = status_res.json()
+                                state = s_data.get("status")
+                                if state == "COMPLETE":
+                                    runs_res = requests.get(f"{FASTAPI_URL}/runs")
+                                    if runs_res.status_code == 200 and len(runs_res.json()) > 0:
+                                        st.session_state["active_run_id"] = runs_res.json()[0]["id"]
+                                    time.sleep(1)
+                                    try:
+                                        st.rerun()
+                                    except Exception as e:
+                                        if type(e).__name__ == 'RerunException':
+                                            raise
+                                elif state == "FAILED":
+                                    status_placeholder.error(f"Failed: {s_data.get('error_message')}")
+                                    break
+                                else:
+                                    status_placeholder.info(f"Status: {state} ... please wait", icon="⏳")
+                            else:
+                                break
+                            time.sleep(2)
 
 if __name__ == "__main__":
     show_dashboard()

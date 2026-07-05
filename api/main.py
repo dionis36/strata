@@ -36,6 +36,15 @@ async def lifespan(app: FastAPI):
     # On startup
     logger.info("API started")
     init_db()
+    try:
+        from infrastructure.persistence.database import SessionLocal
+        db = SessionLocal()
+        db.execute(text("ALTER TABLE project ADD COLUMN ingest_type VARCHAR DEFAULT 'local'"))
+        db.execute(text("ALTER TABLE project ADD COLUMN repo_url VARCHAR"))
+        db.commit()
+        db.close()
+    except Exception:
+        pass
     yield
     # On shutdown
     logger.info("API shutdown")
@@ -467,7 +476,7 @@ def background_process_zip(job_id: str, zip_path: str, project_name: str):
         job_repo.update_status(job_id, "ANALYZING", target_path=target_dir)
         
         project_repo = ProjectRepository(db)
-        project = project_repo.get_or_create(project_name)
+        project = project_repo.get_or_create(project_name, root_path=target_dir, ingest_type="zip")
         
         service = AnalysisService(db)
         service.run_analysis(project.id, target_dir)
@@ -558,7 +567,7 @@ def background_process_git(job_id: str, repo_url: str, branch: str, project_name
         job_repo.update_status(job_id, "ANALYZING", target_path=target_dir)
         
         project_repo = ProjectRepository(db)
-        project = project_repo.get_or_create(project_name)
+        project = project_repo.get_or_create(project_name, root_path=target_dir, ingest_type="git", repo_url=repo_url)
         
         service = AnalysisService(db)
         service.run_analysis(project.id, target_dir)
@@ -602,7 +611,7 @@ def analyze_project(req: AnalyzeRequest, background_tasks: BackgroundTasks, db: 
     """
     try:
         project_repo = ProjectRepository(db)
-        project = project_repo.get_or_create(req.project_name)
+        project = project_repo.get_or_create(req.project_name, root_path=req.project_path, ingest_type="local")
         
         service = AnalysisService(db)
         result = service.run_analysis(project.id, req.project_path)
@@ -1043,6 +1052,8 @@ def get_dashboard(project_id: int, db: Session = Depends(get_db)):
                 "project": {
                     "name": project.name,
                     "root_path": project.root_path,
+                    "ingest_type": getattr(project, "ingest_type", "local"),
+                    "repo_url": getattr(project, "repo_url", None),
                     "created_at": project.created_at.isoformat()
                 },
                 "latest_run": None
@@ -1062,6 +1073,8 @@ def get_dashboard(project_id: int, db: Session = Depends(get_db)):
             "project": {
                 "name": project.name,
                 "root_path": project.root_path,
+                "ingest_type": getattr(project, "ingest_type", "local"),
+                "repo_url": getattr(project, "repo_url", None),
                 "created_at": project.created_at.isoformat()
             },
             "latest_run": {
