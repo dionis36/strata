@@ -84,9 +84,23 @@ def show_dashboard():
     with c1:
         st.markdown("#### New Project Analysis")
         
-        tab_local, tab_zip, tab_git = st.tabs(["Local Directory", "Zip Upload", "Git Repository"])
+        default_idx = 0
+        if dashboard_data and dashboard_data.get("project"):
+            i_type = dashboard_data["project"].get("ingest_type", "local")
+            if i_type == "zip":
+                default_idx = 1
+            elif i_type == "git":
+                default_idx = 2
+                
+        ingest_method = st.radio(
+            "Ingestion Method", 
+            ["Local Directory", "Zip Upload", "Git Repository"], 
+            index=default_idx, 
+            horizontal=True,
+            label_visibility="collapsed"
+        )
         
-        with tab_local:
+        if ingest_method == "Local Directory":
             # ── Directory Discovery ──
             data_dir = os.environ.get("DATA_DIR", "/data")
             try:
@@ -115,7 +129,7 @@ def show_dashboard():
                     else:
                         st.error(f"Failed: {res.text}", icon=":material/error:")
 
-        with tab_zip:
+        elif ingest_method == "Zip Upload":
             st.markdown("Upload a compressed archive of your codebase.")
             
             uploaded_file = st.file_uploader("Upload Codebase", type=["zip"])
@@ -174,7 +188,7 @@ def show_dashboard():
                             raise
                         status_placeholder.error(f"Upload error: {e}")
 
-        with tab_git:
+        elif ingest_method == "Git Repository":
             st.markdown("Clone a Git repository directly into the analysis engine.")
             repo_url = st.text_input("Repository URL", placeholder="https://github.com/dionis36/strata.git", key="git_url")
             c_branch, c_pname = st.columns(2)
