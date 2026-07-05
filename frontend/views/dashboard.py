@@ -84,34 +84,145 @@ def show_dashboard():
     with c1:
         st.markdown("#### New Project Analysis")
         
-        # ── Directory Discovery ──
-        data_dir = "/data"
-        try:
-            available_dirs = [d for d in os.listdir(data_dir) if os.path.isdir(os.path.join(data_dir, d))]
-            available_dirs = sorted(available_dirs)
-        except Exception:
-            available_dirs = []
-            
-        if not available_dirs:
-            st.warning("No directories found in /data. Please verify your volume mounts.")
-            p_path = data_dir
-            p_name = st.text_input("Project Name", value="Monolith_X")
-        else:
-            selected_dir = st.selectbox("Select Directory in /data", options=available_dirs)
-            p_path = os.path.join(data_dir, selected_dir)
-            # Default name to directory name, but allow override
-            p_name = st.text_input("Project Name", value=selected_dir.replace("-", "_").replace(".", "_"))
+        tab_local, tab_zip, tab_git = st.tabs(["Local Directory", "Zip Upload", "Git Repository"])
         
-        if st.button("Initialize Deep Scan", use_container_width=True):
-            with st.spinner("Processing AST..."):
-                res = requests.post(f"{FASTAPI_URL}/analyze", json={"project_name": p_name, "project_path": p_path})
-                if res.status_code == 200:
-                    data = res.json()
-                    st.session_state["active_run_id"] = data.get("run_id")
-                    st.success("Analysis Complete!", icon=":material/check_circle:")
-                    st.rerun()
+        with tab_local:
+            # ── Directory Discovery ──
+            data_dir = os.environ.get("DATA_DIR", "/data")
+            try:
+                available_dirs = [d for d in os.listdir(data_dir) if os.path.isdir(os.path.join(data_dir, d))]
+                available_dirs = sorted(available_dirs)
+            except Exception:
+                available_dirs = []
+                
+            if not available_dirs:
+                st.warning("No directories found in /data. Please verify your volume mounts.")
+                p_path = data_dir
+                p_name = st.text_input("Project Name", value="Monolith_X", key="local_p_name")
+            else:
+                selected_dir = st.selectbox("Select Directory in /data", options=available_dirs)
+                p_path = os.path.join(data_dir, selected_dir)
+                p_name = st.text_input("Project Name", value=selected_dir.replace("-", "_").replace(".", "_"), key="local_p_name")
+            
+            if st.button("Initialize Deep Scan", use_container_width=True, key="btn_local_scan"):
+                with st.spinner("Processing AST..."):
+                    res = requests.post(f"{FASTAPI_URL}/analyze", json={"project_name": p_name, "project_path": p_path})
+                    if res.status_code == 200:
+                        data = res.json()
+                        st.session_state["active_run_id"] = data.get("run_id")
+                        st.success("Analysis Complete!", icon=":material/check_circle:")
+                        st.rerun()
+                    else:
+                        st.error(f"Failed: {res.text}", icon=":material/error:")
+
+        with tab_zip:
+            st.markdown("Upload a compressed archive of your codebase.")
+            p_name_zip = st.text_input("Project Name", value="Uploaded_Monolith", key="zip_p_name")
+            uploaded_file = st.file_uploader("Upload Codebase", type=["zip"])
+            
+            if uploaded_file is not None:
+                if st.button("Upload & Analyze", use_container_width=True, key="btn_zip_analyze"):
+                    import time
+                    status_placeholder = st.empty()
+                    status_placeholder.info("Uploading file to engine...")
+                    
+                    files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "application/zip")}
+                    data_payload = {"project_name": p_name_zip}
+                    
+                    try:
+                        res = requests.post(f"{FASTAPI_URL}/ingest/zip", files=files, data=data_payload)
+                        if res.status_code == 200:
+                            job_data = res.json()
+                            job_id = job_data.get("job_id")
+                            
+                            # Polling loop
+                            while True:
+                                status_res = requests.get(f"{FASTAPI_URL}/ingest/status/{job_id}")
+                                if status_res.status_code == 200:
+                                    s_data = status_res.json()
+                                    state = s_data.get("status")
+                                    
+                                    if state == "COMPLETE":
+                                        status_placeholder.success("Analysis Complete! Loading dashboard...", icon=":material/check_circle:")
+                                        runs_res = requests.get(f"{FASTAPI_URL}/runs")
+                                        if runs_res.status_code == 200:
+                                            runs = runs_res.json()
+                                            if len(runs) > 0:
+                                                st.session_state["active_run_id"] = runs[0]["id"]
+                                        time.sleep(1)
+                                        st.rerun()
+                                    elif state == "FAILED":
+                                        status_placeholder.error(f"Analysis Failed: {s_data.get('error_message')}", icon=":material/error:")
+                                        break
+                                    else:
+                                        # Add some visual spin to the state
+                                        status_placeholder.info(f"Status: {state} ... please wait", icon="⏳")
+                                else:
+                                    status_placeholder.error("Lost connection to status endpoint.")
+                                    break
+                                time.sleep(2)
+                        else:
+                            status_placeholder.error(f"Failed to start upload: {res.text}")
+                    except Exception as e:
+                        status_placeholder.error(f"Upload error: {e}")
+
+        with tab_git:
+            st.markdown("Clone a Git repository directly into the analysis engine.")
+            repo_url = st.text_input("Repository URL", placeholder="https://github.com/dionis36/strata.git", key="git_url")
+            c_branch, c_pname = st.columns(2)
+            with c_branch:
+                branch = st.text_input("Branch", value="main", key="git_branch")
+            with c_pname:
+                git_p_name = st.text_input("Project Name (Optional)", key="git_p_name")
+                
+            if st.button("Clone & Analyze", use_container_width=True, key="btn_git_analyze"):
+                if not repo_url:
+                    st.error("Please provide a Repository URL.")
                 else:
-                    st.error(f"Failed: {res.text}", icon=":material/error:")
+                    import time
+                    status_placeholder = st.empty()
+                    status_placeholder.info("Initializing Git clone...")
+                    
+                    payload = {
+                        "repo_url": repo_url,
+                        "branch": branch,
+                        "project_name": git_p_name if git_p_name else repo_url.rstrip("/").split("/")[-1].replace(".git", "")
+                    }
+                    
+                    try:
+                        res = requests.post(f"{FASTAPI_URL}/ingest/git", json=payload)
+                        if res.status_code == 200:
+                            job_data = res.json()
+                            job_id = job_data.get("job_id")
+                            
+                            while True:
+                                status_res = requests.get(f"{FASTAPI_URL}/ingest/status/{job_id}")
+                                if status_res.status_code == 200:
+                                    s_data = status_res.json()
+                                    state = s_data.get("status")
+                                    
+                                    if state == "COMPLETE":
+                                        status_placeholder.success("Analysis Complete! Loading dashboard...", icon=":material/check_circle:")
+                                        runs_res = requests.get(f"{FASTAPI_URL}/runs")
+                                        if runs_res.status_code == 200:
+                                            runs = runs_res.json()
+                                            if len(runs) > 0:
+                                                st.session_state["active_run_id"] = runs[0]["id"]
+                                        time.sleep(1)
+                                        st.rerun()
+                                    elif state == "FAILED":
+                                        status_placeholder.error(f"Analysis Failed: {s_data.get('error_message')}", icon=":material/error:")
+                                        break
+                                    else:
+                                        status_placeholder.info(f"Status: {state} ... please wait", icon="⏳")
+                                else:
+                                    status_placeholder.error("Lost connection to status endpoint.")
+                                    break
+                                time.sleep(2)
+                        else:
+                            status_placeholder.error(f"Failed to start clone: {res.text}")
+                    except Exception as e:
+                        status_placeholder.error(f"Git Ingestion error: {e}")
 
     with c2:
         if dashboard_data and dashboard_data.get("project"):

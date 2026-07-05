@@ -37,6 +37,18 @@ class AnalysisRun(Base):
     ai_findings_json = Column(String, nullable=True)
     ai_rector_config_json = Column(String, nullable=True)
 
+class IngestionJob(Base):
+    __tablename__ = "ingestion_job"
+
+    id = Column(String, primary_key=True)  # UUID
+    project_id = Column(Integer, ForeignKey("project.id"), nullable=True)
+    status = Column(String, nullable=False) # PENDING, UPLOADING, EXTRACTING, DOWNLOADING, ANALYZING, COMPLETE, FAILED
+    source_type = Column(String, nullable=False) # ZIP, GIT
+    target_path = Column(String, nullable=True)
+    error_message = Column(String, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
+
 class SchemaVersion(Base):
     __tablename__ = "schema_version"
 

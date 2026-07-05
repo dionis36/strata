@@ -441,6 +441,153 @@ def retry_intelligence(run_id: int, background_tasks: BackgroundTasks, db: Sessi
     background_tasks.add_task(background_synthesize_intelligence, run_id)
     return {"message": "AI Synthesis retry queued.", "run_id": run_id}
 
+from fastapi import File, UploadFile, Form
+import uuid
+import os
+import zipfile
+from application.utils.temp_storage import TempStorageManager
+from infrastructure.persistence.repositories import IngestionJobRepository
+
+def background_process_zip(job_id: str, zip_path: str, project_name: str):
+    from infrastructure.persistence.database import SessionLocal
+    from infrastructure.persistence.repositories import IngestionJobRepository, ProjectRepository
+    from application.services.analysis_service import AnalysisService
+    
+    db = SessionLocal()
+    job_repo = IngestionJobRepository(db)
+    try:
+        job_repo.update_status(job_id, "EXTRACTING")
+        
+        target_dir = TempStorageManager.provision_job_dir(job_id)
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(target_dir)
+            
+        os.remove(zip_path)
+        
+        job_repo.update_status(job_id, "ANALYZING", target_path=target_dir)
+        
+        project_repo = ProjectRepository(db)
+        project = project_repo.get_or_create(project_name)
+        
+        service = AnalysisService(db)
+        service.run_analysis(project.id, target_dir)
+        
+        job_repo.update_status(job_id, "COMPLETE")
+        
+    except Exception as e:
+        import traceback
+        logger.error(f"Background Zip processing failed: {e}")
+        job_repo.update_status(job_id, "FAILED", error_message=str(e))
+    finally:
+        db.close()
+
+@app.post("/ingest/zip", tags=["Discovery & Ingestion"], summary="Upload & Analyze Zip Archive")
+async def ingest_zip(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    project_name: str = Form("Uploaded Project"),
+    db: Session = Depends(get_db)
+):
+    if not file.filename.endswith(".zip"):
+        raise HTTPException(status_code=400, detail="Only .zip files are supported")
+        
+    job_id = str(uuid.uuid4())
+    job_repo = IngestionJobRepository(db)
+    job_repo.create(job_id=job_id, source_type="ZIP", status="UPLOADING")
+    
+    os.makedirs(TempStorageManager.BASE_DIR, exist_ok=True)
+    zip_path = os.path.join(TempStorageManager.BASE_DIR, f"{job_id}.zip")
+    
+    with open(zip_path, "wb") as buffer:
+        import shutil
+        shutil.copyfileobj(file.file, buffer)
+        
+    job_repo.update_status(job_id, "PENDING")
+    background_tasks.add_task(background_process_zip, job_id, zip_path, project_name)
+    
+    return {"job_id": job_id, "status": "PENDING", "message": "Zip upload complete, processing started"}
+
+class JobStatusResponse(BaseModel):
+    job_id: str
+    status: str
+    source_type: str
+    error_message: Optional[str] = None
+
+@app.get("/ingest/status/{job_id}", response_model=JobStatusResponse, tags=["Discovery & Ingestion"], summary="Check ingestion job status")
+def get_ingestion_status(job_id: str, db: Session = Depends(get_db)):
+    job_repo = IngestionJobRepository(db)
+    job = job_repo.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+        
+    return {
+        "job_id": job.id,
+        "status": job.status,
+        "source_type": job.source_type,
+        "error_message": job.error_message
+    }
+
+class GitIngestRequest(BaseModel):
+    repo_url: str = Field(..., description="The HTTP/HTTPS or SSH URL to the Git repository")
+    branch: Optional[str] = Field("main", description="The branch to clone")
+    project_name: Optional[str] = Field(None, description="Project name")
+
+def background_process_git(job_id: str, repo_url: str, branch: str, project_name: str):
+    from infrastructure.persistence.database import SessionLocal
+    from infrastructure.persistence.repositories import IngestionJobRepository, ProjectRepository
+    from application.services.analysis_service import AnalysisService
+    import subprocess
+    
+    db = SessionLocal()
+    job_repo = IngestionJobRepository(db)
+    try:
+        job_repo.update_status(job_id, "DOWNLOADING")
+        
+        target_dir = TempStorageManager.provision_job_dir(job_id)
+        
+        # Execute shallow clone
+        cmd = ["git", "clone", "--depth", "1"]
+        if branch:
+            cmd.extend(["--branch", branch])
+        cmd.extend([repo_url, target_dir])
+        
+        process = subprocess.run(cmd, capture_output=True, text=True)
+        if process.returncode != 0:
+            raise Exception(f"Git clone failed: {process.stderr}")
+            
+        job_repo.update_status(job_id, "ANALYZING", target_path=target_dir)
+        
+        project_repo = ProjectRepository(db)
+        project = project_repo.get_or_create(project_name)
+        
+        service = AnalysisService(db)
+        service.run_analysis(project.id, target_dir)
+        
+        job_repo.update_status(job_id, "COMPLETE")
+        
+    except Exception as e:
+        import traceback
+        logger.error(f"Background Git processing failed: {e}")
+        job_repo.update_status(job_id, "FAILED", error_message=str(e))
+    finally:
+        db.close()
+
+@app.post("/ingest/git", tags=["Discovery & Ingestion"], summary="Clone & Analyze Git Repository")
+def ingest_git(req: GitIngestRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    job_id = str(uuid.uuid4())
+    job_repo = IngestionJobRepository(db)
+    
+    # Extract project name from URL if not provided
+    p_name = req.project_name
+    if not p_name:
+        p_name = req.repo_url.rstrip("/").split("/")[-1].replace(".git", "")
+        
+    job_repo.create(job_id=job_id, source_type="GIT", status="PENDING")
+    
+    background_tasks.add_task(background_process_git, job_id, req.repo_url, req.branch, p_name)
+    
+    return {"job_id": job_id, "status": "PENDING", "message": "Git clone started"}
+
 @app.post("/analyze", 
           response_model=AnalyzeResponse, 
           tags=["Core Analysis"],

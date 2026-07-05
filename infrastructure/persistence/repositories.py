@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from infrastructure.persistence.models import Project, AnalysisRun, ComponentMetric, ComponentRisk, ComponentBehavior, ComponentDependency
+from infrastructure.persistence.models import Project, AnalysisRun, ComponentMetric, ComponentRisk, ComponentBehavior, ComponentDependency, IngestionJob
 
 class ProjectRepository:
     def __init__(self, db: Session):
@@ -21,6 +21,32 @@ class ProjectRepository:
             self.db.commit()
             self.db.refresh(project)
         return project
+
+class IngestionJobRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def create(self, job_id: str, source_type: str, status: str = "PENDING", project_id: int = None) -> IngestionJob:
+        job = IngestionJob(id=job_id, source_type=source_type, status=status, project_id=project_id)
+        self.db.add(job)
+        self.db.commit()
+        self.db.refresh(job)
+        return job
+
+    def update_status(self, job_id: str, status: str, target_path: str = None, error_message: str = None) -> IngestionJob:
+        job = self.db.query(IngestionJob).filter(IngestionJob.id == job_id).first()
+        if job:
+            job.status = status
+            if target_path:
+                job.target_path = target_path
+            if error_message:
+                job.error_message = error_message
+            self.db.commit()
+            self.db.refresh(job)
+        return job
+
+    def get(self, job_id: str) -> IngestionJob:
+        return self.db.query(IngestionJob).filter(IngestionJob.id == job_id).first()
 
 class AnalysisRunRepository:
     def __init__(self, db: Session):
@@ -67,10 +93,10 @@ class AnalysisRunRepository:
 
     def serialize_graph(self, run_id: int, graph_data: dict) -> str:
         """
-        Saves the graph JSON to the local /data directory.
+        Saves the graph JSON to the local data directory.
         Returns the path saved.
         """
-        data_dir = os.path.abspath("/data")
+        data_dir = os.path.abspath(os.environ.get("DATA_DIR", "/data"))
         os.makedirs(data_dir, exist_ok=True)
         filepath = os.path.join(data_dir, f"graph_{run_id}.json")
         with open(filepath, "w", encoding="utf-8") as f:
