@@ -457,7 +457,7 @@ import zipfile
 from application.utils.temp_storage import TempStorageManager
 from infrastructure.persistence.repositories import IngestionJobRepository
 
-def background_process_zip(job_id: str, zip_path: str, project_name: str):
+def background_process_zip(job_id: str, zip_path: str, project_name: str, persist: bool):
     from infrastructure.persistence.database import SessionLocal
     from infrastructure.persistence.repositories import IngestionJobRepository, ProjectRepository
     from application.services.analysis_service import AnalysisService
@@ -467,7 +467,13 @@ def background_process_zip(job_id: str, zip_path: str, project_name: str):
     try:
         job_repo.update_status(job_id, "EXTRACTING")
         
-        target_dir = TempStorageManager.provision_job_dir(job_id)
+        if persist:
+            data_dir = os.environ.get("DATA_DIR", "/data")
+            target_dir = os.path.join(data_dir, project_name)
+            os.makedirs(target_dir, exist_ok=True)
+        else:
+            target_dir = TempStorageManager.provision_job_dir(job_id)
+            
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             zip_ref.extractall(target_dir)
             
@@ -476,11 +482,15 @@ def background_process_zip(job_id: str, zip_path: str, project_name: str):
         job_repo.update_status(job_id, "ANALYZING", target_path=target_dir)
         
         project_repo = ProjectRepository(db)
-        project = project_repo.get_or_create(project_name, root_path=target_dir, ingest_type="zip")
+        itype = "local" if persist else "zip"
+        project = project_repo.get_or_create(project_name, root_path=target_dir, ingest_type=itype)
         
         service = AnalysisService(db)
         service.run_analysis(project.id, target_dir)
         
+        if not persist:
+            TempStorageManager.cleanup_job_dir(job_id)
+            
         job_repo.update_status(job_id, "COMPLETE")
         
     except Exception as e:
@@ -495,6 +505,7 @@ async def ingest_zip(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     project_name: str = Form("Uploaded Project"),
+    persist: bool = Form(False),
     db: Session = Depends(get_db)
 ):
     if not file.filename.endswith(".zip"):
@@ -512,7 +523,7 @@ async def ingest_zip(
         shutil.copyfileobj(file.file, buffer)
         
     job_repo.update_status(job_id, "PENDING")
-    background_tasks.add_task(background_process_zip, job_id, zip_path, project_name)
+    background_tasks.add_task(background_process_zip, job_id, zip_path, project_name, persist)
     
     return {"job_id": job_id, "status": "PENDING", "message": "Zip upload complete, processing started"}
 
@@ -540,8 +551,9 @@ class GitIngestRequest(BaseModel):
     repo_url: str = Field(..., description="The HTTP/HTTPS or SSH URL to the Git repository")
     branch: Optional[str] = Field("main", description="The branch to clone")
     project_name: Optional[str] = Field(None, description="Project name")
+    persist: bool = Field(False, description="Save directly to /data")
 
-def background_process_git(job_id: str, repo_url: str, branch: str, project_name: str):
+def background_process_git(job_id: str, repo_url: str, branch: str, project_name: str, persist: bool):
     from infrastructure.persistence.database import SessionLocal
     from infrastructure.persistence.repositories import IngestionJobRepository, ProjectRepository
     from application.services.analysis_service import AnalysisService
@@ -552,7 +564,11 @@ def background_process_git(job_id: str, repo_url: str, branch: str, project_name
     try:
         job_repo.update_status(job_id, "DOWNLOADING")
         
-        target_dir = TempStorageManager.provision_job_dir(job_id)
+        if persist:
+            data_dir = os.environ.get("DATA_DIR", "/data")
+            target_dir = os.path.join(data_dir, project_name)
+        else:
+            target_dir = TempStorageManager.provision_job_dir(job_id)
         
         # Execute shallow clone
         cmd = ["git", "clone", "--depth", "1"]
@@ -567,11 +583,15 @@ def background_process_git(job_id: str, repo_url: str, branch: str, project_name
         job_repo.update_status(job_id, "ANALYZING", target_path=target_dir)
         
         project_repo = ProjectRepository(db)
-        project = project_repo.get_or_create(project_name, root_path=target_dir, ingest_type="git", repo_url=repo_url)
+        itype = "local" if persist else "git"
+        project = project_repo.get_or_create(project_name, root_path=target_dir, ingest_type=itype, repo_url=repo_url)
         
         service = AnalysisService(db)
         service.run_analysis(project.id, target_dir)
         
+        if not persist:
+            TempStorageManager.cleanup_job_dir(job_id)
+            
         job_repo.update_status(job_id, "COMPLETE")
         
     except Exception as e:
@@ -593,7 +613,7 @@ def ingest_git(req: GitIngestRequest, background_tasks: BackgroundTasks, db: Ses
         
     job_repo.create(job_id=job_id, source_type="GIT", status="PENDING")
     
-    background_tasks.add_task(background_process_git, job_id, req.repo_url, req.branch, p_name)
+    background_tasks.add_task(background_process_git, job_id, req.repo_url, req.branch, p_name, req.persist)
     
     return {"job_id": job_id, "status": "PENDING", "message": "Git clone started"}
 

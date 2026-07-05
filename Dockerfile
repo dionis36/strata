@@ -14,6 +14,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     php-xml \
     php-mbstring \
     unzip \
+    git \
     libcairo2 \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \

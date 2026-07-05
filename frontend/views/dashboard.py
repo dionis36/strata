@@ -140,6 +140,8 @@ def show_dashboard():
                 
             p_name_zip = st.text_input("Project Name", value=default_zip_name, key="zip_p_name")
             
+            persist_zip = st.checkbox("Save extracted codebase to persistent /data folder", value=False, key="persist_zip")
+            
             if uploaded_file is not None:
                 if st.button("Upload & Analyze", use_container_width=True, key="btn_zip_analyze"):
                     import time
@@ -147,7 +149,7 @@ def show_dashboard():
                     status_placeholder.info("Uploading file to engine...")
                     
                     files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "application/zip")}
-                    data_payload = {"project_name": p_name_zip}
+                    data_payload = {"project_name": p_name_zip, "persist": persist_zip}
                     
                     try:
                         res = requests.post(f"{FASTAPI_URL}/ingest/zip", files=files, data=data_payload)
@@ -197,6 +199,8 @@ def show_dashboard():
             with c_pname:
                 git_p_name = st.text_input("Project Name (Optional)", key="git_p_name")
                 
+            persist_git = st.checkbox("Save cloned codebase to persistent /data folder", value=False, key="persist_git")
+                
             if st.button("Clone & Analyze", use_container_width=True, key="btn_git_analyze"):
                 if not repo_url:
                     st.error("Please provide a Repository URL.")
@@ -208,7 +212,8 @@ def show_dashboard():
                     payload = {
                         "repo_url": repo_url,
                         "branch": branch,
-                        "project_name": git_p_name if git_p_name else repo_url.rstrip("/").split("/")[-1].replace(".git", "")
+                        "project_name": git_p_name if git_p_name else repo_url.rstrip("/").split("/")[-1].replace(".git", ""),
+                        "persist": persist_git
                     }
                     
                     try:
@@ -254,8 +259,10 @@ def show_dashboard():
             proj = dashboard_data["project"]
             i_type = proj.get("ingest_type", "local")
             
+            st.markdown("##### Source Details")
             if i_type == "local":
-                st.write(f"Active Root: `{proj['root_path']}`")
+                st.markdown(f"**Method:** Local Directory  \n**Directory:** `{proj['root_path']}`")
+                st.markdown("---")
                 if st.button("Re-Scan", use_container_width=True):
                     with st.spinner("Analyzing changes..."):
                         res = requests.post(f"{FASTAPI_URL}/analyze", json={
@@ -268,11 +275,13 @@ def show_dashboard():
                             st.success("Re-scan Successful!", icon=":material/check_circle:")
                             st.rerun()
             elif i_type == "zip":
-                st.write(f"Source: `Zip Upload`")
+                st.markdown(f"**Method:** Zip Upload  \n**Snapshot Path:** `{proj['root_path']}`")
+                st.markdown("---")
                 st.info("Uploaded snapshots cannot be re-scanned. Upload a new zip to analyze changes.")
             elif i_type == "git":
                 repo = proj.get("repo_url", "Unknown repo")
-                st.write(f"Repository: `{repo}`")
+                st.markdown(f"**Method:** Git Repository  \n**Repository:** `{repo}`  \n**Branch:** `main` *(Default)*")
+                st.markdown("---")
                 if st.button("Pull & Re-Scan", use_container_width=True):
                     import time
                     status_placeholder = st.empty()
