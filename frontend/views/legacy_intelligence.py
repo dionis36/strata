@@ -73,8 +73,8 @@ def show_legacy_intelligence():
     tabs = st.tabs([
         f"Era Classification ({len(era_signals)})",
         f"Pattern Detection ({sum(pattern_totals.values())})",
-        "Modernization Scorecard",
-        "File Composition",
+        f"Modernization Scorecard ({len(scores) if scores else 0})",
+        f"File Composition ({total_files})",
     ])
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

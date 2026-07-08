@@ -9,9 +9,12 @@ import pandas as pd
 FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
 from views import page_registry
 
+import urllib.parse
+
 def fetch_simulation(run_id: int, fqn: str):
     try:
-        res = requests.get(f"{FASTAPI_URL}/simulation/impact/{run_id}?fqn={fqn}", timeout=10)
+        encoded_fqn = urllib.parse.quote(fqn, safe="")
+        res = requests.get(f"{FASTAPI_URL}/simulation/impact/{run_id}?fqn={encoded_fqn}", timeout=10)
         if res.status_code == 200:
             return res.json()
     except Exception as e:
@@ -20,7 +23,8 @@ def fetch_simulation(run_id: int, fqn: str):
 
 def fetch_ghost_graph(run_id: int, fqn: str):
     try:
-        res = requests.get(f"{FASTAPI_URL}/simulation/ghost-graph/{run_id}?fqn={fqn}", timeout=10)
+        encoded_fqn = urllib.parse.quote(fqn, safe="")
+        res = requests.get(f"{FASTAPI_URL}/simulation/ghost-graph/{run_id}?fqn={encoded_fqn}", timeout=10)
         if res.status_code == 200:
             return res.json()
     except Exception as e:
@@ -103,6 +107,7 @@ def show_extraction_simulator():
                 
                 st.markdown("#### Isolation Score")
                 st.info(sim["isolation_score"])
+                st.caption(f"*Ratio of Blast Radius (downstream) to Payload (upstream). Lower ratio = easier to extract safely.*")
                 
                 st.markdown("#### State Tear")
                 if sim["state_tear"]["globals"]:
@@ -118,138 +123,77 @@ def show_extraction_simulator():
             with col2:
                 st.markdown("### Extraction Blast Radius")
                 total_nodes = len(sim["blast_radius"]["files"]) + len(sim["dependency_payload"]["files"])
+                target_file = sim["target"]
+                upstream_full = [f for f in sim["dependency_payload"]["files"] if f != target_file]
+                downstream_full = [f for f in sim["blast_radius"]["files"] if f != target_file]
+                
                 if total_nodes > 500:
-                    st.warning(f"Graph too large for interactive rendering ({total_nodes} nodes). Displaying Adjacency Matrix fallback.", icon=":material/warning:")
+                    st.warning(f"Graph too large for full interactive rendering ({total_nodes} nodes). Truncating preview.", icon=":material/warning:")
+                    max_nodes = st.slider("Interactive Graph Render Limit", min_value=50, max_value=500, value=250)
                     
-                    import plotly.graph_objects as go
-                    
-                    target_file = sim["target"]
-                    upstream = [f for f in sim["dependency_payload"]["files"] if f != target_file]
-                    downstream = [f for f in sim["blast_radius"]["files"] if f != target_file]
-                    
-                    x_vals = []
-                    y_vals = []
-                    colors = []
-                    hover_texts = []
-                    
-                    for f in upstream:
-                        x_vals.append(f)
-                        y_vals.append(target_file)
-                        colors.append('#58a6ff')
-                        hover_texts.append(f"Dependant: {target_file}<br>Dependency: {f}")
-                        
-                    for f in downstream:
-                        x_vals.append(target_file)
-                        y_vals.append(f)
-                        colors.append('#d29922')
-                        hover_texts.append(f"Dependant: {f}<br>Dependency: {target_file}")
-                        
-                    x_vals.append(target_file)
-                    y_vals.append(target_file)
-                    colors.append('#f85149')
-                    hover_texts.append(f"Target: {target_file}")
-                    
-                    all_nodes = list(dict.fromkeys([target_file] + upstream + downstream))
-                    
-                    fig = go.Figure(data=go.Scatter(
-                        x=x_vals,
-                        y=y_vals,
-                        mode='markers',
-                        marker=dict(
-                            symbol='square',
-                            size=4,
-                            color=colors,
-                            line=dict(width=0)
-                        ),
-                        text=hover_texts,
-                        hoverinfo='text'
-                    ))
-                    
-                    fig.update_layout(
-                        plot_bgcolor='#0e1117',
-                        paper_bgcolor='#0e1117',
-                        font_color='#e0e0e0',
-                        margin=dict(l=0, r=0, t=10, b=0),
-                        height=500,
-                        xaxis=dict(
-                            title="Dependency",
-                            showgrid=False,
-                            zeroline=False,
-                            showticklabels=False,
-                            categoryorder='array',
-                            categoryarray=all_nodes
-                        ),
-                        yaxis=dict(
-                            title="Dependant",
-                            showgrid=False,
-                            zeroline=False,
-                            showticklabels=False,
-                            categoryorder='array',
-                            categoryarray=all_nodes,
-                            autorange="reversed"
-                        )
-                    )
-                    
-                    st.plotly_chart(fig, use_container_width=True)
-                    
-                    with st.expander("View Raw Dependency Tables"):
-                        st.markdown("##### 🔌 Upstream Dependencies (What this needs)")
-                        if upstream:
-                            st.dataframe(pd.DataFrame({"File Path": upstream}), hide_index=True, use_container_width=True)
-                        else:
-                            st.info("No upstream dependencies detected.")
-                            
-                        st.markdown("##### 💥 Blast Radius (What breaks if this is removed)")
-                        if downstream:
-                            st.dataframe(pd.DataFrame({"File Path": downstream}), hide_index=True, use_container_width=True)
-                        else:
-                            st.info("No downstream blast radius detected.")
+                    half_budget = max_nodes // 2
+                    upstream_preview = upstream_full[:half_budget]
+                    downstream_preview = downstream_full[:(max_nodes - len(upstream_preview))]
                 else:
-                    net = Network(height="500px", width="100%", bgcolor="#0e1117", font_color="#e0e0e0", directed=True)
-                    net.toggle_physics(True)
-                    net.set_options("""
-                    {
-                      "physics": {
-                        "forceAtlas2Based": { "gravitationalConstant": -50, "springLength": 100, "avoidOverlap": 0.5 },
-                        "solver": "forceAtlas2Based",
-                        "stabilization": false
-                      },
-                      "edges": { "smooth": { "type": "continuous" } }
-                    }
-                    """)
-                    net.add_node(sim["target"], label=os.path.basename(sim["target"]), color="#f85149", size=25, title=f"Target: {sim['target']}")
+                    upstream_preview = upstream_full
+                    downstream_preview = downstream_full
                     
-                    for f in sim["blast_radius"]["files"]:
-                        if f != sim["target"]:
-                            net.add_node(f, label=os.path.basename(f), color="#d29922", size=15, title=f"Downstream: {f}")
-                            net.add_edge(f, sim["target"], title="depends on", color="#d29922")
-                    
-                    for f in sim["dependency_payload"]["files"]:
-                        if f != sim["target"]:
-                            try:
-                                net.add_node(f, label=os.path.basename(f), color="#58a6ff", size=10, title=f"Upstream: {f}")
-                            except: pass
-                            net.add_edge(sim["target"], f, title="calls", color="#58a6ff")
+                net = Network(height="500px", width="100%", bgcolor="#0e1117", font_color="#e0e0e0", directed=True)
+                net.toggle_physics(True)
+                net.set_options("""
+                {
+                  "physics": {
+                    "forceAtlas2Based": { "gravitationalConstant": -50, "springLength": 100, "avoidOverlap": 0.5 },
+                    "solver": "forceAtlas2Based",
+                    "stabilization": false
+                  },
+                  "edges": { "smooth": { "type": "continuous" } }
+                }
+                """)
+                net.add_node(target_file, label=os.path.basename(target_file), color="#f85149", size=25, title=f"Target: {target_file}")
+                
+                for f in downstream_preview:
+                    net.add_node(f, label=os.path.basename(f), color="#d29922", size=15, title=f"Downstream: {f}")
+                    net.add_edge(f, target_file, title="depends on", color="#d29922")
+                
+                for f in upstream_preview:
+                    try:
+                        net.add_node(f, label=os.path.basename(f), color="#58a6ff", size=10, title=f"Upstream: {f}")
+                    except: pass
+                    net.add_edge(target_file, f, title="calls", color="#58a6ff")
 
-                    net.save_graph(f"/tmp/extraction_sim_{run_id}.html")
-                    with open(f"/tmp/extraction_sim_{run_id}.html", "r", encoding="utf-8") as f:
-                        html = f.read()
+                net.save_graph(f"/tmp/extraction_sim_{run_id}.html")
+                with open(f"/tmp/extraction_sim_{run_id}.html", "r", encoding="utf-8") as f:
+                    html = f.read()
+                    
+                custom_css = """
+                <style>
+                    body { margin: 0 !important; padding: 0 !important; background-color: #0e1117 !important; }
+                    #mynetwork { 
+                        border: 1px solid #1e2430 !important; 
+                        border-radius: 12px !important; 
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
+                        background-color: #0e1117 !important;
+                    }
+                    #loadingBar { display: none !important; }
+                </style>
+                """
+                html = html.replace("</head>", custom_css + "</head>")
+                html = html.replace('border: 1px solid lightgray;', 'border: none;')
+                components.html(html, height=520)
+                
+                with st.expander("View Raw Dependency Tables"):
+                    st.markdown("##### 🔌 Upstream Dependencies (What this needs)")
+                    if upstream_full:
+                        st.dataframe(pd.DataFrame({"File Path": upstream_full}), hide_index=True, use_container_width=True)
+                    else:
+                        st.info("No upstream dependencies detected.")
                         
-                    custom_css = """
-                    <style>
-                        body { margin: 0 !important; padding: 0 !important; background-color: #0e1117 !important; }
-                        #mynetwork { 
-                            border: 1px solid #1e2430 !important; 
-                            border-radius: 12px !important; 
-                            box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
-                            background-color: #0e1117 !important;
-                        }
-                        #loadingBar { display: none !important; }
-                    </style>
-                    """
-                    html = html.replace("</head>", custom_css + "</head>")
-                    html = html.replace('border: 1px solid lightgray;', 'border: none;')
-                    components.html(html, height=520)
+                    st.markdown("##### 💥 Blast Radius (What breaks if this is removed)")
+                    if downstream_full:
+                        st.dataframe(pd.DataFrame({"File Path": downstream_full}), hide_index=True, use_container_width=True)
+                    else:
+                        st.info("No downstream blast radius detected.")
 
             st.markdown("---")
             st.markdown("#### Simulation Findings")
@@ -352,53 +296,76 @@ def show_extraction_simulator():
                     components.html(html_g, height=520)
                     
                 st.markdown("---")
-                st.markdown("#### Architecture Export & Documentation")
+                st.markdown("#### Extraction Details & Data Contracts")
                 
-                exp_col1, exp_col2 = st.columns(2)
+                tab_comp, tab_db, tab_edges = st.tabs(["🧩 Monolith Components", "🗄️ Database Access", "🔀 Network Interfaces"])
                 
-                with exp_col1:
-                    st.markdown("**1. Raw Topology Schema (JSON)**")
-                    st.caption("Download the simulated nodes and edges coordinates for modeling inside external toolings.")
-                    json_str = json.dumps(ghost, indent=2)
-                    st.download_button(
-                        label="Download JSON Topology",
-                        data=json_str,
-                        file_name=f"ghost_graph_{os.path.basename(target_fqn).replace('.php', '')}.json",
-                        mime="application/json"
-                    )
-                    
-                with exp_col2:
-                    st.markdown("**2. Mermaid Decoupling Diagram**")
-                    st.caption("Copy the flowchart definition below to paste into architecture wiki pages or RFC documents.")
-                    
-                    # Construct Mermaid Flowchart
-                    mermaid_lines = ["flowchart TD"]
-                    
-                    # Subgraph for surviving monolith
-                    mermaid_lines.append("    subgraph Monolith [Surviving Monolith Container]")
-                    for n in ghost["nodes"]:
-                        if n["group"] == "monolith":
-                            mermaid_lines.append(f"        {n['id']}[\"{n['label']}\"]")
-                    mermaid_lines.append("    end")
-                    
-                    # Subgraph for extracted service
-                    mermaid_lines.append(f"    subgraph ExtractedService [Remote Microservice Proxy]")
-                    mermaid_lines.append(f"        {ghost['proxy_node']}[\"{ghost['proxy_node']}\"]")
-                    mermaid_lines.append("    end")
-                    
-                    # Database nodes
-                    for n in ghost["nodes"]:
-                        if n["group"] == "database":
-                            mermaid_lines.append(f"    {n['id']}[(\"{n['label']}\")]")
-                            
-                    # Edges
-                    for e in ghost["edges"]:
-                        mermaid_lines.append(f"    {e['source']} -->|{e['type']}| {e['target']}")
+                with tab_comp:
+                    st.caption("These surviving monolith components will communicate with the new Microservice Proxy.")
+                    monolith_nodes = [{"ID": n["id"], "Name": n["label"], "Type": n["type"]} for n in ghost["nodes"] if n["group"] == "monolith"]
+                    if monolith_nodes:
+                        st.dataframe(pd.DataFrame(monolith_nodes), hide_index=True, use_container_width=True)
+                    else:
+                        st.info("No upstream monolith components detected.")
                         
-                    mermaid_code = "\n".join(mermaid_lines)
-                    st.markdown(f"```mermaid\n{mermaid_code}\n```")
+                with tab_db:
+                    st.caption("These database tables will need to be accessible by the extracted microservice.")
+                    db_nodes = [{"Table ID": n["id"], "Label": n["label"]} for n in ghost["nodes"] if n["group"] == "database"]
+                    if db_nodes:
+                        st.dataframe(pd.DataFrame(db_nodes), hide_index=True, use_container_width=True)
+                    else:
+                        st.success("No direct database dependencies detected for this module.")
+                        
+                with tab_edges:
+                    st.caption("These are the simulated network edges (API calls) that must be preserved over gRPC/REST.")
+                    if ghost["edges"]:
+                        edge_data = [{"Source": e["source"], "Target": e["target"], "Connection Type": e["type"]} for e in ghost["edges"]]
+                        st.dataframe(pd.DataFrame(edge_data), hide_index=True, use_container_width=True)
+                    else:
+                        st.info("No proxy edges simulated.")
+                
+                with st.expander("Developer Exports (JSON / Mermaid)"):
+                    exp_col1, exp_col2 = st.columns(2)
+                    
+                    with exp_col1:
+                        st.markdown("**1. Raw Topology Schema (JSON)**")
+                        st.caption("Download the simulated nodes and edges coordinates for external modeling.")
+                        json_str = json.dumps(ghost, indent=2)
+                        st.download_button(
+                            label="Download JSON Topology",
+                            data=json_str,
+                            file_name=f"ghost_graph_{os.path.basename(target_fqn).replace('.php', '')}.json",
+                            mime="application/json"
+                        )
+                        
+                    with exp_col2:
+                        st.markdown("**2. Mermaid Decoupling Diagram**")
+                        st.caption("Copy the flowchart definition below to paste into architecture wiki pages.")
+                        
+                        mermaid_lines = ["flowchart TD"]
+                        mermaid_lines.append("    subgraph Monolith [Surviving Monolith Container]")
+                        for n in ghost["nodes"]:
+                            if n["group"] == "monolith":
+                                mermaid_lines.append(f"        {n['id']}[\"{n['label']}\"]")
+                        mermaid_lines.append("    end")
+                        
+                        mermaid_lines.append(f"    subgraph ExtractedService [Remote Microservice Proxy]")
+                        mermaid_lines.append(f"        {ghost['proxy_node']}[\"{ghost['proxy_node']}\"]")
+                        mermaid_lines.append("    end")
+                        
+                        for n in ghost["nodes"]:
+                            if n["group"] == "database":
+                                mermaid_lines.append(f"    {n['id']}[(\"{n['label']}\")]")
+                                
+                        for e in ghost["edges"]:
+                            mermaid_lines.append(f"    {e['source']} -->|{e['type']}| {e['target']}")
+                            
+                        mermaid_code = "\n".join(mermaid_lines)
+                        st.markdown(f"```mermaid\n{mermaid_code}\n```")
             else:
                 st.info("Simulating target decoupled architecture... Please run simulation above.")
+    else:
+        st.info("Select a target file from the dropdown and click **Run Impact Simulation** to preview the architectural boundary and structural impact.")
 
 if __name__ == "__main__":
     show_extraction_simulator()

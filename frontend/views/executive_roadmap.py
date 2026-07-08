@@ -17,10 +17,10 @@ def show_executive_roadmap():
         return
 
     tabs = st.tabs([
-        "Modernization Roadmap", 
-        "Architectural Summary (Graph)",
+        "Modernization Roadmap (Actionable)", 
+        "Architectural Summary (Interactive)",
         "Deep Topology (DOT)", 
-        "Export & Integration"
+        "Export & Integration (2 Artifacts)"
     ])
 
     with tabs[0]:

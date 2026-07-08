@@ -55,7 +55,10 @@ def show_legacy_bootstrapper():
     
     # --- Modernization Artifacts ---
     st.markdown("#### Modernization Artifact Generator")
-    tabs = st.tabs(["Composer Configuration", "Bootstrap Hierarchy"])
+    tabs = st.tabs([
+        "Composer Configuration (PSR-4)", 
+        f"Bootstrap Hierarchy ({len(tree_data.get('bootstrap_chain', {}))})"
+    ])
     
     with tabs[0]:
         st.markdown("##### PSR-4 Autoloading Bridge")
