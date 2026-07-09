@@ -38,6 +38,7 @@ from views.decision_engine import show_modernization_decision_engine
 from views.legacy_bootstrapper import show_legacy_bootstrapper
 
 from views.boundary_intelligence import show_boundary_intelligence
+from views.report_viewer import show_report_viewer
 from views import page_registry
 
 # Named Page objects for pages that are cross-referenced by in-page navigation
@@ -46,9 +47,11 @@ from views import page_registry
 _page_dashboard = st.Page(show_dashboard, title="Executive Dashboard", icon=":material/dashboard:")
 _page_risk_audit = st.Page(show_risk_audit, title="Modernization Risk", icon=":material/gpp_maybe:")
 _page_boundary_intelligence = st.Page(show_boundary_intelligence, title="Boundary Intelligence", icon=":material/public:")
+_page_report_viewer = st.Page(show_report_viewer, title="Report Viewer", icon=":material/description:")
 page_registry.PAGE_DASHBOARD = _page_dashboard
 page_registry.PAGE_RISK_AUDIT = _page_risk_audit
 page_registry.PAGE_BOUNDARY_INTELLIGENCE = _page_boundary_intelligence
+page_registry.PAGE_REPORT_VIEWER = _page_report_viewer
 
 # Modern Streamlit Navigation (v1.31+)
 pages = {
@@ -148,5 +151,8 @@ with st.sidebar:
         for page in section_pages:
             st.page_link(page, icon=page.icon)
 
-pg = st.navigation(pages, position="hidden")
+all_pages = [p for sublist in pages.values() for p in sublist]
+all_pages.append(_page_report_viewer)
+
+pg = st.navigation(all_pages, position="hidden")
 pg.run()

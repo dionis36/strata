@@ -114,13 +114,19 @@ def show_dashboard():
 
                 md_content = fetch_human_cached(run['id'])
                 if md_content:
-                    st.download_button(
-                        label="Download Blueprint (.md)",
-                        data=md_content,
-                        file_name="Strategic_Modernization_Blueprint.md",
-                        mime="text/markdown",
-                        use_container_width=True
-                    )
+                    col_view, col_dl = st.columns(2)
+                    with col_view:
+                        if st.button("View Report", use_container_width=True):
+                            from views import page_registry
+                            st.switch_page(page_registry.PAGE_REPORT_VIEWER)
+                    with col_dl:
+                        st.download_button(
+                            label="Download Report",
+                            data=md_content,
+                            file_name="Strategic_Modernization_Blueprint.md",
+                            mime="text/markdown",
+                            use_container_width=True
+                        )
             with c_art2:
                 @st.cache_data(show_spinner=False)
                 def fetch_sarif_cached(run_id_val):

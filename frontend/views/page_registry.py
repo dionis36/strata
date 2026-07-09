@@ -13,3 +13,4 @@ app.py sets these attributes; view files read them.
 PAGE_RISK_AUDIT = None
 PAGE_BOUNDARY_INTELLIGENCE = None
 PAGE_DASHBOARD = None
+PAGE_REPORT_VIEWER = None
