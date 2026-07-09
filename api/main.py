@@ -1109,7 +1109,8 @@ def get_dashboard(project_id: int, db: Session = Depends(get_db)):
                 "risk_score": legacy.total_modernization_score if legacy else 0.0,
                 "php_era": legacy.php_era if legacy else "Unknown",
                 "framework": legacy.detected_framework if legacy else "Unknown",
-                "test_coverage": global_coverage
+                "test_coverage": global_coverage,
+                "status": latest_run.status
             }
         }
     except Exception as e:

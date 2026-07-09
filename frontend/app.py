@@ -38,7 +38,6 @@ from views.decision_engine import show_modernization_decision_engine
 from views.legacy_bootstrapper import show_legacy_bootstrapper
 
 from views.boundary_intelligence import show_boundary_intelligence
-from views.artifact_center import show_artifact_center
 from views import page_registry
 
 # Named Page objects for pages that are cross-referenced by in-page navigation
@@ -74,9 +73,6 @@ pages = {
         st.Page(show_extraction_simulator, title="Extraction Simulator", icon=":material/biotech:"),
         st.Page(show_executive_roadmap, title="Strategic Roadmap", icon=":material/insights:"),
         st.Page(show_legacy_bootstrapper, title="Legacy Bootstrapper", icon=":material/build:"),
-    ],
-    "E. Artifact Center": [
-        st.Page(show_artifact_center, title="Artifact Center", icon=":material/download:"),
     ]
 }
 
@@ -91,7 +87,6 @@ def show_user_guide():
     2. **B. Architectural Discovery:** Use the interactive *System Topology* and *Bounded Contexts* graphs to visually identify "God Classes" and tangled dependencies.
     3. **C. Intelligence Reports:** Deep-dive into specific architectural debts. The *Database Intelligence* and *Global State* tabs are critical for finding hidden couplings before extracting microservices.
     4. **D. Strategic Advisory:** Use the *Extraction Simulator* to mathematically preview the risk impact of moving a class into its own service before you write any code.
-    5. **E. Artifact Center:** Export your findings into Executive PDFs, SARIF security logs, or automated `rector.php` refactoring rules.
     """)
 
 # --- Global Context Sidebar ---

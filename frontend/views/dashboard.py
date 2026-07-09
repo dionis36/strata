@@ -71,6 +71,75 @@ def show_dashboard():
 
         st.markdown("---")
 
+        # ── Artifacts & Exports ──────────────────────────────────────────────────
+        run_status = run.get("status", "unknown").lower()
+        synthesis_statuses = ["synthesizing_findings", "synthesizing_summary", "synthesizing_rector"]
+        
+        if run_status in synthesis_statuses:
+            import time
+            with st.status("Querying LLM & Synthesizing Artifacts...", expanded=True):
+                st.write("Please wait...")
+                time.sleep(3)
+            st.rerun()
+            
+        elif run_status in ["analysis_complete", "completed"]:
+            col_msg, col_btn = st.columns([3, 1])
+            col_msg.info("Analysis complete. Query LLM to generate modernization artifacts.")
+            if col_btn.button("Query LLM for Artifacts", type="primary", use_container_width=True):
+                with st.spinner("Initializing AI Synthesis..."):
+                    requests.post(f"{FASTAPI_URL}/runs/{run['id']}/retry_intelligence")
+                    st.rerun()
+                    
+        elif run_status == "analyzing":
+            st.info("Core analysis is currently running. Please wait...")
+            import time
+            time.sleep(3)
+            st.rerun()
+            
+        elif run_status == "intelligence_failed":
+            col_msg, col_btn = st.columns([3, 1])
+            col_msg.error("LLM Artifact Synthesis Failed.")
+            if col_btn.button("Retry LLM Query", type="primary", use_container_width=True):
+                requests.post(f"{FASTAPI_URL}/runs/{run['id']}/retry_intelligence")
+                st.rerun()
+                
+        elif run_status == "intelligence_ready":
+            st.markdown("#### Artifact Exports")
+            c_art1, c_art2 = st.columns(2)
+            with c_art1:
+                @st.cache_data(show_spinner=False)
+                def fetch_human_cached(run_id_val):
+                    res = requests.get(f"{FASTAPI_URL}/artifacts/human/{run_id_val}?format=md")
+                    return res.content if res.status_code == 200 else None
+
+                md_content = fetch_human_cached(run['id'])
+                if md_content:
+                    st.download_button(
+                        label="Download Blueprint (.md)",
+                        data=md_content,
+                        file_name="Strategic_Modernization_Blueprint.md",
+                        mime="text/markdown",
+                        use_container_width=True
+                    )
+            with c_art2:
+                @st.cache_data(show_spinner=False)
+                def fetch_sarif_cached(run_id_val):
+                    res = requests.get(f"{FASTAPI_URL}/artifacts/sarif/{run_id_val}")
+                    import json
+                    return json.dumps(res.json(), indent=2) if res.status_code == 200 else None
+                
+                sarif_content = fetch_sarif_cached(run['id'])
+                if sarif_content:
+                    st.download_button(
+                        label="Download SARIF Report",
+                        data=sarif_content,
+                        file_name="results.sarif",
+                        mime="application/json",
+                        use_container_width=True
+                    )
+                    
+        st.markdown("---")
+
     else:
         st.info("Select a project or start a new analysis to populate the dashboard.")
 
