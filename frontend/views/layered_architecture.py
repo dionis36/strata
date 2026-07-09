@@ -71,7 +71,7 @@ def show_layered_architecture():
                     current[part]["_info"] = info
                 current = current[part]["_children"]
             
-        search_term = st.text_input("🔍 Search files or directories...", "").lower()
+        search_term = st.text_input(" Search files or directories...", "").lower()
         
         def generate_html_tree(node, depth=0):
             html = ""
@@ -83,10 +83,10 @@ def show_layered_architecture():
                 "view": "<span style='color:#00cc96;'>●</span>", 
                 "config": "<span style='color:#f9a825;'>■</span>", 
                 "asset": "<span style='color:#00cc96;'>●</span>", 
-                "job": "⚙️", 
+                "job": "", 
                 "vendor": "<span style='color:#757575;'>■</span>", 
-                "model": "📦",
-                "schema": "💾",
+                "model": "",
+                "schema": "",
                 "file": "<span style='color:#90a4ae;'>●</span>"
             }
 
@@ -399,7 +399,7 @@ def show_system_topology():
                     
                 st.markdown(f"**EVIDENCE**: \n1. {ev1_bn}\n2. {ev2_bn}")
                 st.markdown(
-                    "**RECOMMENDATION**: The most central node in a legacy system is almost never a coincidence — it accumulated connections because it was the most convenient place to put shared logic. "
+                    "**RECOMMENDATION**: The most central node in a legacy system is almost never a coincidence - it accumulated connections because it was the most convenient place to put shared logic. "
                     "Consider what *role* this node was originally intended to play. Is it a technical utility (a logger, a config loader) that crept into business logic? "
                     "Or is it a core business object that became a catch-all? That distinction determines whether it belongs in a shared library, a dedicated service, or needs to be decomposed entirely."
                 )
@@ -415,13 +415,13 @@ def show_system_topology():
                 
                 if circular_count > 0:
                     st.markdown(
-                        "**RECOMMENDATION**: Circular dependencies are the architectural equivalent of a structural loop — neither component can be moved without moving the other. "
+                        "**RECOMMENDATION**: Circular dependencies are the architectural equivalent of a structural loop - neither component can be moved without moving the other. "
                         "Before deciding how to break them, understand *why* they formed: did two modules genuinely need to share behaviour, or was one module just reaching across a boundary out of convenience? "
                         "The answer will tell you whether to introduce an interface, extract the shared logic into a third component, or merge the two modules into a single bounded context."
                     )
                 else:
                     st.markdown(
-                        "**RECOMMENDATION**: The absence of circular dependencies in this slice indicates that the original call flow was directional — logic moved in one consistent direction through these components. "
+                        "**RECOMMENDATION**: The absence of circular dependencies in this slice indicates that the original call flow was directional - logic moved in one consistent direction through these components. "
                         "Note whether this continues to hold as you explore the full topology, or whether circular dependencies appear only in specific subsystems."
                     )
     except Exception as e:

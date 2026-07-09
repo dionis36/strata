@@ -137,4 +137,4 @@ if __name__ == "__main__":
     test_evidence_builder_extracts_dependents()
     test_evidence_builder_extracts_file_path()
     test_evidence_builder_handles_missing_graph()
-    print("\n✅ All Phase 4.5 Explanation Engine tests passed!")
+    print("\n All Phase 4.5 Explanation Engine tests passed!")

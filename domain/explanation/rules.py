@@ -3,7 +3,7 @@ Phase 4.5: Explanation Rule Set
 Single source of truth for all explainability rules.
 
 Design rules:
-- All threshold values live in THRESHOLDS dict only — never hardcoded inside lambdas.
+- All threshold values live in THRESHOLDS dict only - never hardcoded inside lambdas.
 - Each rule's 'condition' receives the full component_data dict.
 - 'message_template' uses {value:.2f} placeholders rendered at evaluation time.
 - 'weight' controls ranking; explanations are sorted DESC by weight before cap is applied.
@@ -43,7 +43,7 @@ RULES = [
         "severity": "high",
         "weight": 0.90,
         "message_template": (
-            "Participates in cyclic dependency group (SCC size {scc_size}) — "
+            "Participates in cyclic dependency group (SCC size {scc_size}) - "
             "changes cascade unpredictably within the cycle"
         ),
     },
@@ -57,7 +57,7 @@ RULES = [
         "severity": "medium",
         "weight": 0.60,
         "message_template": (
-            "Moderate structural centrality (criticality {criticality_index:.2f}) — "
+            "Moderate structural centrality (criticality {criticality_index:.2f}) - "
             "sits on several dependency paths"
         ),
     },
@@ -68,7 +68,7 @@ RULES = [
         "severity": "medium",
         "weight": 0.70,
         "message_template": (
-            "High outward dependency ratio (instability {instability:.2f}) — "
+            "High outward dependency ratio (instability {instability:.2f}) - "
             "sensitive to changes in its dependencies"
         ),
     },
@@ -79,7 +79,7 @@ RULES = [
         "severity": "medium",
         "weight": 0.65,
         "message_template": (
-            "High coupling pressure ({coupling_pressure:.2f}) — "
+            "High coupling pressure ({coupling_pressure:.2f}) - "
             "strong bidirectional dependency concentration"
         ),
     },
@@ -90,7 +90,7 @@ RULES = [
         "severity": "medium",
         "weight": 0.75,
         "message_template": (
-            "Frequent database write activity (intensity {write_intensity:.2f}) — "
+            "Frequent database write activity (intensity {write_intensity:.2f}) - "
             "mutations increase state-change blast radius"
         ),
     },
@@ -101,7 +101,7 @@ RULES = [
         "severity": "medium",
         "weight": 0.70,
         "message_template": (
-            "Writes to {table_dependencies} shared database tables — "
+            "Writes to {table_dependencies} shared database tables - "
             "broad data coupling increases coordination risk"
         ),
     },

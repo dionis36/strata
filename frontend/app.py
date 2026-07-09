@@ -43,7 +43,7 @@ from views import page_registry
 
 # Named Page objects for pages that are cross-referenced by in-page navigation
 # buttons. Populated into page_registry so view files can import the exact same
-# registered object — avoids the st.switch_page(st.Page(...)) anti-pattern.
+# registered object - avoids the st.switch_page(st.Page(...)) anti-pattern.
 _page_dashboard = st.Page(show_dashboard, title="Executive Dashboard", icon=":material/dashboard:")
 _page_risk_audit = st.Page(show_risk_audit, title="Modernization Risk", icon=":material/gpp_maybe:")
 _page_boundary_intelligence = st.Page(show_boundary_intelligence, title="Boundary Intelligence", icon=":material/public:")

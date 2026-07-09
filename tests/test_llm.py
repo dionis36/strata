@@ -19,11 +19,11 @@ def test_llm_report_generation():
         with open(output_file, "w", encoding="utf-8") as f:
             f.write(html_report)
             
-        print(f"✅ Success! Report saved to {output_file}")
+        print(f" Success! Report saved to {output_file}")
         print("Open this file in your browser to verify the Mermaid rendering and new Tailwind CSS layout.")
         
     except Exception as e:
-        print(f"❌ Failed to generate report: {e}")
+        print(f" Failed to generate report: {e}")
     finally:
         db.close()
 

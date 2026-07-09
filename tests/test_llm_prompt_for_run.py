@@ -161,9 +161,9 @@ def save_summary_to_db(run_id: int, summary: dict):
             run.error_message = None
             run.status = "intelligence_ready"
             db.commit()
-            print(f"✅ Successfully saved AI Intelligence to database for Run ID {run_id}!")
+            print(f" Successfully saved AI Intelligence to database for Run ID {run_id}!")
     except Exception as e:
-        print(f"❌ Failed to save to database: {e}")
+        print(f" Failed to save to database: {e}")
     finally:
         db.close()
 
@@ -194,10 +194,10 @@ def ping_llm(ai_service):
         try:
             res = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
             res.raise_for_status()
-            print("✅ OpenRouter Ping Successful!")
+            print(" OpenRouter Ping Successful!")
             return True
         except Exception as e:
-            print(f"❌ OpenRouter Ping Failed: {e}")
+            print(f" OpenRouter Ping Failed: {e}")
             if hasattr(e, 'response') and e.response is not None:
                 print(f"Response: {e.response.text}")
             if not getattr(ai_service, 'client', None):
@@ -211,10 +211,10 @@ def ping_llm(ai_service):
                 model='gemini-1.5-flash',
                 contents="Ping."
             )
-            print("✅ Native Gemini Ping Successful!")
+            print(" Native Gemini Ping Successful!")
             return True
         except Exception as e:
-            print(f"❌ Native Gemini Ping Failed: {e}")
+            print(f" Native Gemini Ping Failed: {e}")
             return False
             
     return False
@@ -230,7 +230,7 @@ def main():
     args = parser.parse_args()
     
     if (args.invoke or args.save) and check_run_status(args.run_id) and not args.force:
-        print(f"⚠️  Run ID {args.run_id} already has AI Intelligence generated (status: intelligence_ready).")
+        print(f"  Run ID {args.run_id} already has AI Intelligence generated (status: intelligence_ready).")
         print("Use --force to overwrite the existing data in the database.")
         sys.exit(0)
         
@@ -239,7 +239,7 @@ def main():
     if args.invoke:
         is_online = ping_llm(ai_service)
         if not is_online:
-            print("\n⛔ Aborting full payload prompt because LLM ping failed (Rate limit, Auth error, or Overload).")
+            print("\n Aborting full payload prompt because LLM ping failed (Rate limit, Auth error, or Overload).")
             sys.exit(1)
             
     print(f"\nExtracting context for Run ID {args.run_id}...")
@@ -338,7 +338,7 @@ def main():
             )
             spinner_running = False
             spinner_thread.join()
-            sys.stdout.write("\r" + " "*60 + "\r✅ AI response received!\n")
+            sys.stdout.write("\r" + " "*60 + "\r AI response received!\n")
             
             print("\n=== AI RESPONSE ===")
             print(json.dumps(summary, indent=2))
@@ -352,8 +352,8 @@ def main():
         except Exception as e:
             spinner_running = False
             spinner_thread.join()
-            sys.stdout.write("\r" + " "*60 + "\r❌ Request failed!\n")
-            print(f"\n❌ AI Synthesis Failed: {e}")
+            sys.stdout.write("\r" + " "*60 + "\r Request failed!\n")
+            print(f"\n AI Synthesis Failed: {e}")
     else:
         print("Run with --invoke to actually hit the LLM API.")
 

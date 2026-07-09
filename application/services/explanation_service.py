@@ -8,7 +8,7 @@ Pipeline:
   3. For each component: RiskReasoner → explanations, EvidenceBuilder → evidence
   4. Return sorted list of ComponentExplanation (by final_risk DESC)
 
-This service is stateless and read-only — no DB writes, no new tables.
+This service is stateless and read-only no DB writes, no new tables.
 """
 import logging
 from sqlalchemy.orm import Session

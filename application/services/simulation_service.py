@@ -157,9 +157,9 @@ class SimulationService:
 
     def _calculate_isolation_score(self, blast_radius: int, payload_size: int) -> str:
         ratio = blast_radius / payload_size if payload_size > 0 else 0
-        if ratio > 2: return "🔴 HIGH FRICTION (Extensive Refactoring Needed)"
-        if ratio > 1: return "🟡 MODERATE (Manageable Side-Effects)"
-        return "🟢 CLEAN (Independent / Leaf Node)"
+        if ratio > 2: return " HIGH FRICTION (Extensive Refactoring Needed)"
+        if ratio > 1: return " MODERATE (Manageable Side-Effects)"
+        return " CLEAN (Independent / Leaf Node)"
 
     def get_ghost_graph(self, run_id: int, target_fqn: str) -> Dict[str, Any]:
         import networkx as nx

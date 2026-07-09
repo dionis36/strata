@@ -84,7 +84,7 @@ def test_weight_override_changes_scores():
     """Exit criterion 4: Passing weight_overrides changes scores without crashing."""
     metrics = _make_metrics()
     default_results = _compute_risk_for_metrics(metrics)
-    # Heavily weight cycle — ClassE (scc_size=3) and ClassB (scc_size=2) should dominate
+    # Heavily weight cycle - ClassE (scc_size=3) and ClassB (scc_size=2) should dominate
     cycle_heavy = {"criticality": 0.10, "instability": 0.10, "coupling": 0.10, "cycle": 0.70}
     overridden_results = _compute_risk_for_metrics(metrics, weight_overrides=cycle_heavy)
 

@@ -183,13 +183,13 @@ def show_extraction_simulator():
                 components.html(html, height=520)
                 
                 with st.expander("View Raw Dependency Tables"):
-                    st.markdown("##### 🔌 Upstream Dependencies (What this needs)")
+                    st.markdown("#####  Upstream Dependencies (What this needs)")
                     if upstream_full:
                         st.dataframe(pd.DataFrame({"File Path": upstream_full}), hide_index=True, use_container_width=True)
                     else:
                         st.info("No upstream dependencies detected.")
                         
-                    st.markdown("##### 💥 Blast Radius (What breaks if this is removed)")
+                    st.markdown("#####  Blast Radius (What breaks if this is removed)")
                     if downstream_full:
                         st.dataframe(pd.DataFrame({"File Path": downstream_full}), hide_index=True, use_container_width=True)
                     else:
@@ -298,7 +298,7 @@ def show_extraction_simulator():
                 st.markdown("---")
                 st.markdown("#### Extraction Details & Data Contracts")
                 
-                tab_comp, tab_db, tab_edges = st.tabs(["🧩 Monolith Components", "🗄️ Database Access", "🔀 Network Interfaces"])
+                tab_comp, tab_db, tab_edges = st.tabs([" Monolith Components", " Database Access", " Network Interfaces"])
                 
                 with tab_comp:
                     st.caption("These surviving monolith components will communicate with the new Microservice Proxy.")

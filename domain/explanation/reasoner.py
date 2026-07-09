@@ -18,7 +18,7 @@ class RiskReasoner:
       - Deterministic: same input always produces the same output.
       - Bounded: at most MAX_EXPLANATIONS items are returned.
       - Ordered: explanations are sorted by weight DESC (highest importance first).
-      - Isolated: no DB access, no I/O — pure in-memory evaluation.
+      - Isolated: no DB access, no I/O - pure in-memory evaluation.
     """
 
     def __init__(self, rules: list = None):
@@ -55,7 +55,7 @@ class RiskReasoner:
                         )
                     )
             except Exception:
-                # Silently skip a malformed rule — never crash the pipeline
+                # Silently skip a malformed rule - never crash the pipeline
                 continue
 
         # Sort by weight descending, then cap

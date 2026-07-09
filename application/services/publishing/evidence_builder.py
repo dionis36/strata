@@ -318,7 +318,7 @@ class EvidenceBuilder:
                 ui_entanglement_ratio=ratio_float,
                 html_echo_nodes=p.get("HTML/Echo Nodes", 0),
                 db_queries=p.get("DB Operations", 0),
-                severity=p.get("Severity", "🟢 LOW")
+                severity=p.get("Severity", " LOW")
             ))
             
         api_surface = []

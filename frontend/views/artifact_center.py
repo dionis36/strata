@@ -39,11 +39,11 @@ def show_artifact_center():
         import time
         with st.status("Synthesizing System Intelligence...", expanded=True) as status:
             if run_status == "synthesizing_findings":
-                st.write("🤖 Synthesizing deep architectural findings...")
+                st.write(" Synthesizing deep architectural findings...")
             elif run_status == "synthesizing_summary":
-                st.write("📝 Writing executive roadmap and summary...")
+                st.write(" Writing executive roadmap and summary...")
             elif run_status == "synthesizing_rector":
-                st.write("⚙️ Generating targeted Rector.php refactoring rules...")
+                st.write(" Generating targeted Rector.php refactoring rules...")
                 
             st.write("*(This process spaces out API calls to respect rate limits. Please wait...)*")
             time.sleep(3)
@@ -122,7 +122,7 @@ def show_artifact_center():
         
     if bundle_content:
         st.download_button(
-            label="📥 Download strata_workspace.zip",
+            label=" Download strata_workspace.zip",
             data=bundle_content,
             file_name=f"strata_workspace_{run_id}.zip",
             mime="application/zip"
@@ -154,7 +154,7 @@ def show_artifact_center():
             st.info("Generate the AI Executive Summary above to unlock this artifact.")
         elif md_content:
             st.download_button(
-                label="📥 Download Strategic_Modernization_Blueprint.md",
+                label=" Download Strategic_Modernization_Blueprint.md",
                 data=md_content,
                 file_name="Strategic_Modernization_Blueprint.md",
                 mime="text/markdown"
@@ -180,7 +180,7 @@ def show_artifact_center():
             
         if sarif_content:
             st.download_button(
-                label="📥 Download results.sarif",
+                label=" Download results.sarif",
                 data=sarif_content,
                 file_name="results.sarif",
                 mime="application/json"

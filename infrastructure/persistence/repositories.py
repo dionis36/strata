@@ -182,7 +182,7 @@ class AnalysisRunRepository:
 
 
 class BehaviorRepository:
-    """Phase 4 persistence — stores ComponentBehavior rows."""
+    """Phase 4 persistence - stores ComponentBehavior rows."""
 
     def __init__(self, db: Session):
         self.db = db
@@ -212,7 +212,7 @@ class BehaviorRepository:
 
 
 class RiskRepository:
-    """Phase 3 persistence — stores and retrieves ComponentRisk rows."""
+    """Phase 3 persistence - stores and retrieves ComponentRisk rows."""
 
     def __init__(self, db: Session):
         self.db = db

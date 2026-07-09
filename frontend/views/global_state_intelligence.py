@@ -69,7 +69,7 @@ def show_global_state_intelligence():
     ])
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 0 — Superglobal Map
+    # TAB 0 - Superglobal Map
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[0]:
         st.markdown("#### Superglobal Usage Distribution")
@@ -101,7 +101,7 @@ def show_global_state_intelligence():
             "**INTERPRETATION**: Every access to `$_POST`, `$_GET`, `$_SESSION`, or similar variables "
             "creates an **invisible data dependency** between the HTTP request context and the file "
             "reading it. Unlike function parameters or constructor arguments, this coupling is not "
-            "declared in any type signature — it exists only at runtime. This makes it undetectable "
+            "declared in any type signature - it exists only at runtime. This makes it undetectable "
             "by standard static analysis or IDE refactoring tools."
         )
         if total_sg > 0:
@@ -109,7 +109,7 @@ def show_global_state_intelligence():
                 f"**EVIDENCE**:\n"
                 f"1. `{total_sg}` total superglobal accesses detected across the codebase.\n"
                 f"2. Most accessed: `${top_sg}` with `{sg_totals.get(top_sg, 0)}` usages.\n"
-                f"3. `{len(mutations)}` direct write mutations recorded — "
+                f"3. `{len(mutations)}` direct write mutations recorded - "
                 f"these are the points where state is *created*, not just consumed."
             )
             st.markdown(
@@ -125,13 +125,13 @@ def show_global_state_intelligence():
             )
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 1 — Session Flows
+    # TAB 1 - Session Flows
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[1]:
         c1, c2 = st.columns(2)
         with c1:
             st.markdown("#### Session Writers (State Producers)")
-            st.caption("Files that actively mutate `$_SESSION` — they create or update session state.")
+            st.caption("Files that actively mutate `$_SESSION` - they create or update session state.")
             if sess_write:
                 st.dataframe(pd.DataFrame(sess_write), hide_index=True, use_container_width=True)
             else:
@@ -139,7 +139,7 @@ def show_global_state_intelligence():
 
         with c2:
             st.markdown("#### Session Readers (State Consumers)")
-            st.caption("Files that access `$_SESSION` without writing to it — they depend on state set elsewhere.")
+            st.caption("Files that access `$_SESSION` without writing to it - they depend on state set elsewhere.")
             if sess_read:
                 st.dataframe(pd.DataFrame(sess_read), hide_index=True, use_container_width=True)
             else:
@@ -169,7 +169,7 @@ def show_global_state_intelligence():
         else:
             st.info(
                 "No key-level session accesses detected yet. "
-                "This table populates after a re-scan with the updated parser — "
+                "This table populates after a re-scan with the updated parser - "
                 "it will show entries like `$_SESSION['user']` WRITE in `login.php`, "
                 "READ in `dashboard.php`."
             )
@@ -179,7 +179,7 @@ def show_global_state_intelligence():
         st.info("#### Session Flow Analysis")
         st.markdown("**METRIC**: Session Writer/Reader Distribution")
         st.markdown(
-            "**INTERPRETATION**: Session state in PHP flows **one-directionally but invisibly** — "
+            "**INTERPRETATION**: Session state in PHP flows **one-directionally but invisibly** - "
             "a file sets a value into `$_SESSION`, and a completely different file reads it later "
             "in the request lifecycle. This creates a **temporal coupling**: the reader will silently "
             "fail or behave incorrectly if the writer has not run first. "
@@ -195,7 +195,7 @@ def show_global_state_intelligence():
             )
             st.markdown(
                 "**RECOMMENDATION**: Review the writer file(s) listed above alongside the "
-                "**Superglobal Map** tab mutation records — together they show the full picture "
+                "**Superglobal Map** tab mutation records - together they show the full picture "
                 "of where session state originates in the application."
             )
         else:
@@ -206,11 +206,11 @@ def show_global_state_intelligence():
             )
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 2 — Side-Effect Registry
+    # TAB 2 - Side-Effect Registry
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[2]:
         st.markdown("#### Side-Effect Type Breakdown")
-        st.caption("Classification of all detected side effects — operations that interact with systems outside the application's own memory.")
+        st.caption("Classification of all detected side effects - operations that interact with systems outside the application's own memory.")
         if se_totals:
             df_se = pd.DataFrame([
                 {"Type": k, "Count": v}
@@ -219,7 +219,7 @@ def show_global_state_intelligence():
             st.dataframe(df_se, hide_index=True, use_container_width=True)
 
         st.markdown("#### Top Files by Side-Effect Volume")
-        st.caption("Files with the highest concentration of side-effecting operations — the most behaviourally complex files in the system.")
+        st.caption("Files with the highest concentration of side-effecting operations - the most behaviourally complex files in the system.")
         if se_files:
             st.dataframe(pd.DataFrame(se_files), hide_index=True, use_container_width=True)
 
@@ -245,11 +245,11 @@ def show_global_state_intelligence():
         st.info("#### Behavioural Complexity Profile")
         st.markdown("**METRIC**: Side-Effect Classification Distribution")
         st.markdown(
-            "**INTERPRETATION**: Side effects classify what the system *does beyond returning values* — "
+            "**INTERPRETATION**: Side effects classify what the system *does beyond returning values* - "
             "writes to files (`IO`), makes network calls (`NET`), interacts with databases (`DB`), "
             "renders templates (`TEMPLATE`), or modifies runtime state (`HOSTING`). "
             "A system with high side-effect volume concentrated in few files has very high "
-            "behavioural complexity — those files are difficult to test in isolation and "
+            "behavioural complexity - those files are difficult to test in isolation and "
             "risky to modify without understanding their full execution context."
         )
         if dominant_effect:
@@ -258,10 +258,10 @@ def show_global_state_intelligence():
                 f"1. Dominant side-effect category: `{dominant_effect}` with `{dominant_count}` occurrences.\n"
                 f"2. `{se_totals.get('DANGER', 0)}` dangerous execution sink(s) detected (`eval`/`exec`/`extract`).\n"
                 f"3. `{len(legacy_hash)}` weak cryptographic hash usage(s) identified.\n"
-                f"4. `{se_totals.get('NET', 0)}` outbound network call(s) detected — external dependency surface."
+                f"4. `{se_totals.get('NET', 0)}` outbound network call(s) detected - external dependency surface."
             )
             st.markdown(
-                "**RECOMMENDATION**: Review the **Top Files by Side-Effect Volume** table above — "
+                "**RECOMMENDATION**: Review the **Top Files by Side-Effect Volume** table above - "
                 "files appearing at the top of that list with multiple side-effect categories are "
                 "the most complex units in the system. Cross-reference these with the **Modernization Risk** "
                 "page to see how their behavioural complexity contributes to their overall risk score."
@@ -274,11 +274,11 @@ def show_global_state_intelligence():
             )
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 3 — Explicit Globals
+    # TAB 3 - Explicit Globals
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[3]:
         st.markdown("#### Global Variable Declarations (`global $var`)")
-        st.caption("Every use of the `global` keyword — variables pulled from global PHP scope into a local function or method context.")
+        st.caption("Every use of the `global` keyword - variables pulled from global PHP scope into a local function or method context.")
         if explicit_g:
             st.dataframe(pd.DataFrame(explicit_g), hide_index=True, use_container_width=True)
         else:
@@ -298,7 +298,7 @@ def show_global_state_intelligence():
             "**INTERPRETATION**: The `global` keyword in PHP pulls a variable from the global scope "
             "into a function's local scope. Unlike superglobals, these are **application-defined** "
             "shared variables. Every function that declares the same variable as `global` is "
-            "implicitly coupled to every other function that does the same — they all share "
+            "implicitly coupled to every other function that does the same - they all share "
             "and can mutate the same value. This coupling is completely invisible to the call graph."
         )
         if explicit_g:
@@ -311,7 +311,7 @@ def show_global_state_intelligence():
             )
             st.markdown(
                 "**RECOMMENDATION**: Cross-reference the variable names listed above with the "
-                "**Superglobal Map** tab — if `$GLOBALS` appears there, that is the superglobal-level "
+                "**Superglobal Map** tab - if `$GLOBALS` appears there, that is the superglobal-level "
                 "equivalent of these explicit declarations, confirming a deeper pattern of "
                 "global state reliance across this codebase."
             )
@@ -319,7 +319,7 @@ def show_global_state_intelligence():
             st.markdown(
                 "**EVIDENCE**: No `global` keyword usage detected in this run. "
                 "The codebase does not rely on PHP global scope injection.\n\n"
-                "**RECOMMENDATION**: Confirm this by checking the **Superglobal Map** tab — "
+                "**RECOMMENDATION**: Confirm this by checking the **Superglobal Map** tab - "
                 "if `GLOBALS` also shows zero usage there, the codebase is clean of global state coupling."
             )
 

@@ -74,7 +74,7 @@ def main() -> None:
     _run(["docker", "compose", "down", "-v"])
 
     print("[+] Removing strata-api and strata-frontend images...")
-    # Ignore errors — images may not exist yet
+    # Ignore errors - images may not exist yet
     _run(["docker", "rmi", "strata-api", "strata-frontend"], check=False)
 
     print("[+] Purging local artifacts and database...")

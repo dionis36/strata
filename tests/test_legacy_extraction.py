@@ -50,13 +50,13 @@ def test_legacy_chaos():
     assert result['files'] >= 5, f"Expected at least 5 files, got {result['files']}"
     # In legacy chaos, we don't have classes, mostly procedural.
     
-    print("\n✅ Legacy Extraction Test Completed Successfully!")
+    print("\n Legacy Extraction Test Completed Successfully!")
 
 if __name__ == "__main__":
     try:
         test_legacy_chaos()
     except Exception as e:
-        print(f"\n❌ Test Failed: {e}")
+        print(f"\n Test Failed: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

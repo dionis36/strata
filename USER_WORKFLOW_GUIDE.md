@@ -5,7 +5,7 @@ Strata is a specialized **Modernization Advisory Platform**. This guide outlines
 
 ---
 
-## 📂 Step 1: Data Provisioning (Host-Side)
+##  Step 1: Data Provisioning (Host-Side)
 Strata analyzes code directly from your filesystem. It does **not** require you to upload source code through a web browser, ensuring your intellectual property remains within your controlled environment.
 
 
@@ -17,7 +17,7 @@ Strata analyzes code directly from your filesystem. It does **not** require you 
 
 ---
 
-## 🚀 Step 2: Analysis Ignition (The Dashboard)
+##  Step 2: Analysis Ignition (The Dashboard)
 Once your files are provisioned, you trigger the **Intelligence Engine**.
 
 1.  **Access the Hub**: Open your browser to the Strata Landing Page (typically `http://localhost:8501`).
@@ -27,7 +27,7 @@ Once your files are provisioned, you trigger the **Intelligence Engine**.
 
 ---
 
-## 🕸️ Step 3: Immersive Discovery (The Navigator)
+##  Step 3: Immersive Discovery (The Navigator)
 With the analysis complete, you begin the exploration phase to find the "God Objects" and architectural bottlenecks.
 
 1.  **Open Navigator**: Select **"Monolith Navigator"** from the sidebar.
@@ -36,7 +36,7 @@ With the analysis complete, you begin the exploration phase to find the "God Obj
 
 ---
 
-## 🕹️ Step 4: Surgical Planning (The Cockpit)
+##  Step 4: Surgical Planning (The Cockpit)
 This is where "Insight" becomes "Action." You use the **Modernization Cockpit** to simulate the future state of your system.
 
 1.  **Open Cockpit**: Select **"Modernization Cockpit"** from the sidebar.
@@ -46,7 +46,7 @@ This is where "Insight" becomes "Action." You use the **Modernization Cockpit** 
 
 ---
 
-## 📋 Step 5: Finalization & Reporting
+##  Step 5: Finalization & Reporting
 The final step is to generate the professional documentation required to execute the plan and gain stakeholder consensus.
 
 1.  **Generate Protocol**: Review the **Surgical Implementation Protocol**. This provides the step-by-step logic for the code transformation.
@@ -55,5 +55,5 @@ The final step is to generate the professional documentation required to execute
 
 ---
 
-## 🏁 Summary: From Monolith to Modernized
+##  Summary: From Monolith to Modernized
 By following this workflow, you transition from **Architectural Uncertainty** to a **Surgical Modernization Blueprint** backed by technical determinism and executive-ready documentation.

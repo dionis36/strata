@@ -74,7 +74,7 @@ def show_boundary_intelligence():
     ])
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 0 — Presentation Layer
+    # TAB 0 - Presentation Layer
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[0]:
         st.markdown("#### MVC Deficit Report (UI Entanglement)")
@@ -86,23 +86,23 @@ def show_boundary_intelligence():
             
             st.markdown("---")
             st.info("#### Presentation Layer Analysis", icon=":material/info:")
-            st.markdown("**METRIC**: UI Entanglement Ratio — proportion of HTML/echo output nodes relative to logic nodes per file")
+            st.markdown("**METRIC**: UI Entanglement Ratio - proportion of HTML/echo output nodes relative to logic nodes per file")
             fat_views = kpis.get("Fat Views (DB-Coupled UI)", 0)
             mvc_files = len(mvc)
             st.markdown(
                 f"**INTERPRETATION**: **{mvc_files} files** in this codebase produce direct HTML output inside their backend logic. "
-                f"Of these, **{fat_views} are classified as 'Fat Views'** — files that simultaneously query the database and render the resulting HTML in the same execution path. "
+                f"Of these, **{fat_views} are classified as 'Fat Views'** - files that simultaneously query the database and render the resulting HTML in the same execution path. "
                 "This pattern reveals that the application was built without an MVC framework or templating layer, meaning the *same file* is responsible for fetching data, applying business rules, and deciding how to display the result. "
                 "This is the primary structural reason why attaching a React or Vue frontend to this system is not a simple API swap."
             )
             st.markdown(
                 f"**EVIDENCE**:\n"
-                f"1. **{fat_views} 'Fat View' file(s)** detected — these files contain active database operations *and* a UI Entanglement Ratio above 15%, confirming presentation and persistence logic share the same execution context.\n"
-                f"2. **{mvc_files - fat_views} file(s)** produce HTML output but without direct DB coupling — these are easier to convert to template files but still require a clear data contract before a frontend framework can consume them."
+                f"1. **{fat_views} 'Fat View' file(s)** detected - these files contain active database operations *and* a UI Entanglement Ratio above 15%, confirming presentation and persistence logic share the same execution context.\n"
+                f"2. **{mvc_files - fat_views} file(s)** produce HTML output but without direct DB coupling - these are easier to convert to template files but still require a clear data contract before a frontend framework can consume them."
             )
             st.markdown(
                 "**RECOMMENDATION**: The Entanglement Ratio column tells you *how deeply* HTML is mixed into each file. "
-                "Study the distribution — are the fat views concentrated in one directory (suggesting a feature module), or scattered across the codebase? "
+                "Study the distribution - are the fat views concentrated in one directory (suggesting a feature module), or scattered across the codebase? "
                 "That pattern is the difference between a targeted refactor and a wholesale rewrite of the presentation tier."
             )
             if st.button("Analyze Structural Risk of these Views"):
@@ -111,7 +111,7 @@ def show_boundary_intelligence():
             st.success("No presentation coupling detected. HTML output is not mixed with backend logic in this scan.")
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 1 — API Surface
+    # TAB 1 - API Surface
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[1]:
         st.markdown("#### Endpoint & API Surface Intelligence")
@@ -123,27 +123,27 @@ def show_boundary_intelligence():
             
             st.markdown("---")
             st.info("#### Application Entry Point Analysis", icon=":material/info:")
-            st.markdown("**METRIC**: Entry Point Classification — how external requests reach the application")
+            st.markdown("**METRIC**: Entry Point Classification - how external requests reach the application")
             pure_scripts = sum(1 for a in api if a.get("Pure Script") == "Yes")
             api_endpoints = sum(1 for a in api if a.get("Type") == "API Endpoint")
             routers = sum(1 for a in api if a.get("Type") == "Procedural Router")
             total_ep = len(api)
             st.markdown(
                 f"**INTERPRETATION**: This codebase exposes **{total_ep} detectable entry points**, classified by how they receive and respond to incoming requests. "
-                f"**{pure_scripts} are Pure Scripts** — PHP files with no class or function structure that are accessed directly via URL, meaning each is its own isolated request handler. "
+                f"**{pure_scripts} are Pure Scripts** - PHP files with no class or function structure that are accessed directly via URL, meaning each is its own isolated request handler. "
                 f"**{api_endpoints} emit structured API responses** (JSON), indicating that parts of the system are already operating as a de-facto API layer, even if undocumented. "
                 f"**{routers} handle procedural routing** via `$_SERVER['REQUEST_URI']`, acting as a manual front controller without a formal framework."
             )
             st.markdown(
                 f"**EVIDENCE**:\n"
-                f"1. **{pure_scripts} Pure Scripts** detected — each represents an independent, undocumented entry point that any client (or attacker) can call directly if accessible from the web root.\n"
-                f"2. **{api_endpoints} JSON-emitting endpoint(s)** detected — these files are already functioning as an API and are the clearest candidates for formalization into a documented REST layer.\n"
-                f"3. **{routers} Procedural Router(s)** detected — these files inspect the request URI and dispatch control manually, suggesting the presence of a routing convention that predates MVC frameworks."
+                f"1. **{pure_scripts} Pure Scripts** detected - each represents an independent, undocumented entry point that any client (or attacker) can call directly if accessible from the web root.\n"
+                f"2. **{api_endpoints} JSON-emitting endpoint(s)** detected - these files are already functioning as an API and are the clearest candidates for formalization into a documented REST layer.\n"
+                f"3. **{routers} Procedural Router(s)** detected - these files inspect the request URI and dispatch control manually, suggesting the presence of a routing convention that predates MVC frameworks."
             )
             st.markdown(
                 "**RECOMMENDATION**: The entry point table is your first map of the application's public contract. "
                 "Before forming any migration strategy, consider: which of these entry points are actively used by real users or clients, and which are dead code? "
-                "That distinction changes the scope of work significantly — a system with 50 entry points but 10 active ones has a much smaller viable extraction surface than the raw count suggests."
+                "That distinction changes the scope of work significantly - a system with 50 entry points but 10 active ones has a much smaller viable extraction surface than the raw count suggests."
             )
             if st.button("Audit Architectural Rot"):
                 st.switch_page(page_registry.PAGE_RISK_AUDIT)
@@ -151,7 +151,7 @@ def show_boundary_intelligence():
             st.warning("No entry points detected. This may indicate the scan covered only a library or internal module, rather than a web-facing application.")
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 2 — Vendor Intelligence
+    # TAB 2 - Vendor Intelligence
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[2]:
         st.markdown("#### Vendor Inventory & Dependency Graph")
@@ -183,7 +183,7 @@ def show_boundary_intelligence():
             
             st.markdown("---")
             st.info("#### Vendor Dependency Analysis", icon=":material/info:")
-            st.markdown("**METRIC**: Vendor Classification — Composer-managed vs. manually embedded third-party libraries")
+            st.markdown("**METRIC**: Vendor Classification - Composer-managed vs. manually embedded third-party libraries")
             orphans = sum(1 for v in vendor if "ORPHANED RISK" in v.get("Status", ""))
             total_vendor = len(vendor)
             composer_managed = sum(1 for v in vendor if v.get("Vendor Type") == "Composer Vendor")
@@ -191,18 +191,18 @@ def show_boundary_intelligence():
             st.markdown(
                 f"**INTERPRETATION**: **{total_vendor} vendor files** were detected in this codebase. "
                 f"**{composer_managed} are managed via Composer**, meaning they can be updated, pinned, and replaced through standard tooling. "
-                f"**{manual_libs} are manually embedded** (found in `/lib`, `/plugin`, or `/thirdparty` paths, or identified by known legacy namespaces), meaning they exist outside version control accountability — no audit trail, no automated vulnerability alerts, no standard upgrade path. "
-                f"{'Of these, **' + str(orphans) + ' contain active security sinks** (e.g., `mysql_*`) within their own code, meaning the vulnerability cannot be patched by your team — the library must be replaced entirely.' if orphans > 0 else 'None of the detected vendor libraries contain known active security sinks.'}"
+                f"**{manual_libs} are manually embedded** (found in `/lib`, `/plugin`, or `/thirdparty` paths, or identified by known legacy namespaces), meaning they exist outside version control accountability - no audit trail, no automated vulnerability alerts, no standard upgrade path. "
+                f"{'Of these, **' + str(orphans) + ' contain active security sinks** (e.g., `mysql_*`) within their own code, meaning the vulnerability cannot be patched by your team - the library must be replaced entirely.' if orphans > 0 else 'None of the detected vendor libraries contain known active security sinks.'}"
             )
             st.markdown(
                 f"**EVIDENCE**:\n"
-                f"1. **{manual_libs} manually embedded library/plugin file(s)** detected — these exist outside Composer's dependency graph, making it impossible to track their version, provenance, or known CVEs through standard tooling.\n"
-                f"2. **{orphans} vendor file(s) flagged as 'Orphaned Risk'** — these contain security sinks within third-party code your team does not own, meaning the vulnerability is structurally embedded and cannot be resolved without replacement.\n"
-                f"3. **{composer_managed} Composer-managed file(s)** are present — if the codebase uses a `composer.json`, check whether the manually embedded libraries duplicate any already managed dependency."
+                f"1. **{manual_libs} manually embedded library/plugin file(s)** detected - these exist outside Composer's dependency graph, making it impossible to track their version, provenance, or known CVEs through standard tooling.\n"
+                f"2. **{orphans} vendor file(s) flagged as 'Orphaned Risk'** - these contain security sinks within third-party code your team does not own, meaning the vulnerability is structurally embedded and cannot be resolved without replacement.\n"
+                f"3. **{composer_managed} Composer-managed file(s)** are present - if the codebase uses a `composer.json`, check whether the manually embedded libraries duplicate any already managed dependency."
             )
             st.markdown(
                 "**RECOMMENDATION**: The Vendor Type and Status columns reveal the two-tier dependency problem in this system. "
-                "Study the ratio of `Composer Vendor` to `Manual Library/Plugin` — a high proportion of manual libraries tells you that the dependency management strategy was informal, which typically means the codebase has accumulated technical debt from library versions that were never updated. "
+                "Study the ratio of `Composer Vendor` to `Manual Library/Plugin` - a high proportion of manual libraries tells you that the dependency management strategy was informal, which typically means the codebase has accumulated technical debt from library versions that were never updated. "
                 "Understanding which features depend on these libraries is the first step to assessing their replacement cost."
             )
         else:

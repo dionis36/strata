@@ -32,11 +32,11 @@ def run_benchmark():
         }
     }
     
-    print("📊 Initializing Strata Accuracy Benchmark...")
+    print(" Initializing Strata Accuracy Benchmark...")
     results = {}
     
     for project_path, targets in ground_truth.items():
-        print(f"\n📂 Benchmarking Project: {project_path}")
+        print(f"\n Benchmarking Project: {project_path}")
         
         # 1. Run Analysis
         res = analysis_service.run_analysis(1, project_path)
@@ -104,9 +104,9 @@ def run_benchmark():
         }
         
         if f1 >= 0.80:
-            print("✨ **BENCHMARK SUCCESS**: Intelligence Engine is generating modernization candidates with high accuracy.")
+            print(" **BENCHMARK SUCCESS**: Intelligence Engine is generating modernization candidates with high accuracy.")
         else:
-            print("⚠️ **BENCHMARK WARNING**: Accuracy metrics are below expectations. Review topological density.")
+            print(" **BENCHMARK WARNING**: Accuracy metrics are below expectations. Review topological density.")
             
     return results
 

@@ -1,5 +1,5 @@
 """
-Page Registry — Shared st.Page object store.
+Page Registry - Shared st.Page object store.
 
 This module is populated by app.py at startup with the exact st.Page objects
 registered in st.navigation(). View files import from here to get those

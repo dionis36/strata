@@ -11,7 +11,7 @@ class ExplanationItem(BaseModel):
     type: str          # Rule name, e.g. 'high_criticality'
     category: str      # 'structural' | 'behavioral' | 'combined'
     severity: str      # 'high' | 'medium' | 'low'
-    weight: float      # 0.0–1.0 for ranking; higher = more important
+    weight: float      # 0.0-1.0 for ranking; higher = more important
     message: str       # Human-readable, value-interpolated explanation sentence
 
 

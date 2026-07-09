@@ -8,17 +8,17 @@ class RecommendationEngine:
     @staticmethod
     def recommend(score: float, metrics: dict) -> dict:
         if score >= 70:
-            strategy = "Option A — Incremental"
+            strategy = "Option A Incremental"
             description = "The architecture is relatively modern. Safely decouple modules in-place and upgrade framework versions."
-            icon = "🛠️"
+            icon = ""
         elif score >= 40:
-            strategy = "Option B — Strangler Fig"
+            strategy = "Option B Strangler Fig"
             description = "Mixed legacy state. Build an API facade around the monolith and extract bounded contexts one by one."
-            icon = "🌿"
+            icon = ""
         else:
-            strategy = "Option C — Full Rewrite"
+            strategy = "Option C Full Rewrite"
             description = "High technical debt and tight coupling. Freeze new features, maintain security, and rebuild the core domain."
-            icon = "🏗️"
+            icon = ""
             
         # Refine recommendation based on specific technical profile
         risks = []
@@ -30,6 +30,6 @@ class RecommendationEngine:
         return {
             "strategy": strategy,
             "description": description,
-            "icon": icon,
+            # "icon": icon,
             "tactical_advice": risks
         }

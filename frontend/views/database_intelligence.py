@@ -81,7 +81,7 @@ def show_database_intelligence():
     ])
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 0 — Access Taxonomy
+    # TAB 0 - Access Taxonomy
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[0]:
         st.markdown("#### Architectural Access Patterns")
@@ -126,7 +126,7 @@ def show_database_intelligence():
             st.markdown(
                 "**RECOMMENDATION**: The persistence layer is entirely raw SQL. "
                 "Review the **Risk Audit** tab to see which of these files also have duplicate queries or "
-                "missing transaction boundaries — those are the highest-priority files to examine further."
+                "missing transaction boundaries - those are the highest-priority files to examine further."
             )
         elif total_raw == 0 and total_orm == 0:
             st.markdown(
@@ -138,11 +138,11 @@ def show_database_intelligence():
             st.markdown(
                 "**RECOMMENDATION**: The persistence layer has a mix of raw SQL and ORM usage. "
                 "Review the **Access Taxonomy** table above to identify which specific files are still "
-                "using raw SQL — those are worth examining in the **Risk Audit** tab."
+                "using raw SQL - those are worth examining in the **Risk Audit** tab."
             )
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 1 — Risk Audit
+    # TAB 1 - Risk Audit
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[1]:
         st.markdown("#### Security Risk: Hardcoded Credentials")
@@ -153,7 +153,7 @@ def show_database_intelligence():
             st.success("No hardcoded credentials detected.", icon=":material/check_circle:")
 
         st.markdown("#### Performance Risk: Duplicate Queries")
-        st.caption("Identical SQL strings copy-pasted across multiple files — increases maintenance surface area.")
+        st.caption("Identical SQL strings copy-pasted across multiple files - increases maintenance surface area.")
         if dups:
             display_dups = []
             for d in dups:
@@ -174,7 +174,7 @@ def show_database_intelligence():
 
         if sprocs:
             st.markdown("#### Stored Procedures / EXEC Calls")
-            st.caption("Direct stored procedure calls — business logic that lives outside the application layer.")
+            st.caption("Direct stored procedure calls - business logic that lives outside the application layer.")
             st.dataframe(pd.DataFrame(sprocs), hide_index=True, use_container_width=True)
 
         # ── Tab-specific Insight ─────────────────────────────────────────
@@ -189,7 +189,7 @@ def show_database_intelligence():
             "**INTERPRETATION**: This section breaks down three distinct risk categories that affect "
             "database interactions. Credential leaks reflect how credentials are managed in the codebase. "
             "Duplicate queries reflect the degree of code reuse in the persistence layer. "
-            "Unguarded writes reflect how write atomicity is handled — whether failures can leave "
+            "Unguarded writes reflect how write atomicity is handled - whether failures can leave "
             "the database in a partial state."
         )
         st.markdown(
@@ -202,7 +202,7 @@ def show_database_intelligence():
         if total_risk_items > 0:
             st.markdown(
                 "**RECOMMENDATION**: Cross-reference the files listed above with the **Access Taxonomy** tab "
-                "to see which modules carry the highest combined read/write volume alongside these risks — "
+                "to see which modules carry the highest combined read/write volume alongside these risks - "
                 "those files represent the most complex persistence hotspots in the system."
             )
         else:
@@ -213,7 +213,7 @@ def show_database_intelligence():
             )
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 2 — Table Ownership
+    # TAB 2 - Table Ownership
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[2]:
         st.markdown("#### Table Ownership by Bounded Context")
@@ -248,7 +248,7 @@ def show_database_intelligence():
         st.markdown(
             "**INTERPRETATION**: This metric measures how many database tables are written to by "
             "more than one architectural module. Each shared table represents a point of implicit "
-            "coupling between modules — changes to that table's schema will ripple across every "
+            "coupling between modules - changes to that table's schema will ripple across every "
             "module that writes to it. The `primary_owner` column identifies which module has the "
             "highest write volume to that table."
         )
@@ -262,14 +262,14 @@ def show_database_intelligence():
                 f"3. Check the `write_contexts` column in the raw data for the full ownership breakdown."
             )
             st.markdown(
-                "**RECOMMENDATION**: Review the flagged tables in the **Domain Model** tab — they will "
+                "**RECOMMENDATION**: Review the flagged tables in the **Domain Model** tab - they will "
                 "appear as nodes with multiple inbound arrows, visually confirming the entanglement "
                 "detected here."
             )
         else:
             st.markdown(
                 f"**EVIDENCE**:\n"
-                f"1. `{len(ownership)}` table(s) analysed — all have a single identified primary owner.\n"
+                f"1. `{len(ownership)}` table(s) analysed - all have a single identified primary owner.\n"
                 f"2. No cross-module write conflicts detected in this run."
             )
             st.markdown(
@@ -278,12 +278,12 @@ def show_database_intelligence():
             )
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 3 — Domain Model (ERD)
+    # TAB 3 - Domain Model (ERD)
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[3]:
         st.markdown("#### Inferred Domain Relationships (ERD)")
         st.caption(
-            "Automatically inferred from shared write contexts — no database schema access required. "
+            "Automatically inferred from shared write contexts - no database schema access required. "
             "Arrows represent modules that write to both connected tables, implying a relationship."
         )
 
@@ -298,7 +298,7 @@ def show_database_intelligence():
             st.markdown("**METRIC**: Inferred Table Relationship Count")
             st.markdown(
                 "**INTERPRETATION**: Each connection in this diagram represents two tables that are "
-                "written to by the same module — meaning they are behaviourally related even if no "
+                "written to by the same module - meaning they are behaviourally related even if no "
                 "explicit foreign key exists in the schema. Clusters of tightly connected tables "
                 "suggest a natural bounded context boundary. Isolated tables suggest self-contained modules."
             )
@@ -312,7 +312,7 @@ def show_database_intelligence():
             )
             st.markdown(
                 "**RECOMMENDATION**: Compare the clusters visible here against the module groupings in "
-                "the **Bounded Contexts** page — tables that cluster together should map to the same "
+                "the **Bounded Contexts** page - tables that cluster together should map to the same "
                 "bounded context boundary."
             )
         else:

@@ -8,7 +8,7 @@
 
 ---
 
-## 🔬 Core Methodology
+##  Core Methodology
 
 Strata moves beyond simple static analysis. It parses Abstract Syntax Trees (AST) and projects them into a **mathematically rigorous model** to detect:
 *   **Structural Gravity**: High-centrality nodes that prevent decomposition.
@@ -18,7 +18,7 @@ Strata moves beyond simple static analysis. It parses Abstract Syntax Trees (AST
 
 ---
 
-## 🏗️ System Pillars
+##  System Pillars
 
 The platform is organized into four strategic modules:
 
@@ -44,7 +44,7 @@ The platform is organized into four strategic modules:
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Bootstrap Environment
 Ensure you have Docker and Python 3 installed. Run the automated bootstrap script to check requirements and download legacy benchmarks:
@@ -66,7 +66,7 @@ docker compose up --build -d
 
 ---
 
-## 📚 Documentation
+##  Documentation
 
 For a detailed walkthrough on setting up test fixtures, running your first analysis, and resetting the environment, see the **[STRATA UP GUIDE](STRATA_UP_GUIDE.md)**.
 

@@ -3,9 +3,9 @@ Phase 4.5: Evidence Builder
 Extracts concrete, traceable evidence for each explanation.
 
 Evidence sources:
-  1. Metrics  — flat values from the component_data dict (already computed)
-  2. Graph    — dependent components and SCC membership, read from graph_<run_id>.json
-  3. Code     — source file path, sourced from graph node attributes
+  1. Metrics  - flat values from the component_data dict (already computed)
+  2. Graph    - dependent components and SCC membership, read from graph_<run_id>.json
+  3. Code     - source file path, sourced from graph node attributes
 
 Design: stateless, no DB access. Reads from the pre-serialised graph JSON on disk.
 """
@@ -46,7 +46,7 @@ class EvidenceBuilder:
 
         Returns a pre-processed dict with:
           - 'nodes':   {node_id: node_data}
-          - 'inbound': {node_id: [source_ids]}  — who points AT this node
+          - 'inbound': {node_id: [source_ids]}  - who points AT this node
         Returns None if the file doesn't exist.
         """
         path = os.path.join(GRAPH_DIR, f"graph_{run_id}.json")
@@ -60,10 +60,10 @@ class EvidenceBuilder:
             logger.error(f"[EvidenceBuilder] Failed to load graph: {e}")
             return None
 
-        # Pre-index nodes by ID — O(n) once, then O(1) per lookup
+        # Pre-index nodes by ID - O(n) once, then O(1) per lookup
         nodes_index = {n["id"]: n for n in raw.get("nodes", [])}
 
-        # Pre-build inbound adjacency map — O(e) once, then O(1) per lookup
+        # Pre-build inbound adjacency map - O(e) once, then O(1) per lookup
         inbound_map: dict = {}
         for link in raw.get("links", []):
             target = link.get("target")
@@ -130,7 +130,7 @@ class EvidenceBuilder:
         # Direct inbound dependents (capped to avoid payload bloat)
         dependents = inbound.get(component_name, [])[:10]
 
-        # SCC members — same scc_id, same scc_size > 1
+        # SCC members - same scc_id, same scc_size > 1
         target_node = nodes.get(component_name, {})
         scc_id   = target_node.get("scc_id")
         scc_size = target_node.get("scc_size", 1)

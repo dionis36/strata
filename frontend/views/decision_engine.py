@@ -38,7 +38,7 @@ def show_modernization_decision_engine():
         * **X-Axis (Migration Effort)**: How difficult the module is to modernize (measured in Logic Points). Modules further to the right are highly complex, deeply coupled, and will take months to untangle.
         * **Y-Axis (Modernization ROI)**: The Return on Investment (0-100 score). A high ROI means the module carries high structural risk or high business value, meaning modernizing it provides immense immediate benefit.
         * **Bubble Size & Color**: Represents the size of the module and its assigned modernization strategy.
-        * **The Goal**: Target the **top-left quadrant** first. These are "Quick Wins"—high ROI but relatively low effort. Avoid the bottom-right quadrant (low ROI, massive effort).
+        * **The Goal**: Target the **top-left quadrant** first. These are "Quick Wins"-high ROI but relatively low effort. Avoid the bottom-right quadrant (low ROI, massive effort).
         
         ### The 5 Modernization Strategies
         The engine assigns one of five industry-standard strategies based on the module's structural signature:

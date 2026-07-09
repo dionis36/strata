@@ -96,7 +96,7 @@ class MetricCalculator:
         weighted_in = dict(self.graph.in_degree(weight='weight'))
         weighted_out = dict(self.graph.out_degree(weight='weight'))
 
-        # 2. Betweenness & Closeness Centrality — skip if graph is too large
+        # 2. Betweenness & Closeness Centrality - skip if graph is too large
         if self.graph.number_of_nodes() <= MAX_NODES_FOR_BETWEENNESS:
             betweenness = nx.betweenness_centrality(
                 self.graph, normalized=True, weight=None

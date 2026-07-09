@@ -78,7 +78,7 @@ def show_legacy_intelligence():
     ])
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 0 — Era Classification
+    # TAB 0 - Era Classification
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[0]:
         st.markdown("#### PHP Era Signals Detected")
@@ -110,7 +110,7 @@ def show_legacy_intelligence():
             "Era B/C (PHP 5 Transitional)":  ("", "Mixed OOP and procedural. Some namespaces. Still uses legacy DB or auth patterns."),
             "Era C (PHP 5 Transitional)":    ("", "OOP-dominant but inconsistent. Missing PSR-4, type hints, or framework."),
             "Era D (PHP 7+)":                ("", "Modern. PSR-4 autoloading, type hints, namespaces, OOP-first."),
-            "Bespoke / Custom Era":          ("🛠️", "A proprietary or custom-built framework. The system relies on internal conventions rather than standard open-source framework patterns (like Laravel or Symfony)."),
+            "Bespoke / Custom Era":          ("", "A proprietary or custom-built framework. The system relies on internal conventions rather than standard open-source framework patterns (like Laravel or Symfony)."),
             "Unknown":                       ("", "Insufficient signals to classify."),
         }
         icon, desc = ERA_DESC.get(classified_era, ("", classified_era))
@@ -126,7 +126,7 @@ def show_legacy_intelligence():
         st.info("#### Era Classification Assessment", icon=":material/info:")
         st.markdown("**METRIC**: PHP Era Classification based on AST pattern density")
         st.markdown(
-            "**INTERPRETATION**: PHP era classification is not based on the `php_version` file — "
+            "**INTERPRETATION**: PHP era classification is not based on the `php_version` file - "
             "it is inferred from the *actual patterns in the source code*. A codebase can declare "
             "PHP 7 as its minimum version while containing exclusively PHP 4-era patterns. "
             "Era classification is the primary input into migration cost estimation: "
@@ -138,27 +138,27 @@ def show_legacy_intelligence():
             f"1. Classified as: **{classified_era}**.\n"
             f"2. `{len(era_signals)}` total era signal(s) detected.\n"
             f"3. `{critical}` CRITICAL and `{high}` HIGH severity signal(s) confirm the classification.\n"
-            f"4. Namespace coverage: `{ns_ratio:.1%}` — a key differentiator between Era B and Era C/D."
+            f"4. Namespace coverage: `{ns_ratio:.1%}` - a key differentiator between Era B and Era C/D."
         )
         st.markdown(
             "**RECOMMENDATION**: Review the **Pattern Detection** tab to see the specific "
-            "instances driving this classification — particularly the `MYSQL_LEGACY` and "
+            "instances driving this classification particularly the `MYSQL_LEGACY` and "
             "`INLINE_HTML` entries, which are the strongest indicators of Era A/B origin."
         )
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 1 — Pattern Detection
+    # TAB 1 - Pattern Detection
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[1]:
         PATTERN_META = {
-            "MYSQL_LEGACY":               ("", "mysql_*() Family",          "Removed in PHP 7.0 — will crash on modern PHP"),
+            "MYSQL_LEGACY":               ("", "mysql_*() Family",          "Removed in PHP 7.0 - will crash on modern PHP"),
             "HARDCODED_DB_CREDENTIALS":   ("", "Hardcoded DB Credentials",   "mysql_connect/PDO with literal host/user/pass strings"),
             "REGISTER_GLOBALS_ASSUMPTION":("", "register_globals Assumption","extract() / import_request_variables() usage"),
             "LEGACY_AUTOLOAD":            ("", "__autoload() Usage",          "Deprecated PHP 7.2, removed PHP 8.0"),
             "INCLUDE_ROUTING":            ("", "Dynamic Include Routing",    "include($page) used as a routing mechanism"),
-            "INLINE_HTML":                ("", "Inline HTML/PHP Mixing",     "Raw HTML embedded in PHP files — no template layer"),
-            "VARIABLE_VARIABLE":          ("", "Variable Variables ($$var)", "Dynamic binding — untraceable by static analysis"),
-            "CUSTOM_AUTH":                ("", "Custom Session Save Handler","Non-standard auth flow — risky to migrate"),
+            "INLINE_HTML":                ("", "Inline HTML/PHP Mixing",     "Raw HTML embedded in PHP files - no template layer"),
+            "VARIABLE_VARIABLE":          ("", "Variable Variables ($$var)", "Dynamic binding - untraceable by static analysis"),
+            "CUSTOM_AUTH":                ("", "Custom Session Save Handler","Non-standard auth flow - risky to migrate"),
         }
 
         st.markdown("#### Legacy Anti-Pattern Inventory")
@@ -167,7 +167,7 @@ def show_legacy_intelligence():
         if pattern_totals:
             for ptype, count in sorted(pattern_totals.items(), key=lambda x: -x[1]):
                 icon, label, explanation = PATTERN_META.get(ptype, ("", ptype, ""))
-                with st.expander(f"{icon} **{label}** — {count} occurrence(s)  ·  *{explanation}*", expanded=count > 0):
+                with st.expander(f"{icon} **{label}** - {count} occurrence(s)  ·  *{explanation}*", expanded=count > 0):
                     instances = leg_patterns.get(ptype, [])
                     if instances:
                         st.dataframe(pd.DataFrame(instances), hide_index=True, use_container_width=True)
@@ -191,25 +191,25 @@ def show_legacy_intelligence():
             "**INTERPRETATION**: Each detected pattern type represents a different layer of technical debt. "
             "`MYSQL_LEGACY` patterns mean the DB layer is bound to an extinct PHP extension. "
             "`INLINE_HTML` means there is no separation between business logic and presentation. "
-            "`INCLUDE_ROUTING` means the application has no framework routing layer — "
+            "`INCLUDE_ROUTING` means the application has no framework routing layer - "
             "every route is a physical file path, making URL refactoring destructive."
         )
         st.markdown(
             f"**EVIDENCE**:\n"
             f"1. `{total_patterns}` total anti-pattern instance(s) across `{len(pattern_totals)}` distinct categories.\n"
-            f"2. `{mysql_count}` `mysql_*()` call(s) — these represent the DB layer refactoring scope.\n"
-            f"3. `{inline_count}` inline HTML block(s) — each one mixes template and logic in the same file.\n"
-            f"4. `{routing_count}` dynamic include-based routing call(s) — scope of routing refactoring."
+            f"2. `{mysql_count}` `mysql_*()` call(s) - these represent the DB layer refactoring scope.\n"
+            f"3. `{inline_count}` inline HTML block(s) - each one mixes template and logic in the same file.\n"
+            f"4. `{routing_count}` dynamic include-based routing call(s) - scope of routing refactoring."
         )
         st.markdown(
             "**RECOMMENDATION**: Cross-reference the `MYSQL_LEGACY` file list with the "
-            "**Database Intelligence** page — the same files will appear there in the "
+            "**Database Intelligence** page - the same files will appear there in the "
             "Access Taxonomy as high write-volume DB files, confirming they are the "
             "core persistence layer candidates for refactoring."
         )
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 2 — Modernization Scorecard
+    # TAB 2 - Modernization Scorecard
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[2]:
         st.markdown("#### Technology Stack Profile")
@@ -230,14 +230,14 @@ def show_legacy_intelligence():
 
         st.markdown("---")
         st.markdown("#### Score Dimensions")
-        st.caption("Each dimension scores one aspect of modernization readiness on a 0.0 – 1.0 scale.")
+        st.caption("Each dimension scores one aspect of modernization readiness on a 0.0 - 1.0 scale.")
 
         SCORE_DIMS = [
-            ("Namespace Score",   "Proportion of files using PHP namespaces — PSR-4 compliance indicator"),
-            ("Security Score",    "Inverse of dangerous pattern density — credentials, evals, weak crypto"),
-            ("DB Layer Score",    "PDO/ORM usage vs mysql_* — DB abstraction completeness"),
+            ("Namespace Score",   "Proportion of files using PHP namespaces - PSR-4 compliance indicator"),
+            ("Security Score",    "Inverse of dangerous pattern density - credentials, evals, weak crypto"),
+            ("DB Layer Score",    "PDO/ORM usage vs mysql_* - DB abstraction completeness"),
             ("Testability Score", "Presence of class-based structure, interface contracts, and test files"),
-            ("Coupling Score",    "Inverse of coupling density — superglobals, globals, cross-file mutations"),
+            ("Coupling Score",    "Inverse of coupling density - superglobals, globals, cross-file mutations"),
         ]
 
         if scores:
@@ -262,10 +262,10 @@ def show_legacy_intelligence():
         else:
             st.info("#### Overall Modernization Readiness")
 
-        st.markdown("**METRIC**: Composite Modernization Score (0.0 — 1.0)")
+        st.markdown("**METRIC**: Composite Modernization Score (0.0 - 1.0)")
         st.markdown(
             "**INTERPRETATION**: This composite score weights five dimensions of code modernity. "
-            "It is not a quality score — it is a **migration readiness score**. "
+            "It is not a quality score - it is a **migration readiness score**. "
             "A low score does not mean the application doesn't work; it means the effort required "
             "to extract, test, containerize, or migrate it is proportionally higher. "
             "Each dimension targets a distinct refactoring concern: namespace adoption targets PSR-4 compliance, "
@@ -275,9 +275,9 @@ def show_legacy_intelligence():
             st.markdown(
                 f"**EVIDENCE**:\n"
                 f"1. Total modernization score: **{mod_score:.1%}**.\n"
-                f"2. Namespace score: `{scores.get('Namespace Score', 0.0):.2f}` — "
+                f"2. Namespace score: `{scores.get('Namespace Score', 0.0):.2f}` - "
                 f"reflects how much of the codebase uses PHP namespaces.\n"
-                f"3. DB layer score: `{scores.get('DB Layer Score', 0.0):.2f}` — "
+                f"3. DB layer score: `{scores.get('DB Layer Score', 0.0):.2f}` - "
                 f"reflects the proportion of DB calls using PDO or an ORM vs raw mysql_*."
             )
         else:
@@ -288,16 +288,16 @@ def show_legacy_intelligence():
             )
         st.markdown(
             "**RECOMMENDATION**: Review the lowest-scoring dimensions above and cross-reference "
-            "with the **Pattern Detection** tab — the files driving the low scores will appear "
+            "with the **Pattern Detection** tab - the files driving the low scores will appear "
             "there under the corresponding pattern category."
         )
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 3 — File Composition
+    # TAB 3 - File Composition
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[3]:
         st.markdown("#### Codebase Structural Composition")
-        st.caption("Distribution of file types by architectural structure — OOP, namespace-aware, or procedural.")
+        st.caption("Distribution of file types by architectural structure - OOP, namespace-aware, or procedural.")
 
         comp_data = [
             {"Category": "Total Files Scanned",                          "Count": total_files},
@@ -322,18 +322,18 @@ def show_legacy_intelligence():
             "Procedural-only files (functions but no classes) require wrapping before testing. "
             "Files with neither classes nor functions are typically configuration, bootstrap, "
             "or entry-point files. "
-            "Namespace-aware files are compatible with PSR-4 autoloading — a prerequisite for Composer-based modernization."
+            "Namespace-aware files are compatible with PSR-4 autoloading - a prerequisite for Composer-based modernization."
         )
         st.markdown(
             f"**EVIDENCE**:\n"
-            f"1. `{proc_ratio:.1%}` of scanned files are procedural (no class definitions) — `{total_files - oop_count}` file(s).\n"
-            f"2. `{ns_ratio:.1%}` of files use PHP namespaces — `{data.get('files_namespace_aware', 0)}` file(s).\n"
-            f"3. `{proc_only}` file(s) have standalone functions but no classes — these are refactoring candidates.\n"
+            f"1. `{proc_ratio:.1%}` of scanned files are procedural (no class definitions) - `{total_files - oop_count}` file(s).\n"
+            f"2. `{ns_ratio:.1%}` of files use PHP namespaces - `{data.get('files_namespace_aware', 0)}` file(s).\n"
+            f"3. `{proc_only}` file(s) have standalone functions but no classes - these are refactoring candidates.\n"
             f"4. `{host_signals}` file(s) contain hosting assumption calls (ini_set, header, set_time_limit)."
         )
         st.markdown(
             f"**RECOMMENDATION**: The `{proc_only}` procedural function files are the primary target "
-            "for wrapping into stateless service classes. Review them against the **Pattern Detection** tab — "
+            "for wrapping into stateless service classes. Review them against the **Pattern Detection** tab - "
             "those containing `MYSQL_LEGACY` or `INLINE_HTML` are the highest-priority refactoring candidates."
         )
 

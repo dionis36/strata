@@ -73,7 +73,7 @@ class BoundaryIntelligenceService:
                             "Entanglement Ratio": f"{ratio:.1f}%",
                             "HTML/Echo Nodes": ui_entanglement,
                             "DB Operations": db_writes,
-                            "Severity": "🔴 CRITICAL (Fat View)"
+                            "Severity": " CRITICAL (Fat View)"
                         })
                     elif ratio > 0:
                         presentation_coupling.append({
@@ -81,7 +81,7 @@ class BoundaryIntelligenceService:
                             "Entanglement Ratio": f"{ratio:.1f}%",
                             "HTML/Echo Nodes": ui_entanglement,
                             "DB Operations": db_writes,
-                            "Severity": "🟡 MEDIUM" if ratio > 10 else "🟢 LOW"
+                            "Severity": " MEDIUM" if ratio > 10 else " LOW"
                         })
                         
                 # --- 2. API & Endpoint Surface ---
@@ -151,7 +151,7 @@ class BoundaryIntelligenceService:
                         "File": fqn,
                         "Vendor Type": vendor_name,
                         "Known Vulnerabilities": vulns,
-                        "Status": "🔴 ORPHANED RISK" if vulns > 0 and vendor_name != "Composer Vendor" else "🟢 OK"
+                        "Status": " ORPHANED RISK" if vulns > 0 and vendor_name != "Composer Vendor" else " OK"
                     })
                     vendor_files.add(fqn)
                 

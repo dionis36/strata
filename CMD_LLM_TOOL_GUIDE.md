@@ -4,19 +4,19 @@ Because large language models (LLMs) are often rate-limited, overloaded, or non-
 
 If a run fails at the intelligence phase, you can use the built-in CLI override tool to manually extract the database metrics, communicate with the LLM API, handle broken JSON, and forcibly inject the completed insights back into your SQLite database.
 
-## 🚀 The Script Location
+##  The Script Location
 The tool is located at `tests/test_llm_prompt_for_run.py` and must be executed *inside* the API Docker container.
 
 ---
 
-## 🛠️ Command Structure
+##  Command Structure
 
 The base command looks like this:
 ```bash
 docker exec strata-api-1 python tests/test_llm_prompt_for_run.py [OPTIONS]
 ```
 
-## 🏷️ Available Flags
+##  Available Flags
 
 ### 1. `--run-id <ID>` (Required)
 Specifies which Analysis Run you want to generate intelligence for.
@@ -43,7 +43,7 @@ A safety bypass. By default, if the script sees that a Run ID already has the `i
 
 ---
 
-## 💡 Quick Start Workflows
+##  Quick Start Workflows
 
 **Scenario A: The UI says "AI Synthesis Failed" (Red Box)**
 Just run this command. It will retry the LLM, fix any broken JSON, and save it.
@@ -58,7 +58,7 @@ docker compose up -d --build
 docker exec strata-api-1 python tests/test_llm_prompt_for_run.py --run-id <YOUR_RUN_ID> --invoke --save --force
 ```
 
-## 🛡️ Built-In Protections
+##  Built-In Protections
 - **Pre-flight Ping:** Sends a 1-token prompt ("Ping") to check for `429` (Rate Limits) or `503` (Overloaded) errors before wasting your bandwidth.
 - **Auto-JSON Repair:** Free models frequently miss commas or use unescaped double quotes. The script passes the raw LLM output through `json-repair` to structurally fix the syntax before inserting it into the database.
 - **Gemini Fallback:** If OpenRouter completely fails, it intelligently falls back to the native `GEMINI_API_KEY` (if provided) as a safety net.

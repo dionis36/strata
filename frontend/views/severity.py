@@ -1,5 +1,5 @@
 """
-Severity Constants — Single source of truth for the 4-tier risk/complexity scale.
+Severity Constants - Single source of truth for the 4-tier risk/complexity scale.
 Ensures consistency across all UI components and views.
 """
 

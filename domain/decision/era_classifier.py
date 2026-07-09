@@ -42,10 +42,10 @@ class EraClassifier:
             
         # 3. Era Resolution based on Final Score
         if score < 0:
-            return "Era A — PHP 3 / PHP 4 (Procedural/Legacy)"
+            return "Era A PHP 3 / PHP 4 (Procedural/Legacy)"
         elif 0 <= score <= 30:
-            return "Era B — Early PHP 5 (Procedural/Custom MVC)"
+            return "Era B Early PHP 5 (Procedural/Custom MVC)"
         elif 31 <= score <= 70:
-            return "Era C — PHP 5.3+ (Namespaced Legacy)"
+            return "Era C PHP 5.3+ (Namespaced Legacy)"
         else:
-            return "Era D — Modern PHP (PSR-4/Composer)"
+            return "Era D Modern PHP (PSR-4/Composer)"

@@ -21,7 +21,7 @@ def show_risk_audit():
         * **Cyclomatic Complexity (CC)**: The count of distinct logical branches (if, else, loops). A CC over 15 indicates a module that is extremely difficult to test and risky to modify.
         * **Max Nesting Depth**: How deeply logic is indented. Deep nesting (e.g., > 4) exponentially increases developer cognitive load.
         * **Max Method LOC**: The Lines of Code in the single largest function. Massive functions hide business logic and block independent extraction.
-        * **Fan-Out**: The number of external modules this file depends on. High fan-out equals high coupling—you cannot easily extract this file without breaking things.
+        * **Fan-Out**: The number of external modules this file depends on. High fan-out equals high coupling-you cannot easily extract this file without breaking things.
         * **Security Sinks**: Dangerous execution vectors (e.g., `eval`, raw SQL, dynamic includes) found in the AST. 
         * **Global Accesses**: Reliance on global runtime state. This explicitly prevents safe containerization and makes unit testing impossible without heavy mocking.
         """)
@@ -87,7 +87,7 @@ def show_risk_audit():
     ])
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 0 — File-Level Risk Matrix
+    # TAB 0 - File-Level Risk Matrix
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[0]:
         st.markdown("#### The Risk Matrix (Wide Table)")
@@ -139,28 +139,28 @@ def show_risk_audit():
         critical_pct = f"{(critical_count / total_files * 100):.1f}" if total_files > 0 else "0"
         st.markdown("---")
         st.info("#### File Risk Assessment")
-        st.markdown("**METRIC**: Maintainability Index (MI) & Cyclomatic Complexity (CC) — per-file composite scoring")
+        st.markdown("**METRIC**: Maintainability Index (MI) & Cyclomatic Complexity (CC) - per-file composite scoring")
         st.markdown(
             f"**INTERPRETATION**: This codebase has an average Maintainability Index of **{avg_mi}/100**. "
-            f"Of the {total_files} files analyzed, **{critical_count} ({critical_pct}%) are classified as CRITICAL** — "
+            f"Of the {total_files} files analyzed, **{critical_count} ({critical_pct}%) are classified as CRITICAL** - "
             "meaning they combine structural complexity and active security risk in a way that makes safe, automated extraction mathematically improbable. "
-            "The Cyclomatic Complexity metric specifically counts decision branches (if/else, loops, catches) — each branch is a separate path a test must cover. "
+            "The Cyclomatic Complexity metric specifically counts decision branches (if/else, loops, catches) - each branch is a separate path a test must cover. "
             "High CC files are not just risky to change; they are expensive to verify after a change."
         )
         st.markdown(
             f"**EVIDENCE**:\n"
-            f"1. `{high_cc}` files exceed the industry-maximum CC threshold of 15 — each one represents a refactoring blocker that requires manual decomposition before it can be safely extracted.\n"
+            f"1. `{high_cc}` files exceed the industry-maximum CC threshold of 15 - each one represents a refactoring blocker that requires manual decomposition before it can be safely extracted.\n"
             f"2. The codebase average MI is `{avg_mi}/100`. An MI below 65 is considered 'difficult to maintain'; below 25 is 'unmaintainable' by industry standard (SEI).\n"
-            f"3. Sort the matrix by **Sinks** to reveal which high-complexity files also carry active security vulnerabilities — these are your highest-risk intersection points."
+            f"3. Sort the matrix by **Sinks** to reveal which high-complexity files also carry active security vulnerabilities - these are your highest-risk intersection points."
         )
         st.markdown(
             "**RECOMMENDATION**: The Risk Matrix above is your structural map. Before moving to the Security or Architectural tabs, "
-            "study which files cluster at the intersection of high CC and low MI — those files represent the tightest coupling in the system. "
+            "study which files cluster at the intersection of high CC and low MI - those files represent the tightest coupling in the system. "
             "Understanding their role (is this a router, a model, a helper?) will clarify whether they are candidates for extraction or for wrapping."
         )
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 1 — Security Vulnerability Log
+    # TAB 1 - Security Vulnerability Log
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[1]:
         st.markdown("#### Security Incident Registry")
@@ -186,7 +186,7 @@ def show_risk_audit():
         sqli_count = sum(1 for v in vulns if v.get("Vulnerability Type") == "MYSQL_LEGACY")
         lfi_count = sum(1 for v in vulns if v.get("Vulnerability Type") == "INCLUDE_ROUTING")
         st.warning("#### Security Assessment") if total_vulns > 0 else st.success("#### Security Assessment")
-        st.markdown("**METRIC**: AST-detected Security Sinks — functions or patterns that directly enable a known attack class")
+        st.markdown("**METRIC**: AST-detected Security Sinks - functions or patterns that directly enable a known attack class")
         if total_vulns > 0:
             st.markdown(
                 f"**INTERPRETATION**: This codebase contains **{total_vulns} confirmed security sink instances**. "
@@ -202,16 +202,16 @@ def show_risk_audit():
             )
             st.markdown(
                 "**RECOMMENDATION**: Notice how the sinks in this registry map onto specific files in the Risk Matrix. "
-                "Cross-reference the **File** column above with the Tab 1 matrix — files that appear in both the 'CRITICAL' risk row *and* this security log "
+                "Cross-reference the **File** column above with the Tab 1 matrix - files that appear in both the 'CRITICAL' risk row *and* this security log "
                 "are your highest-priority stabilization targets before any modernization work can begin. The Security tab reveals *what* the risk is; the Matrix reveals *how structurally difficult* fixing it will be."
             )
         else:
             st.markdown("**INTERPRETATION**: No active security sinks were detected in this analysis. This indicates the codebase does not directly use the most dangerous PHP constructs (`eval`, `exec`, legacy `mysql_*`).")
             st.markdown("**EVIDENCE**: 0 security sinks detected across all scanned files.")
-            st.markdown("**RECOMMENDATION**: Proceed to the Architectural Rot tab to assess the structural blockers that remain even in a clean codebase — complexity and coupling are often the more costly problem to resolve than security.")
+            st.markdown("**RECOMMENDATION**: Proceed to the Architectural Rot tab to assess the structural blockers that remain even in a clean codebase - complexity and coupling are often the more costly problem to resolve than security.")
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 2 — Architectural Rot
+    # TAB 2 - Architectural Rot
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with tabs[2]:
         st.markdown("#### Architectural Debt & Extensibility Blockers")
@@ -254,7 +254,7 @@ def show_risk_audit():
         dead_code = sum(1 for r in rot if r.get("Defect Type") == "Potential Dead Code")
         blocker_count = sum(1 for r in rot if r.get("Defect Type") in ["High Refactor Risk", "Microservice Extraction Blocker"])
         st.info("#### Extensibility Assessment")
-        st.markdown("**METRIC**: Composite Structural Anti-Patterns — Global State, Dead Code, and PSR violations")
+        st.markdown("**METRIC**: Composite Structural Anti-Patterns - Global State, Dead Code, and PSR violations")
         st.markdown(
             f"**INTERPRETATION**: This codebase carries **{total_rot} architectural debt instances**. "
             "The engine has added a **Dead Code Heuristic**: it identifies 'Orphaned Files' that have zero incoming connections and are not registered entry points. "
@@ -263,14 +263,14 @@ def show_risk_audit():
         )
         st.markdown(
             f"**EVIDENCE**:\n"
-            f"1. **{dead_code} Potential Dead Code file(s)** — orphaned components with zero incoming dependency edges.\n"
-            f"2. **{global_coupling} Global State Coupling instance(s)** — hidden runtime dependencies blocking unit testing.\n"
-            f"3. **{blocker_count} Composite Extraction Blocker(s)** — high-complexity/high-coupling nodes that failed extraction logic."
+            f"1. **{dead_code} Potential Dead Code file(s)** - orphaned components with zero incoming dependency edges.\n"
+            f"2. **{global_coupling} Global State Coupling instance(s)** - hidden runtime dependencies blocking unit testing.\n"
+            f"3. **{blocker_count} Composite Extraction Blocker(s)** - high-complexity/high-coupling nodes that failed extraction logic."
         )
         st.markdown(
             "**RECOMMENDATION**: Consider the Extraction Feasibility Profiles above as your primary discovery output from this tab. "
             "Before any further analysis, ask: do the modules listed as 'High Refactor Risk' correspond to features you intend to extract early? "
-            "If so, those files reveal the minimum set of dependencies you must untangle *first* — understanding their structure is the prerequisite for planning extraction in the Strategic Advisory module."
+            "If so, those files reveal the minimum set of dependencies you must untangle *first* - understanding their structure is the prerequisite for planning extraction in the Strategic Advisory module."
         )
         if st.button("Map External Boundaries"):
             st.switch_page(page_registry.PAGE_BOUNDARY_INTELLIGENCE)

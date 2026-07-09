@@ -1,7 +1,7 @@
 """
 Phase 3: Structural Feature Engineering
 Derives 4 architectural signal indicators from normalized Phase 2 metrics.
-All functions are pure — zero side effects — fully testable in isolation.
+All functions are pure - zero side effects - fully testable in isolation.
 """
 
 
@@ -51,8 +51,8 @@ def engineer_features(normalized: dict, raw_metric: dict) -> dict:
     """Derive all 4 structural indicators for a single component.
 
     Args:
-        normalized: Output from FeatureNormalizer.normalize() — norm_{field} keys.
-        raw_metric: Original metric dict — used for raw in_degree/out_degree/scc_size.
+        normalized: Output from FeatureNormalizer.normalize() - norm_{field} keys.
+        raw_metric: Original metric dict - used for raw in_degree/out_degree/scc_size.
 
     Returns:
         Dict with: criticality_index, instability, cycle_flag, coupling_pressure

@@ -280,7 +280,7 @@ def _build_erd_dot(ownership: list, relationships: list) -> str:
     for row in ownership:
         t = re.sub(r'[^a-zA-Z0-9_]', '_', row["table"])
         owner = row["primary_owner"]
-        cross = " ⚠" if row["cross_module_write"] else ""
+        cross = " " if row["cross_module_write"] else ""
         label = f"{t}\\n[{owner}{cross}]"
         if t not in added:
             lines.append(f'  "{t}" [label="{label}"];')

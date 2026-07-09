@@ -32,5 +32,5 @@ class RiskModel:
             + self.weights["coupling"]    * features.get("coupling_pressure", 0.0)
             + self.weights["cycle"]       * float(features.get("cycle_flag", 0))
         )
-        # Clamp to [0, 1] — cycle_flag can push sum above 1 on very coupled nodes
+        # Clamp to [0, 1] - cycle_flag can push sum above 1 on very coupled nodes
         return round(min(1.0, max(0.0, base_risk)), 6)

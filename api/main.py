@@ -56,8 +56,8 @@ from typing import List, Optional, Dict, Any
 DESCRIPTION = """
 **Strata** is an enterprise-grade Modernization Intelligence Platform designed to de-risk the transformation of legacy PHP monoliths into modern, distributed architectures.
 
-### 🔬 The Strata Methodology
-Unlike traditional static analysis, Strata converts raw source code into a **Structural Intelligence Graph**. By parsing Abstract Syntax Trees (AST) and projecting them into a NetworkX-backed mathematical model, we identify the hidden "gravity" of your codebase—the components that hold the monolith together and the chokepoints that prevent agility.
+###  The Strata Methodology
+Unlike traditional static analysis, Strata converts raw source code into a **Structural Intelligence Graph**. By parsing Abstract Syntax Trees (AST) and projecting them into a NetworkX-backed mathematical model, we identify the hidden "gravity" of your codebase the components that hold the monolith together and the chokepoints that prevent agility.
 
 ### The Intelligence Stack
 The system is organized into four strategic pillars, mirrored in the API and UI:

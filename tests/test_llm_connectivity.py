@@ -8,7 +8,7 @@ def test_gemini():
     print("\n=== Testing Gemini API ===")
     gemini_key = os.getenv("GEMINI_API_KEY", "")
     if not gemini_key:
-        print("❌ GEMINI_API_KEY is not defined in the environment.")
+        print(" GEMINI_API_KEY is not defined in the environment.")
         return False
         
     print(f"Key loaded: {gemini_key[:8]}...{gemini_key[-4:] if len(gemini_key) > 12 else ''}")
@@ -23,7 +23,7 @@ def test_gemini():
         print(f"Response: {response.text.strip()}")
         return True
     except Exception as e:
-        print(f"❌ Gemini Request Failed: {e}")
+        print(f" Gemini Request Failed: {e}")
         return False
 
 def test_openrouter():
@@ -32,7 +32,7 @@ def test_openrouter():
     model = os.getenv("OPENROUTER_MODEL", "google/gemini-flash-1.5")
     
     if not openrouter_key:
-        print("❌ OPENROUTER_API_KEY is not defined in the environment.")
+        print(" OPENROUTER_API_KEY is not defined in the environment.")
         return False
         
     print(f"Key loaded: {openrouter_key[:8]}...{openrouter_key[-4:] if len(openrouter_key) > 12 else ''}")
@@ -62,11 +62,11 @@ def test_openrouter():
             print(f"Response: {content.strip()}")
             return True
         else:
-            print(f"❌ OpenRouter returned non-200 code.")
+            print(f" OpenRouter returned non-200 code.")
             print(f"Response Body: {response.text}")
             return False
     except Exception as e:
-        print(f"❌ OpenRouter Request Failed: {e}")
+        print(f" OpenRouter Request Failed: {e}")
         return False
 
 if __name__ == "__main__":
@@ -88,6 +88,6 @@ if __name__ == "__main__":
     openrouter_ok = test_openrouter()
     
     print("\n=== Diagnostic Summary ===")
-    print(f"Gemini API:     {'🟢 ONLINE' if gemini_ok else '🔴 OFFLINE/CONFIG ERROR'}")
-    print(f"OpenRouter API: {'🟢 ONLINE' if openrouter_ok else '🔴 OFFLINE/CONFIG ERROR'}")
+    print(f"Gemini API:     {' ONLINE' if gemini_ok else ' OFFLINE/CONFIG ERROR'}")
+    print(f"OpenRouter API: {' ONLINE' if openrouter_ok else ' OFFLINE/CONFIG ERROR'}")
     sys.exit(0 if (gemini_ok or openrouter_ok) else 1)

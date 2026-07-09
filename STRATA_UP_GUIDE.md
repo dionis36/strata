@@ -1,10 +1,10 @@
-# 🚀 Strata: The Complete Up Guide
+#  Strata: The Complete Up Guide
 
 Welcome to **Strata**, the professional Modernization Advisory Suite for legacy PHP monoliths. This guide will take you from a bare machine to a fully functional analysis environment in minutes.
 
 ---
 
-## 🛠️ 1. System Requirements
+##  1. System Requirements
 
 Before you begin, ensure your machine meets the following criteria:
 
@@ -15,7 +15,7 @@ Before you begin, ensure your machine meets the following criteria:
 
 ---
 
-## ⚡ 2. One-Click Bootstrap
+##  2. One-Click Bootstrap
 
 We provide a comprehensive Python script to automate the environment preparation. This script checks requirements, sets up environment variables, and provisions test datasets.
 
@@ -34,7 +34,7 @@ python3 scripts/setup_fixtures.py
 
 ---
 
-## 🏗️ 3. Starting the Engine
+##  3. Starting the Engine
 
 Once the bootstrap is complete, you can launch the entire Strata stack using Docker Compose. This starts the **FastAPI Backend** and the **Streamlit Frontend** side-by-side.
 
@@ -56,7 +56,7 @@ docker exec strata-api-1 python tests/test_llm_connectivity.py
 
 ---
 
-## 🔍 4. Running Your First Analysis
+##  4. Running Your First Analysis
 
 1.  Open the [Streamlit UI](http://localhost:8501).
 2.  In the **Project Path** input, enter one of the pre-provisioned paths:
@@ -72,7 +72,7 @@ docker exec strata-api-1 python tests/test_llm_connectivity.py
 
 ---
 
-## 📂 5. Setting Up Your Own Legacy Projects
+##  5. Setting Up Your Own Legacy Projects
 
 Strata uses a Docker **volume mount** to see your local files. 
 
@@ -85,7 +85,7 @@ Strata uses a Docker **volume mount** to see your local files.
 
 ---
 
-## 🛑 6. Stopping vs. Resetting
+##  6. Stopping vs. Resetting
 
 Depending on your goal, you have two ways to power down the environment.
 
