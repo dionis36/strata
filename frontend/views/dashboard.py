@@ -105,21 +105,36 @@ def show_dashboard():
                 
         elif run_status == "intelligence_ready":
             st.markdown("#### Artifact Exports")
-            c_art1, c_art2 = st.columns(2)
-            with c_art1:
-                @st.cache_data(show_spinner=False)
-                def fetch_human_cached(run_id_val):
-                    res = requests.get(f"{FASTAPI_URL}/artifacts/human/{run_id_val}?format=md")
-                    return res.content if res.status_code == 200 else None
+            @st.cache_data(show_spinner=False)
+            def fetch_human_cached(run_id_val):
+                res = requests.get(f"{FASTAPI_URL}/artifacts/human/{run_id_val}?format=md")
+                return res.content if res.status_code == 200 else None
 
-                md_content = fetch_human_cached(run['id'])
+            @st.cache_data(show_spinner=False)
+            def fetch_sarif_cached(run_id_val):
+                res = requests.get(f"{FASTAPI_URL}/artifacts/sarif/{run_id_val}")
+                import json
+                return json.dumps(res.json(), indent=2) if res.status_code == 200 else None
+                
+            md_content = fetch_human_cached(run['id'])
+            sarif_content = fetch_sarif_cached(run['id'])
+            
+            button_count = 0
+            if md_content: button_count += 2
+            if sarif_content: button_count += 1
+            
+            if button_count > 0:
+                cols = st.columns(button_count)
+                col_idx = 0
+                
                 if md_content:
-                    col_view, col_dl = st.columns(2)
-                    with col_view:
+                    with cols[col_idx]:
                         if st.button("View Report", use_container_width=True):
                             from views import page_registry
                             st.switch_page(page_registry.PAGE_REPORT_VIEWER)
-                    with col_dl:
+                    col_idx += 1
+                    
+                    with cols[col_idx]:
                         st.download_button(
                             label="Download Report",
                             data=md_content,
@@ -127,23 +142,18 @@ def show_dashboard():
                             mime="text/markdown",
                             use_container_width=True
                         )
-            with c_art2:
-                @st.cache_data(show_spinner=False)
-                def fetch_sarif_cached(run_id_val):
-                    res = requests.get(f"{FASTAPI_URL}/artifacts/sarif/{run_id_val}")
-                    import json
-                    return json.dumps(res.json(), indent=2) if res.status_code == 200 else None
-                
-                sarif_content = fetch_sarif_cached(run['id'])
-                if sarif_content:
-                    st.download_button(
-                        label="Download SARIF Report",
-                        data=sarif_content,
-                        file_name="results.sarif",
-                        mime="application/json",
-                        use_container_width=True
-                    )
+                    col_idx += 1
                     
+                if sarif_content:
+                    with cols[col_idx]:
+                        st.download_button(
+                            label="Download SARIF Report",
+                            data=sarif_content,
+                            file_name="results.sarif",
+                            mime="application/json",
+                            use_container_width=True
+                        )
+                    col_idx += 1
         st.markdown("---")
 
     else:
