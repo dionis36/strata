@@ -45,9 +45,23 @@ from views import page_registry
 # buttons. Populated into page_registry so view files can import the exact same
 # registered object - avoids the st.switch_page(st.Page(...)) anti-pattern.
 _page_dashboard = st.Page(show_dashboard, title="Executive Dashboard", icon=":material/dashboard:")
+_page_monolith_navigator = st.Page(show_monolith_navigator, title="Monolith Navigator", icon=":material/hub:")
+_page_layered_architecture = st.Page(show_layered_architecture, title="Layered Structure", icon=":material/layers:")
+_page_system_topology = st.Page(show_system_topology, title="System Topology", icon=":material/account_tree:")
+_page_bounded_contexts = st.Page(show_bounded_contexts, title="Bounded Contexts", icon=":material/group_work:")
+
+_page_database_intelligence = st.Page(show_database_intelligence, title="Database Intelligence", icon=":material/storage:")
+_page_global_state_intelligence = st.Page(show_global_state_intelligence, title="Runtime & Global State", icon=":material/memory:")
+_page_legacy_intelligence = st.Page(show_legacy_intelligence, title="Legacy PHP Intelligence", icon=":material/history:")
 _page_risk_audit = st.Page(show_risk_audit, title="Modernization Risk", icon=":material/gpp_maybe:")
 _page_boundary_intelligence = st.Page(show_boundary_intelligence, title="Boundary Intelligence", icon=":material/public:")
+
+_page_decision_engine = st.Page(show_modernization_decision_engine, title="Modernization Decision Engine", icon=":material/psychology:")
+_page_extraction_simulator = st.Page(show_extraction_simulator, title="Extraction Simulator", icon=":material/biotech:")
+_page_executive_roadmap = st.Page(show_executive_roadmap, title="Strategic Roadmap", icon=":material/insights:")
+_page_legacy_bootstrapper = st.Page(show_legacy_bootstrapper, title="Legacy Bootstrapper", icon=":material/build:")
 _page_report_viewer = st.Page(show_report_viewer, title="Report Viewer", icon=":material/description:")
+
 page_registry.PAGE_DASHBOARD = _page_dashboard
 page_registry.PAGE_RISK_AUDIT = _page_risk_audit
 page_registry.PAGE_BOUNDARY_INTELLIGENCE = _page_boundary_intelligence
@@ -59,45 +73,129 @@ pages = {
         _page_dashboard,
     ],
     "Architectural Discovery": [
-        st.Page(show_monolith_navigator, title="Monolith Navigator", icon=":material/hub:"),
-        st.Page(show_layered_architecture, title="Layered Structure", icon=":material/layers:"),
-        st.Page(show_system_topology, title="System Topology", icon=":material/account_tree:"),
-        st.Page(show_bounded_contexts, title="Bounded Contexts", icon=":material/group_work:"),
+        _page_monolith_navigator,
+        _page_layered_architecture,
+        _page_system_topology,
+        _page_bounded_contexts,
     ],
     "Intelligence Reports": [
-        st.Page(show_database_intelligence, title="Database Intelligence", icon=":material/storage:"),
-        st.Page(show_global_state_intelligence, title="Runtime & Global State", icon=":material/memory:"),
-        st.Page(show_legacy_intelligence, title="Legacy PHP Intelligence", icon=":material/history:"),
+        _page_database_intelligence,
+        _page_global_state_intelligence,
+        _page_legacy_intelligence,
         _page_risk_audit,
         _page_boundary_intelligence,
     ],
     "Strategic Advisory": [
-        st.Page(show_modernization_decision_engine, title="Modernization Decision Engine", icon=":material/psychology:"),
-        st.Page(show_extraction_simulator, title="Extraction Simulator", icon=":material/biotech:"),
-        st.Page(show_executive_roadmap, title="Strategic Roadmap", icon=":material/insights:"),
-        st.Page(show_legacy_bootstrapper, title="Legacy Bootstrapper", icon=":material/build:"),
+        _page_decision_engine,
+        _page_extraction_simulator,
+        _page_executive_roadmap,
+        _page_legacy_bootstrapper,
     ]
 }
 
 @st.dialog("User Guide", width="large")
 def show_user_guide():
-    st.markdown("""
-    ### Welcome to Strata
-    Strata is an enterprise-grade static analysis platform built to untangle legacy monoliths and guide your modernization strategy.
+    st.session_state["show_user_guide"] = False
+    st.subheader("Welcome to Strata")
+    st.markdown(
+        "Strata is an enterprise-grade modernization advisory platform designed to analyze legacy monoliths, identify architectural risk, and generate structured migration blueprints."
+    )
+    
+    tab1, tab2, tab3 = st.tabs([
+        "Overview & Workflow",
+        "Sidebar Modules",
+        "Architectural Concepts"
+    ])
+    
+    with tab1:
+        st.markdown("### The Modernization Workflow")
+        st.caption(
+            "Strata helps you navigate the transition from legacy monoliths to modern, modular architectures. "
+            "Follow these key phases to modernize your codebase:"
+        )
+        
+        w_col1, w_col2, w_col3 = st.columns(3)
+        with w_col1:
+            st.markdown("**Phase 1: Ingestion & Scan**")
+            st.markdown(
+                "1. **Provision Code**: Place your legacy files in the local `data/` folder\n\n"
+                "2. **Trigger Scan**: Go to the **Executive Dashboard**, enter the container path, and run the intelligence scan."
+            )
+        with w_col2:
+            st.markdown("**Phase 2: Discover & Analyze**")
+            st.markdown(
+                "3. **Audit Topology**: Use the **Monolith Navigator** and topology graphs to identify God Classes and cycles.\n\n"
+                "4. **Analyze Coupling**: Inspect database dependencies and global state risks in **Intelligence Reports**."
+            )
+        with w_col3:
+            st.markdown("**Phase 3: Simulate & Export**")
+            st.markdown(
+                "5. **Simulate Extraction**: Use the **Extraction Simulator** to model changes in Blast Radius and dependency flow.\n\n"
+                "6. **Export Roadmaps**: Generate step-by-step modernization guides and Neo4j Cypher/AI JSON metadata."
+            )
+        st.info("Tip: You can switch between active workspace runs anytime using the drop-down menu in the sidebar.")
 
-    #### Navigation Workflow
-    1. **A. Command Center:** Start here to initialize new code scans, switch between active projects, and view high-level system readiness scores.
-    2. **B. Architectural Discovery:** Use the interactive *System Topology* and *Bounded Contexts* graphs to visually identify "God Classes" and tangled dependencies.
-    3. **C. Intelligence Reports:** Deep-dive into specific architectural debts. The *Database Intelligence* and *Global State* tabs are critical for finding hidden couplings before extracting microservices.
-    4. **D. Strategic Advisory:** Use the *Extraction Simulator* to mathematically preview the risk impact of moving a class into its own service before you write any code.
-    """)
+    with tab2:
+        st.markdown("### Sidebar Navigation Categories")
+        st.caption("The sidebar organizes Strata's analytical tools into four primary sections:")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("##### Command Center")
+            st.markdown("Start here to initialize new code scans, switch between active projects/runs, and view high-level system readiness scores.")
+            
+            st.write("") # Spacer
+            st.markdown("##### Architectural Discovery")
+            st.markdown("Use interactive dependency graphs, heatmaps, and layered structures to visually trace class dependencies and identify God Objects.")
+            
+        with col2:
+            st.markdown("##### Intelligence Reports")
+            st.markdown("Deep-dive into technical debt reports, including database query coupling, runtime global state usage, and legacy version risks.")
+            
+            st.write("") # Spacer
+            st.markdown("##### Strategic Advisory")
+            st.markdown("Simulate the risk impact of class extraction, get advisory decisions, and export surgical modernization blueprints.")
+            
+    with tab3:
+        st.markdown("### Key Architectural Metrics")
+        st.caption("Strata uses deterministic graph theory and structural metrics to assess your system's design:")
+        
+        m_col1, m_col2 = st.columns(2)
+        with m_col1:
+            st.markdown("**Blast Radius**")
+            st.caption(
+                "The percentage of the system that could be impacted by a change in this specific component. "
+                "A lower blast radius indicates better decoupling."
+            )
+            
+            st.markdown("**Systemic Gravity & Weight**")
+            st.caption(
+                "A metric based on in-degree and out-degree centrality. "
+                "High gravity components pull the rest of the application into their orbit."
+            )
+            
+        with m_col2:
+            st.markdown("**Acyclic Guarantee**")
+            st.caption(
+                "Verification that dependencies flow in one direction without circular loops, ensuring clean encapsulation."
+            )
+            
+            st.markdown("**Modernization ROI**")
+            st.caption(
+                "Estimated return on investment for decoupling a specific class, based on structural risk reduction "
+                "divided by extraction complexity."
+            )
+            
+        st.success("Strata is a read-only static analyzer. It never modifies your source files, making it safe to run on any codebase.")
 
 # --- Global Context Sidebar ---
+def trigger_user_guide():
+    st.session_state["show_user_guide"] = True
+
 with st.sidebar:
     st.markdown("<h1 style='font-size: 2.4rem; font-weight: 800; letter-spacing: -0.04em; margin-top: 0; padding-top: 0;'>Strata</h1>", unsafe_allow_html=True)
     
-    if st.button("User Guide", use_container_width=True):
-        show_user_guide()
+    st.button("User Guide", use_container_width=True, on_click=trigger_user_guide)
         
     st.write("") # Small spacer
     
@@ -157,3 +255,6 @@ all_pages.append(_page_report_viewer)
 
 pg = st.navigation(all_pages, position="hidden")
 pg.run()
+
+if st.session_state.get("show_user_guide", False):
+    show_user_guide()

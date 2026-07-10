@@ -155,14 +155,30 @@ def show_modernization_decision_engine():
         st.markdown("#### Top 10 Strategic Justifications")
         st.caption("Detailed rationale for the most critical modules to prevent UI overload.")
         top_recommendations = recommendations[:10]
+        
+        STRATEGY_HELP = {
+            "EXTRACT (MICROSERVICE)": "The module is sufficiently decoupled to be moved into its own independently deployable microservice now. Low coupling, low blast radius.",
+            "STRANGLER FIG":          "The module is too entangled to rewrite at once. Wrap it in an API facade and gradually replace its internals over time without disrupting the monolith.",
+            "REWRITE":                "Structural rot has made this module unmaintainable. The cost of untangling it exceeds the cost of building a replacement from scratch.",
+            "REPLATFORM":             "The module's business logic is sound but its infrastructure is deprecated (e.g., mysql_*, legacy auth). Move it to a modern runtime without changing behavior.",
+            "RETAIN / REHOST":        "The module is stable and low risk. Leave it in the monolith until higher-priority targets are resolved.",
+        }
+        
         for rec in top_recommendations:
             with st.expander(f"Strategy for: {rec['Context']}"):
-                st.markdown(f"**RECOMMENDED**: `{rec['Recommended Strategy']}`")
+                strategy = rec['Recommended Strategy']
+                strategy_tip = STRATEGY_HELP.get(strategy, "")
+                _sc, _sp = st.columns([5, 1])
+                _sc.markdown(f"**RECOMMENDED**: `{strategy}`")
+                if strategy_tip:
+                    with _sp.popover("?"):
+                        st.markdown(strategy_tip)
                 st.markdown(f"**RATIONALE**: {rec['Rationale']}")
                 st.markdown(f"**PRIMARY BLOCKER**: {rec['Primary Blocker']}")
                 
                 # Behavioral Insight Protocol (D1 Strategy)
-                st.info("##### Advisory Interpretation", icon=":material/info:")
+                st.markdown("##### Advisory Interpretation")
+                st.info("Data-driven strategy assignment based on industry benchmarks for legacy PHP decomposition.", icon=":material/info:")
                 st.markdown(
                     f"The {rec['Context']} module has been assigned a **{rec['Recommended Strategy']}** strategy because its "
                     f"structural profile shows {rec['Primary Blocker']} as the dominant constraint. "

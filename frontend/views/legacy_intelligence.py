@@ -62,11 +62,31 @@ def show_legacy_intelligence():
 
     # ── Top-level KPI strip ───────────────────────────────────────────────
     k1, k2, k3, k4, k5 = st.columns(5)
-    k1.metric("PHP Era",             classified_era.split("(")[0].strip())
-    k2.metric("Modernization Score",  f"{mod_score:.1%}" if mod_score else "N/A")
-    k3.metric("Procedural Ratio",     f"{proc_ratio:.1%}")
-    k4.metric("Namespace Coverage",   f"{ns_ratio:.1%}")
-    k5.metric("Era Signals",          len(era_signals))
+    k1.metric(
+        "PHP Era",
+        classified_era.split("(")[0].strip(),
+        help="The detected PHP generation of this codebase, inferred from actual source code patterns — not the declared php version. Era A/B (PHP 4/5) = fully procedural, globally coupled. Era D (PHP 7+) = modern, namespace-aware, OOP-first."
+    )
+    k2.metric(
+        "Modernization Score",
+        f"{mod_score:.1%}" if mod_score else "N/A",
+        help="A composite 0.0–1.0 readiness score weighted across 5 dimensions: namespace adoption, security posture, DB abstraction level, testability, and coupling density. This is a migration cost estimator — not a quality score. Higher = easier to modernize."
+    )
+    k3.metric(
+        "Procedural Ratio",
+        f"{proc_ratio:.1%}",
+        help="The percentage of files that contain no class definitions — purely function-based or script-based code. High ratios indicate a pre-OOP architecture requiring significant structural wrapping before containerization is possible."
+    )
+    k4.metric(
+        "Namespace Coverage",
+        f"{ns_ratio:.1%}",
+        help="The percentage of files that declare a PHP namespace. Namespace adoption is the minimum prerequisite for PSR-4 autoloading, which is required for Composer-based dependency management and modern framework integration."
+    )
+    k5.metric(
+        "Era Signals",
+        len(era_signals),
+        help="The total count of code patterns detected that are characteristic of a specific PHP era. A higher signal count increases classification confidence. Expand the Era Classification tab to see each individual signal."
+    )
 
     st.markdown("---")
 
@@ -115,15 +135,16 @@ def show_legacy_intelligence():
         }
         icon, desc = ERA_DESC.get(classified_era, ("", classified_era))
 
-        st.info(f"#### Classified Era: {classified_era}", icon=":material/info:")
-        st.markdown(f"*{desc}*")
+        st.markdown(f"#### Classified Era: {classified_era}")
+        st.info(f"{desc}", icon=":material/info:")
         st.markdown("---")
 
         # Insight
         critical = sum(1 for s in era_signals if str(s.get("severity", "")).upper() == SEVERITY_CRITICAL)
         high     = sum(1 for s in era_signals if str(s.get("severity", "")).upper() == SEVERITY_HIGH)
 
-        st.info("#### Era Classification Assessment", icon=":material/info:")
+        st.markdown("#### Era Classification Assessment")
+        st.info("PHP Era Classification based on AST pattern density — not the declared php version.", icon=":material/info:")
         st.markdown("**METRIC**: PHP Era Classification based on AST pattern density")
         st.markdown(
             "**INTERPRETATION**: PHP era classification is not based on the `php_version` file - "
@@ -181,10 +202,11 @@ def show_legacy_intelligence():
         inline_count   = pattern_totals.get("INLINE_HTML", 0)
         routing_count  = pattern_totals.get("INCLUDE_ROUTING", 0)
 
+        st.markdown("#### Anti-Pattern Density")
         if total_patterns > 0:
-            st.warning("#### Anti-Pattern Density")
+            st.warning(f"{total_patterns} legacy anti-pattern instance(s) detected across {len(pattern_totals)} distinct categories.", icon=":material/warning:")
         else:
-            st.success("#### Anti-Pattern Density")
+            st.success("No legacy anti-patterns detected in this run.", icon=":material/check_circle:")
 
         st.markdown("**METRIC**: Legacy Anti-Pattern Count by Category")
         st.markdown(
@@ -256,11 +278,12 @@ def show_legacy_intelligence():
 
         # ── Insight ──────────────────────────────────────────────────────
         st.markdown("---")
+        st.markdown("#### Overall Modernization Readiness")
         if mod_score > 0:
             bucket = "Modern (Era D)" if mod_score >= 0.7 else ("Transitional (Era C)" if mod_score >= 0.4 else "Legacy (Era A/B)")
-            st.info(f"#### Overall Modernization Readiness: {bucket}")
+            st.info(f"Composite score: **{mod_score:.1%}** — classified as **{bucket}**.", icon=":material/info:")
         else:
-            st.info("#### Overall Modernization Readiness")
+            st.info("Modernization score not yet computed for this run.", icon=":material/info:")
 
         st.markdown("**METRIC**: Composite Modernization Score (0.0 - 1.0)")
         st.markdown(
@@ -314,7 +337,8 @@ def show_legacy_intelligence():
         oop_count = data.get("files_with_classes", 0)
         proc_only = data.get("files_procedural_only", 0)
 
-        st.info("#### Structural Composition Profile")
+        st.markdown("#### Structural Composition Profile")
+        st.info("OOP vs Procedural file distribution — classes, namespaces, and procedural-only files across the codebase.", icon=":material/info:")
         st.markdown("**METRIC**: OOP vs Procedural Distribution")
         st.markdown(
             "**INTERPRETATION**: This table shows the raw structural split of the codebase. "

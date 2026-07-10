@@ -105,14 +105,23 @@ def show_extraction_simulator():
                 elif cov is not None:
                     st.success(f"**Safe to Extract**: Target component has {cov*100:.1f}% test coverage.", icon=":material/check_circle:")
 
-                st.metric("Blast Radius (Downstream)", f"{sim['blast_radius']['count']} files")
-                st.metric("Dependency Payload (Upstream)", f"{sim['dependency_payload']['count']} files")
+                st.metric(
+                    "Blast Radius (Downstream)",
+                    f"{sim['blast_radius']['count']} files",
+                    help="The number of files in the remaining monolith that depend on this module. If removed without a backward-compatible proxy, all of these files will break at runtime."
+                )
+                st.metric(
+                    "Dependency Payload (Upstream)",
+                    f"{sim['dependency_payload']['count']} files",
+                    help="The number of files this module depends on. These must either be migrated alongside the module or mocked out behind an interface in the new microservice boundary."
+                )
                 
                 st.markdown("#### Isolation Score")
                 st.info(sim["isolation_score"])
-                st.caption(f"*Ratio of Blast Radius (downstream) to Payload (upstream). Lower ratio = easier to extract safely.*")
+                st.caption(f"*Ratio of Blast Radius (downstream) to Dependency Payload (upstream). A score near 0 = nearly self-contained. A score > 1 = affects far more than it depends on — high extraction risk. Lower ratio = easier to extract safely.*")
                 
                 st.markdown("#### State Tear")
+                st.caption("*Globals and DB dependencies severed by this extraction — these must be formalized into a shared library or API contract before extraction can proceed safely.*")
                 if sim["state_tear"]["globals"]:
                     st.warning(f"Shared Globals: {len(sim['state_tear']['globals'])}")
                     st.caption(", ".join(sim["state_tear"]["globals"][:5]) + ("..." if len(sim["state_tear"]["globals"]) > 5 else ""))
@@ -218,21 +227,31 @@ def show_extraction_simulator():
                     # Risk Delta Display
                     if risk_diff > 0:
                         st.metric(
-                            label="Systemic Risk Profile", 
-                            value=f"{metrics['after_risk']:.3f}", 
-                            delta=f"+{risk_diff:.3f} (Penalty)", 
-                            delta_color="inverse"
+                            label="Systemic Risk Profile",
+                            value=f"{metrics['after_risk']:.3f}",
+                            delta=f"+{risk_diff:.3f} (Penalty)",
+                            delta_color="inverse",
+                            help="Coupling risk score for the monolith after this extraction. A positive delta (red) means the extraction introduces new network boundary complexity — the new service contract adds more risk than it removes."
                         )
                     else:
                         st.metric(
-                            label="Systemic Risk Profile", 
-                            value=f"{metrics['after_risk']:.3f}", 
-                            delta=f"{risk_diff:.3f} (Reduced)", 
-                            delta_color="normal"
+                            label="Systemic Risk Profile",
+                            value=f"{metrics['after_risk']:.3f}",
+                            delta=f"{risk_diff:.3f} (Reduced)",
+                            delta_color="normal",
+                            help="Coupling risk score for the monolith after this extraction. A negative delta (green) means extracting this module makes the remaining system less coupled and less risky overall."
                         )
-                        
-                    st.metric("Interface Complexity", f"{metrics['interface_complexity']} cross-calls")
-                    st.metric("Data Isolation Difficulty", f"{metrics['data_isolation_difficulty']} shared tables")
+
+                    st.metric(
+                        "Interface Complexity",
+                        f"{metrics['interface_complexity']} cross-calls",
+                        help="The number of cross-boundary function calls that must be converted into network API calls (gRPC or REST) for the extracted microservice to function. Higher = more complex service contract to design and maintain."
+                    )
+                    st.metric(
+                        "Data Isolation Difficulty",
+                        f"{metrics['data_isolation_difficulty']} shared tables",
+                        help="The number of database tables shared between the extracted microservice and the remaining monolith. Higher = harder to split the data tier. Each shared table is a candidate for a Data Access Layer or event-driven sync pattern."
+                    )
                     
                     st.markdown("#### Decoupled Architecture")
                     st.info("The selected class and all its declared methods have been removed from the monolith. All incoming and outgoing connections are consolidated into the new green Proxy Service node.")

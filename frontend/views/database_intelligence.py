@@ -49,7 +49,6 @@ def show_database_intelligence():
     taxonomy  = data.get("taxonomy", {})
     risk      = data.get("risk_audit", {})
     ownership = data.get("table_ownership", [])
-    erd_dot   = data.get("erd_dot", "")
 
     total_reads  = sum(v.get("reads", 0)  for v in taxonomy.values())
     total_writes = sum(v.get("writes", 0) for v in taxonomy.values())
@@ -66,10 +65,26 @@ def show_database_intelligence():
 
     # ── Top-level KPI strip ───────────────────────────────────────────────
     k1, k2, k3, k4 = st.columns(4)
-    k1.metric("Read Operations",  total_reads)
-    k2.metric("Write Operations", total_writes)
-    k3.metric("ORM Abstractions", total_orm)
-    k4.metric("Credential Risks", sum(v.get("credentials", 0) for v in taxonomy.values()))
+    k1.metric(
+        "Read Operations",
+        total_reads,
+        help="Total SELECT queries detected across all files. High read volume identifies data-heavy modules that will need a caching layer or read-replica strategy when extracted."
+    )
+    k2.metric(
+        "Write Operations",
+        total_writes,
+        help="Total INSERT, UPDATE, and DELETE operations detected. Write-heavy files carry the highest data integrity risk during extraction — they require a Data Access Layer or API Proxy."
+    )
+    k3.metric(
+        "ORM Abstractions",
+        total_orm,
+        help="Database calls routed through an ORM layer (e.g., Eloquent, Doctrine) rather than raw SQL strings. Higher values indicate a more database-agnostic codebase that is easier to migrate to a new DB engine."
+    )
+    k4.metric(
+        "Credential Risks",
+        sum(v.get("credentials", 0) for v in taxonomy.values()),
+        help="Files where database credentials (hostname, username, password) appear as hardcoded literal strings. A direct security vulnerability — credentials cannot be rotated without a code change."
+    )
 
     st.markdown("---")
 
@@ -77,7 +92,6 @@ def show_database_intelligence():
         f"Access Taxonomy (CRUD Patterns) ({len(taxonomy)})",
         f"Risk Audit (Security & Integrity) ({total_risk_items})",
         f"Table Ownership (DB-per-Service) ({len(ownership)})",
-        "Domain Model (ERD Visualization)",
     ])
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -107,7 +121,8 @@ def show_database_intelligence():
         raw_pct = f"{(total_raw / (total_raw + total_orm) * 100):.1f}%" if (total_raw + total_orm) > 0 else "N/A"
         top_files = [r["File"] for r in rows[:3]] if rows else []
 
-        st.info("#### Query Abstraction Level", icon=":material/info:")
+        st.markdown("#### Query Abstraction Level")
+        st.info("Raw SQL vs. ORM usage ratio across the persistence layer.", icon=":material/info:")
         st.markdown("**METRIC**: Raw SQL vs. ORM Usage ratio across the persistence layer")
         st.markdown(
             "**INTERPRETATION**: This metric assesses how the system interacts with its database. "
@@ -179,10 +194,11 @@ def show_database_intelligence():
 
         # ── Tab-specific Insight ─────────────────────────────────────────
         st.markdown("---")
+        st.markdown("#### Persistence Risk Posture")
         if total_risk_items > 0:
-            st.warning("#### Persistence Risk Posture", icon=":material/warning:")
+            st.warning(f"{total_risk_items} persistence risk item(s) detected — credential, duplicate query, or transaction issues present.", icon=":material/warning:")
         else:
-            st.success("#### Persistence Risk Posture", icon=":material/check_circle:")
+            st.success("Persistence risk profile is clean — no credential, duplicate, or transaction risks detected.", icon=":material/check_circle:")
 
         st.markdown("**METRIC**: Composite Persistence Vulnerability Count")
         st.markdown(
@@ -239,10 +255,11 @@ def show_database_intelligence():
 
         # ── Tab-specific Insight ─────────────────────────────────────────
         st.markdown("---")
+        st.markdown("#### Data Entanglement & Ownership")
         if cross_module:
-            st.warning("#### Data Entanglement & Ownership", icon=":material/warning:")
+            st.warning(f"{len(cross_module)} table(s) written to by more than one module — cross-module write conflicts detected.", icon=":material/warning:")
         else:
-            st.info("#### Data Entanglement & Ownership", icon=":material/info:")
+            st.info("All tables have a single identified primary owner — no cross-module write conflicts.", icon=":material/info:")
 
         st.markdown("**METRIC**: Cross-Module Write Operations (Shared Table Access)")
         st.markdown(
@@ -262,9 +279,9 @@ def show_database_intelligence():
                 f"3. Check the `write_contexts` column in the raw data for the full ownership breakdown."
             )
             st.markdown(
-                "**RECOMMENDATION**: Review the flagged tables in the **Domain Model** tab - they will "
-                "appear as nodes with multiple inbound arrows, visually confirming the entanglement "
-                "detected here."
+                "**RECOMMENDATION**: Cross-reference the flagged tables with the **Access Taxonomy** tab "
+                "to identify which modules have the highest write volume to these shared tables — "
+                "those modules are the primary candidates for data boundary refactoring."
             )
         else:
             st.markdown(
@@ -273,53 +290,8 @@ def show_database_intelligence():
                 f"2. No cross-module write conflicts detected in this run."
             )
             st.markdown(
-                "**RECOMMENDATION**: Proceed to the **Domain Model** tab to see the inferred "
-                "relationships between these tables visualised as an ERD."
-            )
-
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 3 - Domain Model (ERD)
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    with tabs[3]:
-        st.markdown("#### Inferred Domain Relationships (ERD)")
-        st.caption(
-            "Automatically inferred from shared write contexts - no database schema access required. "
-            "Arrows represent modules that write to both connected tables, implying a relationship."
-        )
-
-        if erd_dot:
-            st.graphviz_chart(erd_dot, use_container_width=True)
-
-            st.markdown("---")
-            erd_rels = data.get("erd_relationships", [])
-            context_labels = list(set(r.get("inferred_via", "") for r in erd_rels if r.get("inferred_via")))
-
-            st.success("#### Domain Cohesion", icon=":material/check_circle:")
-            st.markdown("**METRIC**: Inferred Table Relationship Count")
-            st.markdown(
-                "**INTERPRETATION**: Each connection in this diagram represents two tables that are "
-                "written to by the same module - meaning they are behaviourally related even if no "
-                "explicit foreign key exists in the schema. Clusters of tightly connected tables "
-                "suggest a natural bounded context boundary. Isolated tables suggest self-contained modules."
-            )
-            st.markdown(
-                f"**EVIDENCE**:\n"
-                f"1. `{len(erd_rels)}` implicit table relationship(s) inferred from shared write contexts.\n"
-                f"2. `{len(ownership)}` unique table(s) mapped across the ownership model.\n"
-                f"3. Active bounded contexts driving these relationships: "
-                + (", ".join([f'`{c}`' for c in context_labels[:5]])
-                   + (f" and {len(context_labels) - 5} more." if len(context_labels) > 5 else "."))
-            )
-            st.markdown(
-                "**RECOMMENDATION**: Compare the clusters visible here against the module groupings in "
-                "the **Bounded Contexts** page - tables that cluster together should map to the same "
-                "bounded context boundary."
-            )
-        else:
-            st.info(
-                "Insufficient data to infer domain relationships for this run. "
-                "ERD inference requires at least one parseable INSERT/UPDATE/DELETE statement "
-                "with a recognisable table name."
+                "**RECOMMENDATION**: Proceed to the **Risk Audit** tab to verify there are no "
+                "credential risks or unguarded writes associated with these cleanly bounded tables."
             )
 
 

@@ -60,10 +60,28 @@ def show_boundary_intelligence():
 
     # ── Top-level KPI strip ───────────────────────────────────────────────
     k1, k2, k3, k4 = st.columns(4)
-    k1.metric("Global UI Entanglement", kpis.get("Global UI Entanglement", "0%"), help="Percentage of total AST nodes that are HTML or echo statements.")
-    k2.metric("Fat Views (DB-Coupled)", kpis.get("Fat Views (DB-Coupled UI)", 0), delta="Refactor Priority", delta_color="inverse", help="Files with >15% HTML that also write to the database.")
-    k3.metric("Endpoints Detected", kpis.get("Total Endpoints Detected", 0))
-    k4.metric("Vendor Files Scanned", kpis.get("Vendor Files Scanned", 0))
+    k1.metric(
+        "Global UI Entanglement",
+        kpis.get("Global UI Entanglement", "0%"),
+        help="Percentage of total AST nodes that are HTML output or echo statements. The higher this value, the more backend logic is coupled to the presentation layer — the primary blocker for attaching a React or Vue frontend."
+    )
+    k2.metric(
+        "Fat Views (DB-Coupled)",
+        kpis.get("Fat Views (DB-Coupled UI)", 0),
+        delta="Refactor Priority",
+        delta_color="inverse",
+        help="Files that both query the database AND render HTML in the same execution path. Each one is a 'Fat View' — the anti-pattern that prevents a clean separation between backend API and frontend UI."
+    )
+    k3.metric(
+        "Endpoints Detected",
+        kpis.get("Total Endpoints Detected", 0),
+        help="The number of distinct network entry points (routes, direct-access scripts, JSON-emitting files) detected. Represents the full public-facing surface area of the application."
+    )
+    k4.metric(
+        "Vendor Files Scanned",
+        kpis.get("Vendor Files Scanned", 0),
+        help="Total count of third-party files found in the codebase, including both Composer-managed packages and manually embedded libraries."
+    )
 
     st.markdown("---")
 
@@ -85,7 +103,8 @@ def show_boundary_intelligence():
             st.dataframe(df, hide_index=True, use_container_width=True)
             
             st.markdown("---")
-            st.info("#### Presentation Layer Analysis", icon=":material/info:")
+            st.markdown("#### Presentation Layer Analysis")
+            st.info("UI Entanglement Ratio — proportion of HTML output nodes relative to logic nodes per file.", icon=":material/info:")
             st.markdown("**METRIC**: UI Entanglement Ratio - proportion of HTML/echo output nodes relative to logic nodes per file")
             fat_views = kpis.get("Fat Views (DB-Coupled UI)", 0)
             mvc_files = len(mvc)
@@ -122,7 +141,8 @@ def show_boundary_intelligence():
             st.dataframe(df, hide_index=True, use_container_width=True)
             
             st.markdown("---")
-            st.info("#### Application Entry Point Analysis", icon=":material/info:")
+            st.markdown("#### Application Entry Point Analysis")
+            st.info("Entry Point Classification — how external requests reach and enter the application.", icon=":material/info:")
             st.markdown("**METRIC**: Entry Point Classification - how external requests reach the application")
             pure_scripts = sum(1 for a in api if a.get("Pure Script") == "Yes")
             api_endpoints = sum(1 for a in api if a.get("Type") == "API Endpoint")
@@ -182,7 +202,8 @@ def show_boundary_intelligence():
             st.dataframe(df, hide_index=True, use_container_width=True)
             
             st.markdown("---")
-            st.info("#### Vendor Dependency Analysis", icon=":material/info:")
+            st.markdown("#### Vendor Dependency Analysis")
+            st.info("Vendor Classification — Composer-managed vs. manually embedded third-party libraries.", icon=":material/info:")
             st.markdown("**METRIC**: Vendor Classification - Composer-managed vs. manually embedded third-party libraries")
             orphans = sum(1 for v in vendor if "ORPHANED RISK" in v.get("Status", ""))
             total_vendor = len(vendor)

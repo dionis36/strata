@@ -53,11 +53,31 @@ def show_global_state_intelligence():
 
     # ── Top-level KPI strip ───────────────────────────────────────────────
     k1, k2, k3, k4, k5 = st.columns(5)
-    k1.metric("Superglobal Hits",     sum(sg_totals.values()))
-    k2.metric("State Mutations",      len(mutations))
-    k3.metric("Session Writers",      len(sess_write))
-    k4.metric("Danger Sinks",         se_totals.get("DANGER", 0))
-    k5.metric("Weak Hash (MD5/SHA1)", len(legacy_hash))
+    k1.metric(
+        "Superglobal Hits",
+        sum(sg_totals.values()),
+        help="Total accesses to PHP superglobals ($_POST, $_GET, $_SESSION, etc.) across the codebase. Each access is an invisible runtime dependency — the file cannot be unit tested without a real HTTP request or heavy mocking."
+    )
+    k2.metric(
+        "State Mutations",
+        len(mutations),
+        help="Lines where a superglobal is directly written to (not just read). These are the origin points of shared, untyped, untraceable application state."
+    )
+    k3.metric(
+        "Session Writers",
+        len(sess_write),
+        help="Files that actively set values into $_SESSION. Any file that later reads those values has a hidden temporal dependency on these writers executing first in the request lifecycle."
+    )
+    k4.metric(
+        "Danger Sinks",
+        se_totals.get("DANGER", 0),
+        help="Files containing eval(), exec(), or extract() — functions that execute arbitrary code or inject external data into the current variable scope. These are Remote Code Execution (RCE) vectors if any input is attacker-controlled."
+    )
+    k5.metric(
+        "Weak Hash (MD5/SHA1)",
+        len(legacy_hash),
+        help="Usages of MD5 or SHA1 for cryptographic operations such as password hashing. Both algorithms are cryptographically broken and must be replaced with bcrypt or Argon2 before any security audit or compliance review."
+    )
 
     st.markdown("---")
 
@@ -95,7 +115,8 @@ def show_global_state_intelligence():
         total_sg = sum(sg_totals.values())
         top_sg   = max(sg_totals, key=sg_totals.get) if sg_totals else None
 
-        st.info("#### Superglobal Coupling")
+        st.markdown("#### Superglobal Coupling")
+        st.info("Total superglobal accesses (`$_POST`, `$_GET`, `$_SESSION`, etc.) across all modules.", icon=":material/info:")
         st.markdown("**METRIC**: Total superglobal accesses across all modules")
         st.markdown(
             "**INTERPRETATION**: Every access to `$_POST`, `$_GET`, `$_SESSION`, or similar variables "
@@ -176,7 +197,8 @@ def show_global_state_intelligence():
 
         # ── Insight ──────────────────────────────────────────────────────
         st.markdown("---")
-        st.info("#### Session Flow Analysis")
+        st.markdown("#### Session Flow Analysis")
+        st.info("Session Writer/Reader distribution — how session state is produced and consumed across files.", icon=":material/info:")
         st.markdown("**METRIC**: Session Writer/Reader Distribution")
         st.markdown(
             "**INTERPRETATION**: Session state in PHP flows **one-directionally but invisibly** - "
@@ -242,7 +264,8 @@ def show_global_state_intelligence():
         dominant_effect = max(se_totals, key=se_totals.get) if se_totals else None
         dominant_count  = se_totals.get(dominant_effect, 0) if dominant_effect else 0
 
-        st.info("#### Behavioural Complexity Profile")
+        st.markdown("#### Behavioural Complexity Profile")
+        st.info("Side-effect classification distribution — IO, NET, DB, TEMPLATE, and HOSTING operations across modules.", icon=":material/info:")
         st.markdown("**METRIC**: Side-Effect Classification Distribution")
         st.markdown(
             "**INTERPRETATION**: Side effects classify what the system *does beyond returning values* - "
@@ -288,10 +311,11 @@ def show_global_state_intelligence():
         st.markdown("---")
         unique_vars = list(set(g.get("variable", "") for g in explicit_g))
 
+        st.markdown("#### Global State Coupling")
         if explicit_g:
-            st.warning("#### Global State Coupling")
+            st.warning(f"{len(explicit_g)} explicit `global` keyword usage(s) detected — shared mutable state couples modules invisibly.", icon=":material/warning:")
         else:
-            st.info("#### Global State Coupling")
+            st.success("No explicit `global` keyword usage detected — global state coupling is absent.", icon=":material/check_circle:")
 
         st.markdown("**METRIC**: Explicit Global Variable Injections (`global $var` usage count)")
         st.markdown(

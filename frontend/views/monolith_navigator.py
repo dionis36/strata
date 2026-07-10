@@ -63,9 +63,17 @@ def show_monolith_navigator():
             })
 
     st.markdown("### System Composition")
+    ROLE_HELP = {
+        "STANDARD":    "General-purpose application directories containing core backend logic, services, or mixed-role files.",
+        "VENDOR":      "External third-party dependency directories. These are excluded from structural risk analysis — they cannot be refactored by your team.",
+        "ENTRY_POINT": "Directories containing web-accessible scripts. These are the public surface area of the application that receives incoming HTTP requests.",
+        "ASSET":       "Public static files (CSS, JS, images). No business logic — excluded from modernization scope.",
+        "BOOTSTRAP":   "Framework initialization files. Changing these has cascading effects across the entire application startup sequence.",
+        "CONFIG":      "Configuration files. These often contain hardcoded environment assumptions that block containerization.",
+    }
     cols = st.columns(len(role_counts))
     for i, (role, count) in enumerate(role_counts.items()):
-        cols[i].metric(role, count)
+        cols[i].metric(role, count, help=ROLE_HELP.get(role, f"Files classified as {role} by the architectural scanner."))
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -115,14 +123,20 @@ def show_monolith_navigator():
         
         col1, col2 = st.columns(2)
         with col1:
-            st.info("#### Object Encapsulation Insight")
+            _h1, _p1 = st.columns([5, 1])
+            _h1.info("#### Object Encapsulation Insight")
+            with _p1.popover("?"):
+                st.markdown("**High-Complexity Object Concentration** — measures whether logic is evenly distributed across many single-responsibility classes or concentrated in a few bloated objects. A high number of complex classes (> 20 methods) indicates a heavy, tightly-coupled OOP architecture that resists extraction.")
             st.markdown("**METRIC**: High-Complexity Object Concentration")
             st.markdown("**INTERPRETATION**: This metric assesses whether logic is evenly distributed across many single-responsibility classes or concentrated in a few bloated objects. A high number of complex classes indicates a heavy, tightly-coupled OOP architecture.")
             st.markdown(f"**EVIDENCE**: \n1. Total recognized entities: {total_entities}.\n2. Entities flagged with 'High' complexity (> 20 methods): {high_complexity}.")
             st.markdown("**RECOMMENDATION**: Focus refactoring efforts on the 'High' complexity entities. If the system is mostly procedural (few entities), proceed to look at standalone scripts instead of classes.")
 
         with col2:
-            st.success("#### Gravity Wells (God Objects)")
+            _h2, _p2 = st.columns([5, 1])
+            _h2.success("#### Gravity Wells (God Objects)")
+            with _p2.popover("?"):
+                st.markdown("**Method Weight & Interaction Gravity** — 'Gravity Wells' are massive God Objects containing so much logic they attract dependencies from across the entire system. They are the primary anti-corruption targets: breaking them apart is mandatory before attempting to split the system into microservices.")
             st.markdown("**METRIC**: Method Weight & Interaction Gravity")
             st.markdown("**INTERPRETATION**: 'Gravity Wells' are massive God Objects that contain so much logic they attract dependencies from across the entire system. Breaking these apart is mandatory before attempting to split the system into microservices.")
             

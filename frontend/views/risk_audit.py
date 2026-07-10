@@ -73,10 +73,20 @@ def show_risk_audit():
 
     # ── Top-level KPI strip ───────────────────────────────────────────────
     k1, k2, k3, k4 = st.columns(4)
-    k1.metric("Critical Risk Files", lvl_counts[SEVERITY_CRITICAL], delta="Urgent Action", delta_color="inverse", help="Files containing active security sinks or extreme complexity.")
-    k2.metric("High Risk Files", lvl_counts[SEVERITY_HIGH], delta="Careful Extraction", delta_color="inverse", help="Files with high structural complexity.")
-    k3.metric("Medium Risk Files", lvl_counts[SEVERITY_MEDIUM])
-    k4.metric("Stable Files", lvl_counts[SEVERITY_LOW], delta="Safe Candidate", delta_color="normal")
+    k1.metric("Critical Risk Files", lvl_counts[SEVERITY_CRITICAL], delta="Urgent Action", delta_color="inverse", help="Files containing active security sinks or extreme complexity. These are immediate blockers — do not attempt extraction until they are stabilized.")
+    k2.metric("High Risk Files", lvl_counts[SEVERITY_HIGH], delta="Careful Extraction", delta_color="inverse", help="Files with high structural complexity. They can be extracted but require careful dependency mapping and a robust test harness first.")
+    k3.metric(
+        "Medium Risk Files",
+        lvl_counts[SEVERITY_MEDIUM],
+        help="Files with moderate structural complexity or isolated security concerns. They require careful code review before extraction but are not immediate blockers."
+    )
+    k4.metric(
+        "Stable Files",
+        lvl_counts[SEVERITY_LOW],
+        delta="Safe Candidate",
+        delta_color="normal",
+        help="Files with low cyclomatic complexity, no security sinks, and a high Maintainability Index. These are the safest candidates for early extraction or direct reuse in a new service."
+    )
 
     st.markdown("---")
 
@@ -119,13 +129,13 @@ def show_risk_audit():
                 use_container_width=True,
                 column_config={
                     "File Name": st.column_config.TextColumn("File Path", width="large"),
-                    "Cyclomatic Complexity": st.column_config.NumberColumn("Cyclomatic Complexity"),
-                    "Max Nesting Depth": st.column_config.NumberColumn("Nesting Depth", help="Max nesting depth of loops/conditionals."),
-                    "Max Method LOC": st.column_config.NumberColumn("Method LOC", help="Lines of Code in the largest method."),
-                    "Fan-Out": st.column_config.NumberColumn("Fan-Out", help="Number of external dependencies."),
-                    "Global Accesses": st.column_config.NumberColumn("Global Accesses"),
-                    "Domain Archetype": st.column_config.TextColumn("Archetype"),
-                    "Semantic Multiplier": st.column_config.NumberColumn("Risk Multiplier", help="Semantic AI Adjustment")
+                    "Cyclomatic Complexity": st.column_config.NumberColumn("Cyclomatic Complexity", help="Count of distinct logical branches (if, else, loops, catches). CC > 15 means the file is extremely difficult to test and risky to modify safely."),
+                    "Max Nesting Depth": st.column_config.NumberColumn("Nesting Depth", help="Max depth of nested loops and conditionals. Depth > 4 exponentially increases cognitive load and makes logic nearly impossible to trace without a debugger."),
+                    "Max Method LOC": st.column_config.NumberColumn("Method LOC", help="Lines of Code in the single largest method or function. Massive methods hide multiple responsibilities — each is a refactoring and testing blocker."),
+                    "Fan-Out": st.column_config.NumberColumn("Fan-Out", help="The number of external files or modules this file directly depends on. High fan-out means this file cannot be moved or extracted without also moving everything it depends on."),
+                    "Global Accesses": st.column_config.NumberColumn("Global Accesses", help="How many times this file reads from PHP superglobals or global scope. A direct measure of hidden runtime coupling — prevents safe unit testing or containerization."),
+                    "Domain Archetype": st.column_config.TextColumn("Archetype", help="The engine's classification of this file's role: ENTITY (domain object), CONTROLLER (request handler), UTILITY (stateless helper), or GOD_CLASS (monolithic bottleneck)."),
+                    "Semantic Multiplier": st.column_config.NumberColumn("Risk Multiplier", help="An AI-adjusted weight applied based on the file's detected role (e.g., authentication, routing). Files in high-stakes architectural positions receive a higher multiplier to surface them in priority rankings.")
                 }
             )
         else:
@@ -138,7 +148,8 @@ def show_risk_audit():
         avg_mi = kpis.get("Average Maintainability", 0)
         critical_pct = f"{(critical_count / total_files * 100):.1f}" if total_files > 0 else "0"
         st.markdown("---")
-        st.info("#### File Risk Assessment")
+        st.markdown("#### File Risk Assessment")
+        st.info("Maintainability Index (MI) & Cyclomatic Complexity (CC) — per-file composite structural scoring.", icon=":material/info:")
         st.markdown("**METRIC**: Maintainability Index (MI) & Cyclomatic Complexity (CC) - per-file composite scoring")
         st.markdown(
             f"**INTERPRETATION**: This codebase has an average Maintainability Index of **{avg_mi}/100**. "
@@ -185,7 +196,11 @@ def show_risk_audit():
         rce_count = sum(1 for v in vulns if v.get("Vulnerability Type") == "DANGER")
         sqli_count = sum(1 for v in vulns if v.get("Vulnerability Type") == "MYSQL_LEGACY")
         lfi_count = sum(1 for v in vulns if v.get("Vulnerability Type") == "INCLUDE_ROUTING")
-        st.warning("#### Security Assessment") if total_vulns > 0 else st.success("#### Security Assessment")
+        st.markdown("#### Security Assessment")
+        if total_vulns > 0:
+            st.warning(f"{total_vulns} confirmed security sink(s) detected — RCE, SQLi, or LFI vectors present.", icon=":material/warning:")
+        else:
+            st.success("No active security sinks detected in this analysis.", icon=":material/check_circle:")
         st.markdown("**METRIC**: AST-detected Security Sinks - functions or patterns that directly enable a known attack class")
         if total_vulns > 0:
             st.markdown(
@@ -253,7 +268,8 @@ def show_risk_audit():
         multi_class = sum(1 for r in rot if r.get("Defect Type") == "Multiple Classes per File")
         dead_code = sum(1 for r in rot if r.get("Defect Type") == "Potential Dead Code")
         blocker_count = sum(1 for r in rot if r.get("Defect Type") in ["High Refactor Risk", "Microservice Extraction Blocker"])
-        st.info("#### Extensibility Assessment")
+        st.markdown("#### Extensibility Assessment")
+        st.info("Composite structural anti-patterns — Global State coupling, Dead Code, and PSR violations.", icon=":material/info:")
         st.markdown("**METRIC**: Composite Structural Anti-Patterns - Global State, Dead Code, and PSR violations")
         st.markdown(
             f"**INTERPRETATION**: This codebase carries **{total_rot} architectural debt instances**. "
