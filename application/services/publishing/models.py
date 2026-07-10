@@ -94,6 +94,7 @@ class BoundaryIntelligence(BaseModel):
 class BoundedContext(BaseModel):
     name: str
     file_count: int
+    files: List[str] = Field(default_factory=list)
     internal_calls: int
     external_calls: int
     coupling_ratio: float

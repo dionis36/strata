@@ -131,7 +131,8 @@ class LayerService:
             # Count the 'Physical' size of the domain
             valid_types = ["file", "class", "interface", "trait", "entry_point", "config", "view", "controller", "model", "schema", "job", "asset", "NodeType.VIEW", "NodeType.CONTROLLER", "NodeType.MODEL", "NodeType.SCHEMA", "NodeType.JOB", "NodeType.ASSET", "NodeType.FILE", "NodeType.CLASS", "NodeType.INTERFACE", "NodeType.TRAIT", "NodeType.ENTRY_POINT", "NodeType.CONFIG"]
             if n.get("type") in valid_types:
-                contexts[ctx]["files"].add(n["id"])
+                fqn = n.get("fqn") or n["id"]
+                contexts[ctx]["files"].add(str(fqn))
                 
         id_to_fqn = {n["id"]: str(n.get("fqn", "")).lower() for n in nodes}
         
@@ -161,6 +162,7 @@ class LayerService:
                 bounded_contexts.append({
                     "name": name,
                     "file_count": len(data["files"]),
+                    "files": sorted(list(data["files"])),
                     "internal_edges": data["internal_edges"],
                     "external_edges": data["external_edges"],
                     "coupling_ratio": coupling_ratio,
