@@ -6,6 +6,10 @@ from views import page_registry
 def show_legacy_bootstrapper():
     st.title("Legacy Bootstrapper")
     st.markdown("##### Circular Dependency Audit · PSR-4 Autoloading · Bootstrap Hierarchy")
+    
+    with st.expander("About the Legacy Bootstrapper", expanded=True):
+        st.markdown("This module maps out the archaic `require` and `include` chains used to boot your legacy application. It automatically audits the codebase for circular dependency loops and orphaned (dead) files, while dynamically generating a modern PSR-4 `composer.json` file to help you upgrade to standardized class autoloading.")
+        
     st.markdown("---")
 
     FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")

@@ -8,7 +8,7 @@ def show_database_intelligence():
     st.title("Database Intelligence")
     st.markdown("##### Persistence Layer Analysis")
 
-    with st.expander("Database Intelligence Blueprint Key", expanded=False):
+    with st.expander("Database Intelligence Blueprint Key", expanded=True):
         colA, colB = st.columns(2)
         with colA:
             st.markdown("""

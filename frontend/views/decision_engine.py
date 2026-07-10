@@ -29,9 +29,9 @@ def fetch_ai_advisory(run_id: int):
 
 def show_modernization_decision_engine():
     st.title("Modernization Decision Engine")
-    st.caption("Strategic advisory based on structural risk, domain coupling, and modernization ROI.")
+    st.markdown("##### Strategic advisory based on structural risk, domain coupling, and modernization ROI.")
 
-    with st.expander("Decision Engine Blueprint Key", expanded=False):
+    with st.expander("Decision Engine Blueprint Key", expanded=True):
         st.markdown("""
         ### Understanding the Modernization ROI Graph
         The scatter plot visualizes the cost-benefit analysis of modernizing each architectural module.

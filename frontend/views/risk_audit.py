@@ -10,7 +10,7 @@ def show_risk_audit():
     st.title("Modernization Risk")
     st.markdown("##### Maintainability Index · Security Sinks · Architectural Deficits")
 
-    with st.expander("Security & Risk Audit Blueprint Key", expanded=False):
+    with st.expander("Security & Risk Audit Blueprint Key", expanded=True):
         st.markdown("""
         This view is the **Technical Debt & Security Ledger** of the platform. It translates the 
         structural flaws of the codebase into prioritized, actionable risk registers using a **Deterministic Threshold Engine**.

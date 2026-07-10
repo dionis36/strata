@@ -23,9 +23,9 @@ def fetch_boundary_intelligence(run_id: int):
 
 def show_boundary_intelligence():
     st.title("Boundary Intelligence")
-    st.caption("Map the external surface area of the legacy monolith: UI Entanglement, Network Endpoints, and Vendor Dependencies.")
+    st.markdown("##### Map the external surface area of the legacy monolith: UI Entanglement, Network Endpoints, and Vendor Dependencies.")
 
-    with st.expander("Boundary Intelligence Blueprint Key", expanded=False):
+    with st.expander("Boundary Intelligence Blueprint Key", expanded=True):
         colA, colB = st.columns(2)
         with colA:
             st.markdown("""

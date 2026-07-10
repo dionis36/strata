@@ -33,7 +33,10 @@ def fetch_ghost_graph(run_id: int, fqn: str):
 
 def show_extraction_simulator():
     st.title("Extraction & Impact Simulator")
-    st.caption("Perform simulated topological rewiring to preview the 'To-Be' network boundaries and systemic risk shift.")
+    st.markdown("##### Perform simulated topological rewiring to preview the 'To-Be' network boundaries and systemic risk shift.")
+    
+    with st.expander("About the Extraction Simulator", expanded=True):
+        st.markdown("This tool allows you to mathematically preview the architectural impact of extracting a specific file or God Class into its own microservice. By running a simulation, you can compare the **As-Is Blast Radius** (which files will break if this is removed) against the **To-Be Ghost Graph** (how the new decoupled proxy architecture will communicate over the network and access the database).")
 
     run_id = st.session_state.get("active_run_id")
     if not run_id:

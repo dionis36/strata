@@ -9,7 +9,7 @@ def show_legacy_intelligence():
     st.title("Legacy PHP Intelligence")
     st.markdown("##### Era Classification · Pattern Detection · Modernization Scoring")
 
-    with st.expander("Legacy PHP Intelligence Blueprint Key", expanded=False):
+    with st.expander("Legacy PHP Intelligence Blueprint Key", expanded=True):
         colA, colB = st.columns(2)
         with colA:
             st.markdown("""

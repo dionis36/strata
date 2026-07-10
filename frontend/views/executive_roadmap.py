@@ -4,7 +4,11 @@ import os
 
 def show_executive_roadmap():
     st.title("Strategic Roadmap")
-    st.markdown("### Executive Modernization Brief & Artifacts")
+    st.markdown("##### Executive Modernization Brief & Artifacts")
+    
+    with st.expander("About the Strategic Roadmap", expanded=True):
+        st.markdown("This module consolidates all intelligence gathered from the codebase into an actionable, step-by-step modernization plan. It also provides interactive architectural summaries, deep network reachability graphs, and raw structural artifacts ready for ingestion by external graph databases (Neo4j) or custom LLM pipelines.")
+        
     st.markdown("---")
 
     FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")

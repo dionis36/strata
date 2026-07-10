@@ -55,23 +55,23 @@ page_registry.PAGE_REPORT_VIEWER = _page_report_viewer
 
 # Modern Streamlit Navigation (v1.31+)
 pages = {
-    "A. Command Center": [
+    "Command Center": [
         _page_dashboard,
     ],
-    "B. Architectural Discovery": [
+    "Architectural Discovery": [
         st.Page(show_monolith_navigator, title="Monolith Navigator", icon=":material/hub:"),
         st.Page(show_layered_architecture, title="Layered Structure", icon=":material/layers:"),
         st.Page(show_system_topology, title="System Topology", icon=":material/account_tree:"),
         st.Page(show_bounded_contexts, title="Bounded Contexts", icon=":material/group_work:"),
     ],
-    "C. Intelligence Reports": [
+    "Intelligence Reports": [
         st.Page(show_database_intelligence, title="Database Intelligence", icon=":material/storage:"),
         st.Page(show_global_state_intelligence, title="Runtime & Global State", icon=":material/memory:"),
         st.Page(show_legacy_intelligence, title="Legacy PHP Intelligence", icon=":material/history:"),
         _page_risk_audit,
         _page_boundary_intelligence,
     ],
-    "D. Strategic Advisory": [
+    "Strategic Advisory": [
         st.Page(show_modernization_decision_engine, title="Modernization Decision Engine", icon=":material/psychology:"),
         st.Page(show_extraction_simulator, title="Extraction Simulator", icon=":material/biotech:"),
         st.Page(show_executive_roadmap, title="Strategic Roadmap", icon=":material/insights:"),
@@ -147,9 +147,10 @@ with st.sidebar:
     
     # ── Page Navigations ──
     for section, section_pages in pages.items():
-        st.markdown(f"**{section}**")
-        for page in section_pages:
-            st.page_link(page, icon=page.icon)
+        is_expanded = (section == "Command Center")
+        with st.expander(f"**{section}**", expanded=is_expanded):
+            for page in section_pages:
+                st.page_link(page, icon=page.icon)
 
 all_pages = [p for sublist in pages.values() for p in sublist]
 all_pages.append(_page_report_viewer)
