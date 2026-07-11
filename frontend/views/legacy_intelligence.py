@@ -63,17 +63,17 @@ def show_legacy_intelligence():
     k1.metric(
         "PHP Era",
         classified_era.split("(")[0].strip(),
-        help="The detected PHP generation of this codebase, inferred from actual source code patterns — not the declared php version. Era A/B (PHP 4/5) = fully procedural, globally coupled. Era D (PHP 7+) = modern, namespace-aware, OOP-first."
+        help="The detected PHP generation of this codebase, inferred from actual source code patterns not the declared php version. Era A/B (PHP 4/5) = fully procedural, globally coupled. Era D (PHP 7+) = modern, namespace-aware, OOP-first."
     )
     k2.metric(
         "Modernization Score",
         f"{mod_score:.1%}" if mod_score else "N/A",
-        help="A composite 0.0–1.0 readiness score weighted across 5 dimensions: namespace adoption, security posture, DB abstraction level, testability, and coupling density. This is a migration cost estimator — not a quality score. Higher = easier to modernize."
+        help="A composite 0.0–1.0 readiness score weighted across 5 dimensions: namespace adoption, security posture, DB abstraction level, testability, and coupling density. This is a migration cost estimator not a quality score. Higher = easier to modernize."
     )
     k3.metric(
         "Procedural Ratio",
         f"{proc_ratio:.1%}",
-        help="The percentage of files that contain no class definitions — purely function-based or script-based code. High ratios indicate a pre-OOP architecture requiring significant structural wrapping before containerization is possible."
+        help="The percentage of files that contain no class definitions purely function-based or script-based code. High ratios indicate a pre-OOP architecture requiring significant structural wrapping before containerization is possible."
     )
     k4.metric(
         "Namespace Coverage",
@@ -249,7 +249,7 @@ def show_legacy_intelligence():
         st.markdown("#### Overall Modernization Readiness")
         if mod_score > 0:
             bucket = "Modern (Era D)" if mod_score >= 0.7 else ("Transitional (Era C)" if mod_score >= 0.4 else "Legacy (Era A/B)")
-            st.info(f"Composite score: **{mod_score:.1%}** — classified as **{bucket}**.", icon=":material/info:")
+            st.info(f"Composite score: **{mod_score:.1%}** classified as **{bucket}**.", icon=":material/info:")
         else:
             st.info("Modernization score not yet computed for this run.", icon=":material/info:")
 

@@ -60,13 +60,13 @@ def show_system_topology():
                 for _fqn in _ctx.get("files", []):
                     fqn_to_domain[str(_fqn)] = _dname
     except Exception:
-        pass  # Domain Focus unavailable — selectbox falls back to "All Domains" only
+        pass  # Domain Focus unavailable selectbox falls back to "All Domains" only
 
     # --- Step 2: Render Topology Filters ---
     st.markdown("#### Topology Filters")
     col1, col2, col3 = st.columns([3, 1, 2])
 
-    # Render type filter first — domain node counts depend on this selection
+    # Render type filter first domain node counts depend on this selection
     with col1:
         selected_types = st.multiselect(
             "Visible Layers",
@@ -94,7 +94,7 @@ def show_system_topology():
             if _nm:
                 _domain_node_counts[_nm] = _ctx.get("file_count", 0)
 
-    # Build enriched options — only domains with at least 1 matching node
+    # Build enriched options only domains with at least 1 matching node
     domain_label_to_name = {"All Domains": "All Domains"}
     enriched_domain_options = ["All Domains"]
     for _ctx in sorted(_bounded_contexts, key=lambda x: -_domain_node_counts.get(x.get("name", ""), 0)):
@@ -166,12 +166,12 @@ def show_system_topology():
             top_nodes    = sorted_nodes[:max_nodes]
             top_node_ids = {n["id"] for n in top_nodes}
 
-            # 5. Transparency notice — always tell the user what's hidden
+            # 5. Transparency notice always tell the user what's hidden
             hidden_count = total_after_filter - len(top_nodes)
             if hidden_count > 0:
                 st.warning(
                     f"Displaying **{len(top_nodes)} of {total_after_filter}** nodes "
-                    f"— **{hidden_count} hidden** by the node limit. "
+                    f" **{hidden_count} hidden** by the node limit. "
                     f"Increase the slider or narrow the Domain Focus / Layer filter to see more.",
                     icon=":material/visibility_off:"
                 )
@@ -438,7 +438,7 @@ def show_system_topology():
                 st.markdown("""
                 <div style="background-color: rgba(28,131,225,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                     <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Network Density & Coupling</h4>
-                    <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Graph Edge Density measures how interconnected the components are. A density near 0 = modular clusters. A density near 1 = 'Spaghetti Code' — every file talks to every other file, making safe extraction mathematically improbable.</span></div>
+                    <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Graph Edge Density measures how interconnected the components are. A density near 0 = modular clusters. A density near 1 = 'Spaghetti Code' every file talks to every other file, making safe extraction mathematically improbable.</span></div>
                 </div>
                 """, unsafe_allow_html=True)
                 st.markdown("**METRIC**: Graph Edge Density")
@@ -453,7 +453,7 @@ def show_system_topology():
                 st.markdown("""
                 <div style="background-color: rgba(33,195,84,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                     <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Structural Bottlenecks</h4>
-                    <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Component Centrality & Degree — the node with the highest connection count is the structural center of gravity. In legacy systems this is usually a shared utility, base controller, or God Class that every other file depends on. It cannot be safely moved until its dependents are decoupled.</span></div>
+                    <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Component Centrality & Degree the node with the highest connection count is the structural center of gravity. In legacy systems this is usually a shared utility, base controller, or God Class that every other file depends on. It cannot be safely moved until its dependents are decoupled.</span></div>
                 </div>
                 """, unsafe_allow_html=True)
                 st.markdown("**METRIC**: Component Centrality & Degree")
@@ -477,7 +477,7 @@ def show_system_topology():
                 st.markdown("""
                 <div style="background-color: rgba(255,193,7,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                     <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Circular Dependencies</h4>
-                    <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Mutual Back-Edges — A depends on B, and B depends on A. These loops are the most severe extraction blockers: neither component can be independently deployed without the other. Breaking them requires introducing an interface, a shared library, or merging both modules into one bounded context.</span></div>
+                    <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Mutual Back-Edges A depends on B, and B depends on A. These loops are the most severe extraction blockers: neither component can be independently deployed without the other. Breaking them requires introducing an interface, a shared library, or merging both modules into one bounded context.</span></div>
                 </div>
                 """, unsafe_allow_html=True)
                 st.markdown("**METRIC**: Mutual Back-Edges")
@@ -525,7 +525,7 @@ def show_bounded_contexts():
         l3 = res.json().get("layer_3", {})
         contexts = l3.get("bounded_contexts", [])
         if contexts:
-            # Build display table (exclude raw files list — kept in contexts for drill-down)
+            # Build display table (exclude raw files list kept in contexts for drill-down)
             display_rows = []
             for c in contexts:
                 display_rows.append({
@@ -562,7 +562,7 @@ def show_bounded_contexts():
                 domain_files = domain.get("files", [])
 
                 st.markdown("---")
-                st.markdown(f"### `{domain_name}` — File Inventory")
+                st.markdown(f"### `{domain_name}` File Inventory")
 
                 col_meta1, col_meta2, col_meta3 = st.columns(3)
                 col_meta1.metric("Files in Domain",   domain.get("file_count", 0))
@@ -605,7 +605,7 @@ def show_bounded_contexts():
                 st.markdown("""
                 <div style="background-color: rgba(28,131,225,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                     <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Domain Cohesion Insight</h4>
-                    <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Coupling Ratio = External Calls ÷ Internal Calls. A ratio > 1.0 means a domain makes more calls outside itself than within — it is not a true bounded context and cannot be extracted as-is without breaking cross-domain dependencies.</span></div>
+                    <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Coupling Ratio = External Calls ÷ Internal Calls. A ratio > 1.0 means a domain makes more calls outside itself than within it is not a true bounded context and cannot be extracted as-is without breaking cross-domain dependencies.</span></div>
                 </div>
                 """, unsafe_allow_html=True)
                 st.markdown("**METRIC**: Global Coupling Ratios & Outliers")
@@ -621,7 +621,7 @@ def show_bounded_contexts():
                 st.markdown("""
                 <div style="background-color: rgba(33,195,84,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                     <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">State & Boundary Distribution</h4>
-                    <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Transactional (DB) and Authentication (Auth) Sinks — domains with direct DB access or auth/session management cannot easily operate as independent microservices without owning their own data tier. These domains require a Database-per-Service migration pattern before extraction.</span></div>
+                    <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Transactional (DB) and Authentication (Auth) Sinks domains with direct DB access or auth/session management cannot easily operate as independent microservices without owning their own data tier. These domains require a Database-per-Service migration pattern before extraction.</span></div>
                 </div>
                 """, unsafe_allow_html=True)
                 st.markdown("**METRIC**: Transactional (DB) and Authentication (Auth) Sinks")

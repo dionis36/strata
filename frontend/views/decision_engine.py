@@ -152,7 +152,7 @@ def show_modernization_decision_engine():
         )
         
         # Deep Dive rationale
-        st.markdown("#### Top 10 Strategic Justifications")
+        st.markdown("#### Top Strategic Justifications")
         st.caption("Detailed rationale for the most critical modules to prevent UI overload.")
         top_recommendations = recommendations[:10]
         

@@ -262,7 +262,7 @@ def show_dashboard():
                                         break
                                     else:
                                         # Add some visual spin to the state
-                                        status_placeholder.info(f"Status: {state} ... please wait")
+                                        status_placeholder.info(f"Status: {state} ...")
                                 else:
                                     status_placeholder.error("Lost connection to status endpoint.")
                                     break
@@ -325,7 +325,7 @@ def show_dashboard():
                                         status_placeholder.error(f"Analysis Failed: {s_data.get('error_message')}", icon=":material/error:")
                                         break
                                     else:
-                                        status_placeholder.info(f"Status: {state} ... please wait")
+                                        status_placeholder.info(f"Status: {state} ...")
                                 else:
                                     status_placeholder.error("Lost connection to status endpoint.")
                                     break
@@ -403,7 +403,7 @@ def show_dashboard():
                                     status_placeholder.error(f"Failed: {s_data.get('error_message')}")
                                     break
                                 else:
-                                    status_placeholder.info(f"Status: {state} ... please wait")
+                                    status_placeholder.info(f"Status: {state} ...")
                             else:
                                 break
                             time.sleep(2)

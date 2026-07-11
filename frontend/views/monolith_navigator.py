@@ -51,9 +51,9 @@ def show_monolith_navigator():
     st.markdown("### System Composition")
     ROLE_HELP = {
         "STANDARD":    "General-purpose application directories containing core backend logic, services, or mixed-role files.",
-        "VENDOR":      "External third-party dependency directories. These are excluded from structural risk analysis — they cannot be refactored by your team.",
+        "VENDOR":      "External third-party dependency directories. These are excluded from structural risk analysis they cannot be refactored by your team.",
         "ENTRY_POINT": "Directories containing web-accessible scripts. These are the public surface area of the application that receives incoming HTTP requests.",
-        "ASSET":       "Public static files (CSS, JS, images). No business logic — excluded from modernization scope.",
+        "ASSET":       "Public static files (CSS, JS, images). No business logic excluded from modernization scope.",
         "BOOTSTRAP":   "Framework initialization files. Changing these has cascading effects across the entire application startup sequence.",
         "CONFIG":      "Configuration files. These often contain hardcoded environment assumptions that block containerization.",
     }
@@ -177,7 +177,7 @@ def show_monolith_navigator():
             st.markdown("""
             <div style="background-color: rgba(28,131,225,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                 <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Object Encapsulation Insight</h4>
-                <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">High-Complexity Object Concentration — measures whether logic is evenly distributed across many single-responsibility classes or concentrated in a few bloated objects. A high number of complex classes (> 20 methods) indicates a heavy, tightly-coupled OOP architecture that resists extraction.</span></div>
+                <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">High-Complexity Object Concentration measures whether logic is evenly distributed across many single-responsibility classes or concentrated in a few bloated objects. A high number of complex classes (> 20 methods) indicates a heavy, tightly-coupled OOP architecture that resists extraction.</span></div>
             </div>
             """, unsafe_allow_html=True)
             st.markdown("**METRIC**: High-Complexity Object Concentration")
@@ -189,7 +189,7 @@ def show_monolith_navigator():
             st.markdown("""
             <div style="background-color: rgba(33,195,84,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                 <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Gravity Wells (God Objects)</h4>
-                <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Method Weight & Interaction Gravity — 'Gravity Wells' are massive God Objects containing so much logic they attract dependencies from across the entire system. They are the primary anti-corruption targets: breaking them apart is mandatory before attempting to split the system into microservices.</span></div>
+                <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Method Weight & Interaction Gravity 'Gravity Wells' are massive God Objects containing so much logic they attract dependencies from across the entire system. They are the primary anti-corruption targets: breaking them apart is mandatory before attempting to split the system into microservices.</span></div>
             </div>
             """, unsafe_allow_html=True)
             st.markdown("**METRIC**: Method Weight & Interaction Gravity")

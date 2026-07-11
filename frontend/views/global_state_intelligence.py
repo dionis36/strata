@@ -56,7 +56,7 @@ def show_global_state_intelligence():
     k1.metric(
         "Superglobal Hits",
         sum(sg_totals.values()),
-        help="Total accesses to PHP superglobals ($_POST, $_GET, $_SESSION, etc.) across the codebase. Each access is an invisible runtime dependency — the file cannot be unit tested without a real HTTP request or heavy mocking."
+        help="Total accesses to PHP superglobals ($_POST, $_GET, $_SESSION, etc.) across the codebase. Each access is an invisible runtime dependency the file cannot be unit tested without a real HTTP request or heavy mocking."
     )
     k2.metric(
         "State Mutations",
@@ -71,7 +71,7 @@ def show_global_state_intelligence():
     k4.metric(
         "Danger Sinks",
         se_totals.get("DANGER", 0),
-        help="Files containing eval(), exec(), or extract() — functions that execute arbitrary code or inject external data into the current variable scope. These are Remote Code Execution (RCE) vectors if any input is attacker-controlled."
+        help="Files containing eval(), exec(), or extract() functions that execute arbitrary code or inject external data into the current variable scope. These are Remote Code Execution (RCE) vectors if any input is attacker-controlled."
     )
     k5.metric(
         "Weak Hash (MD5/SHA1)",
@@ -204,7 +204,7 @@ def show_global_state_intelligence():
         st.markdown("""
         <div style="background-color: rgba(33,195,84,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
             <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Session State Intelligence</h4>
-            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Session Writer/Reader distribution — how session state is produced and consumed across files.</span></div>
+            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Session Writer/Reader distribution how session state is produced and consumed across files.</span></div>
         </div>
         """, unsafe_allow_html=True)
         st.markdown("**METRIC**: Session Writer/Reader Distribution")
@@ -275,7 +275,7 @@ def show_global_state_intelligence():
         st.markdown("""
         <div style="background-color: rgba(255,193,7,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
             <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Side-Effect Intelligence</h4>
-            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Side-effect classification distribution — IO, NET, DB, TEMPLATE, and HOSTING operations across modules.</span></div>
+            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Side-effect classification distribution IO, NET, DB, TEMPLATE, and HOSTING operations across modules.</span></div>
         </div>
         """, unsafe_allow_html=True)
         st.markdown("**METRIC**: Side-Effect Classification Distribution")
@@ -325,9 +325,9 @@ def show_global_state_intelligence():
 
         st.markdown("#### Global State Coupling")
         if explicit_g:
-            st.warning(f"{len(explicit_g)} explicit `global` keyword usage(s) detected — shared mutable state couples modules invisibly.", icon=":material/warning:")
+            st.warning(f"{len(explicit_g)} explicit `global` keyword usage(s) detected shared mutable state couples modules invisibly.", icon=":material/warning:")
         else:
-            st.success("No explicit `global` keyword usage detected — global state coupling is absent.", icon=":material/check_circle:")
+            st.success("No explicit `global` keyword usage detected global state coupling is absent.", icon=":material/check_circle:")
 
         st.markdown("**METRIC**: Explicit Global Variable Injections (`global $var` usage count)")
         st.markdown(

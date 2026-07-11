@@ -73,7 +73,7 @@ def show_database_intelligence():
     k2.metric(
         "Write Operations",
         total_writes,
-        help="Total INSERT, UPDATE, and DELETE operations detected. Write-heavy files carry the highest data integrity risk during extraction — they require a Data Access Layer or API Proxy."
+        help="Total INSERT, UPDATE, and DELETE operations detected. Write-heavy files carry the highest data integrity risk during extraction they require a Data Access Layer or API Proxy."
     )
     k3.metric(
         "ORM Abstractions",
@@ -83,7 +83,7 @@ def show_database_intelligence():
     k4.metric(
         "Credential Risks",
         sum(v.get("credentials", 0) for v in taxonomy.values()),
-        help="Files where database credentials (hostname, username, password) appear as hardcoded literal strings. A direct security vulnerability — credentials cannot be rotated without a code change."
+        help="Files where database credentials (hostname, username, password) appear as hardcoded literal strings. A direct security vulnerability credentials cannot be rotated without a code change."
     )
 
     st.markdown("---")
@@ -205,9 +205,9 @@ def show_database_intelligence():
         </div>
         """, unsafe_allow_html=True)
         if total_risk_items > 0:
-            st.warning(f"{total_risk_items} persistence risk item(s) detected — credential, duplicate query, or transaction issues present.", icon=":material/warning:")
+            st.warning(f"{total_risk_items} persistence risk item(s) detected credential, duplicate query, or transaction issues present.", icon=":material/warning:")
         else:
-            st.success("Persistence risk profile is clean — no credential, duplicate, or transaction risks detected.", icon=":material/check_circle:")
+            st.success("Persistence risk profile is clean no credential, duplicate, or transaction risks detected.", icon=":material/check_circle:")
 
         st.markdown("**METRIC**: Composite Persistence Vulnerability Count")
         st.markdown(
@@ -271,9 +271,9 @@ def show_database_intelligence():
         </div>
         """, unsafe_allow_html=True)
         if cross_module:
-            st.warning(f"{len(cross_module)} table(s) written to by more than one module — cross-module write conflicts detected.", icon=":material/warning:")
+            st.warning(f"{len(cross_module)} table(s) written to by more than one module cross-module write conflicts detected.", icon=":material/warning:")
         else:
-            st.info("All tables have a single identified primary owner — no cross-module write conflicts.", icon=":material/info:")
+            st.info("All tables have a single identified primary owner no cross-module write conflicts.", icon=":material/info:")
 
         st.markdown("**METRIC**: Cross-Module Write Operations (Shared Table Access)")
         st.markdown(
@@ -294,7 +294,7 @@ def show_database_intelligence():
             )
             st.markdown(
                 "**RECOMMENDATION**: Cross-reference the flagged tables with the **Access Taxonomy** tab "
-                "to identify which modules have the highest write volume to these shared tables — "
+                "to identify which modules have the highest write volume to these shared tables"
                 "those modules are the primary candidates for data boundary refactoring."
             )
         else:

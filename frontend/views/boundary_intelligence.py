@@ -63,14 +63,14 @@ def show_boundary_intelligence():
     k1.metric(
         "Global UI Entanglement",
         kpis.get("Global UI Entanglement", "0%"),
-        help="Percentage of total AST nodes that are HTML output or echo statements. The higher this value, the more backend logic is coupled to the presentation layer — the primary blocker for attaching a React or Vue frontend."
+        help="Percentage of total AST nodes that are HTML output or echo statements. The higher this value, the more backend logic is coupled to the presentation layer the primary blocker for attaching a React or Vue frontend."
     )
     k2.metric(
         "Fat Views (DB-Coupled)",
         kpis.get("Fat Views (DB-Coupled UI)", 0),
         delta="Refactor Priority",
         delta_color="inverse",
-        help="Files that both query the database AND render HTML in the same execution path. Each one is a 'Fat View' — the anti-pattern that prevents a clean separation between backend API and frontend UI."
+        help="Files that both query the database AND render HTML in the same execution path. Each one is a 'Fat View' the anti-pattern that prevents a clean separation between backend API and frontend UI."
     )
     k3.metric(
         "Endpoints Detected",
@@ -106,7 +106,7 @@ def show_boundary_intelligence():
             st.markdown("""
             <div style="background-color: rgba(28,131,225,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                 <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Presentation Layer Intelligence</h4>
-                <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">UI Entanglement Ratio — proportion of HTML output nodes relative to logic nodes per file.</span></div>
+                <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">UI Entanglement Ratio proportion of HTML output nodes relative to logic nodes per file.</span></div>
             </div>
             """, unsafe_allow_html=True)
             st.markdown("**METRIC**: UI Entanglement Ratio - proportion of HTML/echo output nodes relative to logic nodes per file")
@@ -148,7 +148,7 @@ def show_boundary_intelligence():
             st.markdown("""
             <div style="background-color: rgba(33,195,84,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                 <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Application Entry Point Intelligence</h4>
-                <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Entry Point Classification — how external requests reach and enter the application.</span></div>
+                <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Entry Point Classification how external requests reach and enter the application.</span></div>
             </div>
             """, unsafe_allow_html=True)
             st.markdown("**METRIC**: Entry Point Classification - how external requests reach the application")
@@ -213,7 +213,7 @@ def show_boundary_intelligence():
             st.markdown("""
             <div style="background-color: rgba(255,193,7,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                 <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Vendor Dependency Intelligence</h4>
-                <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Vendor Classification — Composer-managed vs. manually embedded third-party libraries.</span></div>
+                <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Vendor Classification Composer-managed vs. manually embedded third-party libraries.</span></div>
             </div>
             """, unsafe_allow_html=True)
             st.markdown("**METRIC**: Vendor Classification - Composer-managed vs. manually embedded third-party libraries")

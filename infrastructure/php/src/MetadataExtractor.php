@@ -650,7 +650,7 @@ class MetadataExtractor extends NodeVisitorAbstract
 
     private function detectSideEffects(Node $node)
     {
-        // eval() is a PHP language construct, NOT a FuncCall — handle it explicitly
+        // eval() is a PHP language construct, NOT a FuncCall handle it explicitly
         if ($node instanceof Node\Expr\Eval_) {
             $this->recordSideEffect('DANGER', $node->getLine());
             return;

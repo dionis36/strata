@@ -118,10 +118,10 @@ def show_extraction_simulator():
                 
                 st.markdown("#### Isolation Score")
                 st.info(sim["isolation_score"])
-                st.caption(f"*Ratio of Blast Radius (downstream) to Dependency Payload (upstream). A score near 0 = nearly self-contained. A score > 1 = affects far more than it depends on — high extraction risk. Lower ratio = easier to extract safely.*")
+                st.caption(f"*Ratio of Blast Radius (downstream) to Dependency Payload (upstream). A score near 0 = nearly self-contained. A score > 1 = affects far more than it depends on high extraction risk. Lower ratio = easier to extract safely.*")
                 
                 st.markdown("#### State Tear")
-                st.caption("*Globals and DB dependencies severed by this extraction — these must be formalized into a shared library or API contract before extraction can proceed safely.*")
+                st.caption("*Globals and DB dependencies severed by this extraction these must be formalized into a shared library or API contract before extraction can proceed safely.*")
                 if sim["state_tear"]["globals"]:
                     st.warning(f"Shared Globals: {len(sim['state_tear']['globals'])}")
                     st.caption(", ".join(sim["state_tear"]["globals"][:5]) + ("..." if len(sim["state_tear"]["globals"]) > 5 else ""))
@@ -231,7 +231,7 @@ def show_extraction_simulator():
                             value=f"{metrics['after_risk']:.3f}",
                             delta=f"+{risk_diff:.3f} (Penalty)",
                             delta_color="inverse",
-                            help="Coupling risk score for the monolith after this extraction. A positive delta (red) means the extraction introduces new network boundary complexity — the new service contract adds more risk than it removes."
+                            help="Coupling risk score for the monolith after this extraction. A positive delta (red) means the extraction introduces new network boundary complexity the new service contract adds more risk than it removes."
                         )
                     else:
                         st.metric(

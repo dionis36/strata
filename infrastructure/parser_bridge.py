@@ -42,14 +42,30 @@ class ParserBridge:
                 all_nodes.append(node)
                 added_node_ids.add(node.id)
 
+        # --- Global Path Sanitization Helper ---
+        project_name = os.path.basename(root_path.rstrip(os.sep))
+        def sanitize_path(p):
+            if not p: return p
+            if p.startswith(root_path):
+                if "/tmp/strata_ingests/" in root_path:
+                    prefix = root_path if root_path.endswith(os.sep) else root_path + os.sep
+                    return p.replace(prefix, "", 1)
+                else:
+                    return p.replace(root_path, project_name, 1)
+            return p
+
         # 1. First Collect all Definitions (Files, Classes, Functions, Namespaces)
         for data in raw_results:
-            path = data.get("path")
+            orig_path = data.get("path")
             metadata = data.get("metadata", {})
-            f_id = generate_deterministic_id(path, NodeType.FILE.value)
             
             from domain.services.file_classifier import FileClassifier
-            f_role = FileClassifier.classify(path, root_path)
+            f_role = FileClassifier.classify(orig_path, root_path)
+
+            path = sanitize_path(orig_path)
+            data["path"] = path  # Mutate for Pass 2
+            
+            f_id = generate_deterministic_id(path, NodeType.FILE.value)
             
             # File Node
             file_node = Node(id=f_id, name=os.path.basename(path), node_type=f_role, file_path=path, fqn=path, metadata=metadata)
