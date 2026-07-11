@@ -996,17 +996,6 @@ def get_roadmap(run_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/advisory/ai/{run_id}", tags=["Reporting & Visuals"], summary="Get AI-driven advisory findings")
-def get_ai_advisory(run_id: int, db: Session = Depends(get_db)):
-    """Returns the Canonical Model with AI findings and playbook recommendations."""
-    from application.services.publishing.evidence_builder import EvidenceBuilder
-    try:
-        model = EvidenceBuilder(db).build(run_id)
-        return model.model_dump(mode="json")
-    except Exception as e:
-        logger.error(f"Failed to fetch AI advisory: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
 @app.get("/report/summary-network/{run_id}", tags=["Reporting & Visuals"], summary="Get high-level interactive network")
 def get_summary_network(run_id: int, db: Session = Depends(get_db)):
     """Returns a simplified JSON network representing directory-level coupling."""
