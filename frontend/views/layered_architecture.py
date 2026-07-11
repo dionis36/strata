@@ -334,6 +334,7 @@ def show_system_topology():
                 themeBtn.onclick = () => {
                     isDark = !isDark;
                     if (isDark) {
+                        document.documentElement.style.setProperty('background-color', '#0e1117', 'important');
                         document.body.style.setProperty('background-color', '#0e1117', 'important');
                         networkDiv.style.setProperty('background-color', '#0e1117', 'important');
                         networkDiv.style.setProperty('border-color', '#2d3748', 'important');
@@ -349,6 +350,7 @@ def show_system_topology():
                         
                         updateNodeFonts('#e0e0e0');
                     } else {
+                        document.documentElement.style.setProperty('background-color', '#ffffff', 'important');
                         document.body.style.setProperty('background-color', '#ffffff', 'important');
                         networkDiv.style.setProperty('background-color', '#ffffff', 'important');
                         networkDiv.style.setProperty('border-color', '#cbd5e1', 'important');
