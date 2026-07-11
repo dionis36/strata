@@ -55,8 +55,6 @@ def show_legacy_intelligence():
     total_files    = data.get("total_files_scanned", 0)
     proc_ratio     = data.get("procedural_ratio", 0.0)
     ns_ratio       = data.get("namespace_ratio", 0.0)
-    vv_count       = data.get("variable_variable_count", 0)
-    host_signals   = data.get("hosting_signal_count", 0)
     classified_era = data.get("classified_era", "Unknown")
     mod_score      = scores.get("Total Modernization Score", 0.0)
 
@@ -91,10 +89,8 @@ def show_legacy_intelligence():
     st.markdown("---")
 
     tabs = st.tabs([
-        f"Era Classification ({len(era_signals)})",
-        f"Pattern Detection ({sum(pattern_totals.values())})",
+        f"Era & Pattern Analysis ({len(era_signals)})",
         f"Modernization Scorecard ({len(scores) if scores else 0})",
-        f"File Composition ({total_files})",
     ])
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -139,42 +135,6 @@ def show_legacy_intelligence():
         st.info(f"{desc}", icon=":material/info:")
         st.markdown("---")
 
-        # Insight
-        critical = sum(1 for s in era_signals if str(s.get("severity", "")).upper() == SEVERITY_CRITICAL)
-        high     = sum(1 for s in era_signals if str(s.get("severity", "")).upper() == SEVERITY_HIGH)
-
-        st.markdown("""
-        <div style="background-color: rgba(28,131,225,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
-            <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Era Classification Intelligence</h4>
-            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">PHP Era Classification based on AST pattern density — not the declared php version.</span></div>
-        </div>
-        """, unsafe_allow_html=True)
-        st.markdown("**METRIC**: PHP Era Classification based on AST pattern density")
-        st.markdown(
-            "**INTERPRETATION**: PHP era classification is not based on the `php_version` file - "
-            "it is inferred from the *actual patterns in the source code*. A codebase can declare "
-            "PHP 7 as its minimum version while containing exclusively PHP 4-era patterns. "
-            "Era classification is the primary input into migration cost estimation: "
-            "Era A/B codebases require structural rewrites, while Era C/D codebases can be "
-            "iteratively refactored."
-        )
-        st.markdown(
-            f"**EVIDENCE**:\n"
-            f"1. Classified as: **{classified_era}**.\n"
-            f"2. `{len(era_signals)}` total era signal(s) detected.\n"
-            f"3. `{critical}` CRITICAL and `{high}` HIGH severity signal(s) confirm the classification.\n"
-            f"4. Namespace coverage: `{ns_ratio:.1%}` - a key differentiator between Era B and Era C/D."
-        )
-        st.markdown(
-            "**RECOMMENDATION**: Review the **Pattern Detection** tab to see the specific "
-            "instances driving this classification particularly the `MYSQL_LEGACY` and "
-            "`INLINE_HTML` entries, which are the strongest indicators of Era A/B origin."
-        )
-
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 1 - Pattern Detection
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    with tabs[1]:
         PATTERN_META = {
             "MYSQL_LEGACY":               ("", "mysql_*() Family",          "Removed in PHP 7.0 - will crash on modern PHP"),
             "HARDCODED_DB_CREDENTIALS":   ("", "Hardcoded DB Credentials",   "mysql_connect/PDO with literal host/user/pass strings"),
@@ -186,8 +146,8 @@ def show_legacy_intelligence():
             "CUSTOM_AUTH":                ("", "Custom Session Save Handler","Non-standard auth flow - risky to migrate"),
         }
 
-        st.markdown("#### Legacy Anti-Pattern Inventory")
-        st.caption("Each category represents a distinct type of legacy usage. Expand to see exact file and line locations.")
+        st.markdown("#### Legacy Anti-Pattern Inventory (Raw Evidence Logs)")
+        st.caption("Each category represents a distinct type of legacy usage driving the era classification above. Expand to see exact file locations.")
 
         if pattern_totals:
             for ptype, count in sorted(pattern_totals.items(), key=lambda x: -x[1]):
@@ -199,50 +159,49 @@ def show_legacy_intelligence():
         else:
             st.success("No legacy anti-patterns detected.", icon=":material/check_circle:")
 
-        # ── Insight ──────────────────────────────────────────────────────
+        # ── Unified Insight ──────────────────────────────────────────────────────
         st.markdown("---")
+        critical = sum(1 for s in era_signals if str(s.get("severity", "")).upper() == SEVERITY_CRITICAL)
+        high     = sum(1 for s in era_signals if str(s.get("severity", "")).upper() == SEVERITY_HIGH)
         total_patterns = sum(pattern_totals.values())
         mysql_count    = pattern_totals.get("MYSQL_LEGACY", 0)
         inline_count   = pattern_totals.get("INLINE_HTML", 0)
         routing_count  = pattern_totals.get("INCLUDE_ROUTING", 0)
 
         st.markdown("""
-        <div style="background-color: rgba(33,195,84,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
-            <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Anti-Pattern Intelligence</h4>
-            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Density and concentration of specific legacy anti-patterns across the codebase.</span></div>
+        <div style="background-color: rgba(28,131,225,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Era & Anti-Pattern Intelligence</h4>
+            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">PHP Era Classification based on AST pattern density and detected technical debt.</span></div>
         </div>
         """, unsafe_allow_html=True)
-        if total_patterns > 0:
-            st.warning(f"{total_patterns} legacy anti-pattern instance(s) detected across {len(pattern_totals)} distinct categories.", icon=":material/warning:")
-        else:
-            st.success("No legacy anti-patterns detected in this run.", icon=":material/check_circle:")
-
-        st.markdown("**METRIC**: Legacy Anti-Pattern Count by Category")
+        
+        st.markdown("**METRIC**: PHP Era Classification & Legacy Anti-Pattern Count")
         st.markdown(
-            "**INTERPRETATION**: Each detected pattern type represents a different layer of technical debt. "
-            "`MYSQL_LEGACY` patterns mean the DB layer is bound to an extinct PHP extension. "
-            "`INLINE_HTML` means there is no separation between business logic and presentation. "
-            "`INCLUDE_ROUTING` means the application has no framework routing layer - "
-            "every route is a physical file path, making URL refactoring destructive."
+            "**INTERPRETATION**: PHP era classification is inferred directly from the legacy anti-patterns "
+            "detected in the codebase (the inventory above). Each detected pattern represents a specific layer "
+            "of technical debt. For instance, `MYSQL_LEGACY` locks the DB layer to an extinct PHP extension, "
+            "while `INLINE_HTML` eliminates the separation between business logic and presentation. "
+            "Era A/B codebases typically require structural rewrites, while Era C/D codebases can be iteratively refactored."
         )
         st.markdown(
             f"**EVIDENCE**:\n"
-            f"1. `{total_patterns}` total anti-pattern instance(s) across `{len(pattern_totals)}` distinct categories.\n"
-            f"2. `{mysql_count}` `mysql_*()` call(s) - these represent the DB layer refactoring scope.\n"
-            f"3. `{inline_count}` inline HTML block(s) - each one mixes template and logic in the same file.\n"
-            f"4. `{routing_count}` dynamic include-based routing call(s) - scope of routing refactoring."
+            f"1. Overall Classification: **{classified_era}**.\n"
+            f"2. `{len(era_signals)}` total era signal(s) detected, including `{critical}` CRITICAL and `{high}` HIGH severity signals.\n"
+            f"3. `{total_patterns}` total anti-pattern instance(s) found across `{len(pattern_totals)}` distinct categories.\n"
+            f"4. Specifically, `{mysql_count}` `mysql_*()` call(s) and `{inline_count}` inline HTML block(s) detected.\n"
+            f"5. Namespace coverage: `{ns_ratio:.1%}` - a key differentiator between Era B and Era C/D."
         )
         st.markdown(
             "**RECOMMENDATION**: Cross-reference the `MYSQL_LEGACY` file list with the "
             "**Database Intelligence** page - the same files will appear there in the "
             "Access Taxonomy as high write-volume DB files, confirming they are the "
-            "core persistence layer candidates for refactoring."
+            "core persistence layer candidates for structural rewrites."
         )
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 2 - Modernization Scorecard
+    # TAB 1 - Modernization Scorecard
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    with tabs[2]:
+    with tabs[1]:
         st.markdown("#### Technology Stack Profile")
         st.caption("Detected framework, DB layer, auth layer, and template layer from the analysis run.")
 
@@ -324,55 +283,7 @@ def show_legacy_intelligence():
             "there under the corresponding pattern category."
         )
 
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # TAB 3 - File Composition
-    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    with tabs[3]:
-        st.markdown("#### Codebase Structural Composition")
-        st.caption("Distribution of file types by architectural structure - OOP, namespace-aware, or procedural.")
 
-        comp_data = [
-            {"Category": "Total Files Scanned",                          "Count": total_files},
-            {"Category": "OOP Files (has at least one class)",           "Count": data.get("files_with_classes", 0)},
-            {"Category": "Namespace-aware Files",                        "Count": data.get("files_namespace_aware", 0)},
-            {"Category": "Procedural-only Files (functions, no classes)", "Count": data.get("files_procedural_only", 0)},
-            {"Category": "Variable Variable Usages ($$var files)",        "Count": vv_count},
-            {"Category": "Files with Hosting Assumption Calls",           "Count": host_signals},
-        ]
-        st.dataframe(pd.DataFrame(comp_data), hide_index=True, use_container_width=True)
-
-        # ── Insight ──────────────────────────────────────────────────────
-        st.markdown("---")
-        oop_count = data.get("files_with_classes", 0)
-        proc_only = data.get("files_procedural_only", 0)
-
-        st.markdown("""
-        <div style="background-color: rgba(255,193,7,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
-            <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Structural Composition Intelligence</h4>
-            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">OOP vs Procedural file distribution — classes, namespaces, and procedural-only files across the codebase.</span></div>
-        </div>
-        """, unsafe_allow_html=True)
-        st.markdown("**METRIC**: OOP vs Procedural Distribution")
-        st.markdown(
-            "**INTERPRETATION**: This table shows the raw structural split of the codebase. "
-            "Files with classes can potentially be unit-tested in isolation. "
-            "Procedural-only files (functions but no classes) require wrapping before testing. "
-            "Files with neither classes nor functions are typically configuration, bootstrap, "
-            "or entry-point files. "
-            "Namespace-aware files are compatible with PSR-4 autoloading - a prerequisite for Composer-based modernization."
-        )
-        st.markdown(
-            f"**EVIDENCE**:\n"
-            f"1. `{proc_ratio:.1%}` of scanned files are procedural (no class definitions) - `{total_files - oop_count}` file(s).\n"
-            f"2. `{ns_ratio:.1%}` of files use PHP namespaces - `{data.get('files_namespace_aware', 0)}` file(s).\n"
-            f"3. `{proc_only}` file(s) have standalone functions but no classes - these are refactoring candidates.\n"
-            f"4. `{host_signals}` file(s) contain hosting assumption calls (ini_set, header, set_time_limit)."
-        )
-        st.markdown(
-            f"**RECOMMENDATION**: The `{proc_only}` procedural function files are the primary target "
-            "for wrapping into stateless service classes. Review them against the **Pattern Detection** tab - "
-            "those containing `MYSQL_LEGACY` or `INLINE_HTML` are the highest-priority refactoring candidates."
-        )
 
 
 if __name__ == "__main__":

@@ -72,7 +72,7 @@ class SecurityRiskService:
         max_cc_file = "None"
         total_danger = 0
         
-        valid_types = ["file", "class", "entry_point", "bootstrap", "controller", "view", "config", "asset", "job", "model", "schema", "NodeType.FILE", "NodeType.CLASS", "NodeType.ENTRY_POINT", "NodeType.BOOTSTRAP", "NodeType.CONTROLLER", "NodeType.VIEW", "NodeType.CONFIG", "NodeType.ASSET", "NodeType.JOB", "NodeType.MODEL", "NodeType.SCHEMA"]
+        valid_types = ["file", "entry_point", "bootstrap", "controller", "view", "config", "asset", "job", "model", "schema", "NodeType.FILE", "NodeType.ENTRY_POINT", "NodeType.BOOTSTRAP", "NodeType.CONTROLLER", "NodeType.VIEW", "NodeType.CONFIG", "NodeType.ASSET", "NodeType.JOB", "NodeType.MODEL", "NodeType.SCHEMA"]
         for n in nodes:
             node_type = n.get("type") or n.get("node_type")
             if node_type in valid_types:

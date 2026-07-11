@@ -124,7 +124,7 @@ def show_risk_audit():
             
             st.markdown("##### Detailed Complexity Metrics")
             st.dataframe(
-                df_matrix[["File Name", "Cyclomatic Complexity", "Max Nesting Depth", "Max Method LOC", "Fan-Out", "Global Accesses", "Domain Archetype", "Semantic Multiplier"]],
+                df_matrix[["File Name", "Cyclomatic Complexity", "Max Nesting Depth", "Max Method LOC", "Fan-Out", "Global Accesses"]],
                 hide_index=True,
                 use_container_width=True,
                 column_config={
@@ -133,9 +133,7 @@ def show_risk_audit():
                     "Max Nesting Depth": st.column_config.NumberColumn("Nesting Depth", help="Max depth of nested loops and conditionals. Depth > 4 exponentially increases cognitive load and makes logic nearly impossible to trace without a debugger."),
                     "Max Method LOC": st.column_config.NumberColumn("Method LOC", help="Lines of Code in the single largest method or function. Massive methods hide multiple responsibilities — each is a refactoring and testing blocker."),
                     "Fan-Out": st.column_config.NumberColumn("Fan-Out", help="The number of external files or modules this file directly depends on. High fan-out means this file cannot be moved or extracted without also moving everything it depends on."),
-                    "Global Accesses": st.column_config.NumberColumn("Global Accesses", help="How many times this file reads from PHP superglobals or global scope. A direct measure of hidden runtime coupling — prevents safe unit testing or containerization."),
-                    "Domain Archetype": st.column_config.TextColumn("Archetype", help="The engine's classification of this file's role: ENTITY (domain object), CONTROLLER (request handler), UTILITY (stateless helper), or GOD_CLASS (monolithic bottleneck)."),
-                    "Semantic Multiplier": st.column_config.NumberColumn("Risk Multiplier", help="An AI-adjusted weight applied based on the file's detected role (e.g., authentication, routing). Files in high-stakes architectural positions receive a higher multiplier to surface them in priority rankings.")
+                    "Global Accesses": st.column_config.NumberColumn("Global Accesses", help="How many times this file reads from PHP superglobals or global scope. A direct measure of hidden runtime coupling — prevents safe unit testing or containerization.")
                 }
             )
         else:
