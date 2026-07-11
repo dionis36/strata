@@ -28,7 +28,7 @@ st.markdown("""
 from views.dashboard import show_dashboard
 from views.executive_roadmap import show_executive_roadmap
 from views.monolith_navigator import show_monolith_navigator
-from views.layered_architecture import show_layered_architecture, show_system_topology, show_bounded_contexts
+from views.layered_architecture import show_system_topology, show_bounded_contexts
 from views.database_intelligence import show_database_intelligence
 from views.global_state_intelligence import show_global_state_intelligence
 from views.legacy_intelligence import show_legacy_intelligence
@@ -45,8 +45,7 @@ from views import page_registry
 # buttons. Populated into page_registry so view files can import the exact same
 # registered object - avoids the st.switch_page(st.Page(...)) anti-pattern.
 _page_dashboard = st.Page(show_dashboard, title="Executive Dashboard", icon=":material/dashboard:")
-_page_monolith_navigator = st.Page(show_monolith_navigator, title="Monolith Navigator", icon=":material/hub:")
-_page_layered_architecture = st.Page(show_layered_architecture, title="Layered Structure", icon=":material/layers:")
+_page_monolith_navigator = st.Page(show_monolith_navigator, title="System Structure", icon=":material/hub:")
 _page_system_topology = st.Page(show_system_topology, title="System Topology", icon=":material/account_tree:")
 _page_bounded_contexts = st.Page(show_bounded_contexts, title="Bounded Contexts", icon=":material/group_work:")
 
@@ -74,7 +73,6 @@ pages = {
     ],
     "Architectural Discovery": [
         _page_monolith_navigator,
-        _page_layered_architecture,
         _page_system_topology,
         _page_bounded_contexts,
     ],
