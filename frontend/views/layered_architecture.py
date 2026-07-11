@@ -208,19 +208,76 @@ def show_system_topology():
         st.page_link(page_registry.PAGE_DASHBOARD, label="← Go to Executive Dashboard", icon=":material/dashboard:")
         return
 
-    # --- Filtering Logic ---
+    # --- Step 1: Fetch Bounded Context data for Domain Focus filter ---
+    FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
+    fqn_to_domain = {}
+    _bounded_contexts = []
+    try:
+        _layer_res = requests.get(f"{FASTAPI_URL}/layer-analysis/{run_id}", timeout=15)
+        if _layer_res.status_code == 200:
+            _l3 = _layer_res.json().get("layer_3", {})
+            _bounded_contexts = _l3.get("bounded_contexts", [])
+            for _ctx in _bounded_contexts:
+                _dname = _ctx.get("name", "")
+                for _fqn in _ctx.get("files", []):
+                    fqn_to_domain[str(_fqn)] = _dname
+    except Exception:
+        pass  # Domain Focus unavailable — selectbox falls back to "All Domains" only
+
+    # --- Step 2: Render Topology Filters ---
     st.markdown("#### Topology Filters")
-    col1, col2 = st.columns([2, 1])
-    
+    col1, col2, col3 = st.columns([3, 1, 2])
+
+    # Render type filter first — domain node counts depend on this selection
     with col1:
         selected_types = st.multiselect(
             "Visible Layers",
             options=["class", "method", "function", "global_var", "namespace", "file", "entry_point", "controller", "view", "config"],
             default=["class", "function", "global_var", "entry_point", "controller"]
         )
-    
+
+    # --- Step 3: Count nodes per domain matching the current type filter ---
+    _domain_node_counts = {}
+    try:
+        _data_dir = os.getenv("DATA_DIR", "/data")
+        _graph_path_scan = os.path.join(_data_dir, f"graph_{run_id}.json")
+        if os.path.exists(_graph_path_scan):
+            with open(_graph_path_scan, "r") as _gsf:
+                _gsdata = json.load(_gsf)
+            for _n in _gsdata.get("nodes", []):
+                if _n.get("type") in selected_types:
+                    _nd = fqn_to_domain.get(str(_n.get("fqn", "")))
+                    if _nd:
+                        _domain_node_counts[_nd] = _domain_node_counts.get(_nd, 0) + 1
+    except Exception:
+        # Fallback: use file_count from API as proxy
+        for _ctx in _bounded_contexts:
+            _nm = _ctx.get("name", "")
+            if _nm:
+                _domain_node_counts[_nm] = _ctx.get("file_count", 0)
+
+    # Build enriched options — only domains with at least 1 matching node
+    domain_label_to_name = {"All Domains": "All Domains"}
+    enriched_domain_options = ["All Domains"]
+    for _ctx in sorted(_bounded_contexts, key=lambda x: -_domain_node_counts.get(x.get("name", ""), 0)):
+        _nm  = _ctx.get("name", "")
+        _cnt = _domain_node_counts.get(_nm, 0)
+        if _nm and _cnt > 0:
+            _label = f"{_nm}  ({_cnt} nodes)"
+            enriched_domain_options.append(_label)
+            domain_label_to_name[_label] = _nm
+
+    # --- Step 4: Render remaining controls ---
     with col2:
         max_nodes = st.slider("Node Limit", 50, 500, 250)
+
+    with col3:
+        selected_domain_label = st.selectbox(
+            "Domain Focus",
+            options=enriched_domain_options,
+            help="Only domains with nodes matching the current Visible Layers filter are shown. Sorted by node count."
+        )
+        selected_domain = domain_label_to_name.get(selected_domain_label, "All Domains")
 
     try:
         data_dir = os.getenv("DATA_DIR", "/data")
@@ -230,23 +287,65 @@ def show_system_topology():
                 with open(graph_path, "r") as f:
                     graph_data = json.load(f)
                 
-                # 1. Build a lookup for node importance (degree)
+                # 1. Build degree lookup (total connections per node)
                 links = graph_data.get("links", [])
                 node_degree = {}
             for l in links:
                 node_degree[l["source"]] = node_degree.get(l["source"], 0) + 1
                 node_degree[l["target"]] = node_degree.get(l["target"], 0) + 1
-            
-            # 2. Filter nodes by type AND degree
+
+            # 2. Filter nodes by selected types
             all_nodes = graph_data.get("nodes", [])
             filtered_nodes = [n for n in all_nodes if n.get("type") in selected_types]
-            
-            sorted_nodes = sorted(filtered_nodes, key=lambda n: node_degree.get(n["id"], 0), reverse=True)
-            top_nodes = sorted_nodes[:max_nodes]
+
+            # 3. Apply Domain Focus filter (if a specific domain is selected)
+            if selected_domain != "All Domains":
+                filtered_nodes = [
+                    n for n in filtered_nodes
+                    if fqn_to_domain.get(str(n.get("fqn", ""))) == selected_domain
+                ]
+            total_after_filter = len(filtered_nodes)
+
+            # 4. Role-weighted ranking: architectural importance first, degree within tier
+            #    Tier 0 (GOD_CLASS) → Tier 1 (CONTROLLER / entry_point) → Tier 2 (ENTITY / class)
+            #    → Tier 3 (function / global_var) → Tier 4 (everything else)
+            def _node_sort_key(n):
+                archetype = n.get("domain_archetype", "UNKNOWN")
+                ntype = n.get("type", "")
+                if archetype == "GOD_CLASS":
+                    tier = 0
+                elif archetype == "CONTROLLER" or ntype in ("entry_point", "controller"):
+                    tier = 1
+                elif archetype == "ENTITY" or ntype == "class":
+                    tier = 2
+                elif ntype in ("function", "global_var"):
+                    tier = 3
+                else:
+                    tier = 4
+                return (tier, -node_degree.get(n["id"], 0))
+
+            sorted_nodes = sorted(filtered_nodes, key=_node_sort_key)
+            top_nodes    = sorted_nodes[:max_nodes]
             top_node_ids = {n["id"] for n in top_nodes}
-            net = Network(height="750px", width="100%", bgcolor="#0e1117", font_color="#e0e0e0", directed=True)
+
+            # 5. Transparency notice — always tell the user what's hidden
+            hidden_count = total_after_filter - len(top_nodes)
+            if hidden_count > 0:
+                st.warning(
+                    f"Displaying **{len(top_nodes)} of {total_after_filter}** nodes "
+                    f"— **{hidden_count} hidden** by the node limit. "
+                    f"Increase the slider or narrow the Domain Focus / Layer filter to see more.",
+                    icon=":material/visibility_off:"
+                )
+            else:
+                st.success(
+                    f"Displaying all **{len(top_nodes)}** nodes matching the current filters.",
+                    icon=":material/check_circle:"
+                )
+            HEIGHT_PX = 750
+            net = Network(height=f"{HEIGHT_PX}px", width="100%", bgcolor="#0e1117", font_color="#e0e0e0", directed=True)
             
-            # Use a robust configuration
+            # Physics: stabilize fully then fit all nodes within the canvas bounds
             net.toggle_physics(True)
             net.set_options("""
             {
@@ -257,7 +356,11 @@ def show_system_topology():
                   "avoidOverlap": 0.5
                 },
                 "solver": "forceAtlas2Based",
-                "stabilization": false
+                "stabilization": {
+                  "enabled": true,
+                  "iterations": 200,
+                  "fit": true
+                }
               },
               "edges": { "smooth": { "type": "continuous" } }
             }
@@ -326,23 +429,140 @@ def show_system_topology():
             with open(f"/tmp/topology_graph_{run_id}.html", "r", encoding="utf-8") as f:
                 html = f.read()
                 
-            # Inject custom CSS to remove PyVis default white borders and margins
+            # Inject CSS: zero out body/html margins, border lives on #mynetwork inside the iframe
+            # Inject CSS: zero out body margins, let PyVis manage the explicit pixel height
             custom_css = """
             <style>
-                body { margin: 0 !important; padding: 0 !important; background-color: #0e1117 !important; }
-                #mynetwork { 
-                    border: 1px solid #1e2430 !important; 
-                    border-radius: 12px !important; 
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
+                html, body {
+                    margin: 0 !important;
+                    padding: 0 !important;
                     background-color: #0e1117 !important;
+                    overflow: hidden !important;
+                }
+                center, h1 {
+                    display: none !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
+                .card {
+                    border: none !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    background-color: transparent !important;
+                }
+                .card-body {
+                    padding: 0 !important;
+                }
+                #mynetwork {
+                    background-color: #0e1117 !important;
+                    border: 1px solid #2d3748 !important;
+                    border-radius: 8px !important;
+                    box-sizing: border-box !important;
                 }
                 #loadingBar { display: none !important; }
             </style>
             """
-            html = html.replace("</head>", custom_css + "</head>")
+            # Inject Material Icons & custom CSS
+            icon_css = '<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">'
+            html = html.replace("</head>", icon_css + custom_css + "</head>")
             html = html.replace('border: 1px solid lightgray;', 'border: none;')
-            
-            components.html(html, height=770)
+
+            # Inject floating controls (Theme + Fullscreen) and their Javascript logic
+            ui_controls = """
+            <div style="position: absolute; top: 15px; right: 15px; z-index: 9999; display: flex; gap: 8px;">
+                <button id="theme-btn" style="background: rgba(30, 36, 48, 0.8); border: 1px solid #4a5568; color: #e2e8f0; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-family: sans-serif; font-size: 13px; font-weight: 500; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
+                    <span class="material-icons" style="font-size: 16px;">light_mode</span> Light Mode
+                </button>
+                <button id="fs-btn" style="background: rgba(30, 36, 48, 0.8); border: 1px solid #4a5568; color: #e2e8f0; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-family: sans-serif; font-size: 13px; font-weight: 500; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
+                    <span class="material-icons" style="font-size: 16px;">fullscreen</span> Fullscreen
+                </button>
+            </div>
+            <script>
+                // Theme toggle logic
+                let isDark = true;
+                const themeBtn = document.getElementById('theme-btn');
+                const fsBtn = document.getElementById('fs-btn');
+                const networkDiv = document.getElementById('mynetwork');
+                
+                const updateNodeFonts = (colorHex) => {
+                    if (typeof nodes !== 'undefined') {
+                        const updates = nodes.get().map(n => ({id: n.id, font: {color: colorHex}}));
+                        nodes.update(updates);
+                    } else if (typeof network !== 'undefined') {
+                        network.setOptions({ nodes: { font: { color: colorHex } } });
+                    }
+                };
+                
+                themeBtn.onclick = () => {
+                    isDark = !isDark;
+                    if (isDark) {
+                        document.body.style.setProperty('background-color', '#0e1117', 'important');
+                        networkDiv.style.setProperty('background-color', '#0e1117', 'important');
+                        networkDiv.style.setProperty('border-color', '#2d3748', 'important');
+                        
+                        themeBtn.innerHTML = '<span class="material-icons" style="font-size: 16px;">light_mode</span> Light Mode';
+                        themeBtn.style.background = 'rgba(30, 36, 48, 0.8)';
+                        themeBtn.style.color = '#e2e8f0';
+                        themeBtn.style.borderColor = '#4a5568';
+                        
+                        fsBtn.style.background = 'rgba(30, 36, 48, 0.8)';
+                        fsBtn.style.color = '#e2e8f0';
+                        fsBtn.style.borderColor = '#4a5568';
+                        
+                        updateNodeFonts('#e0e0e0');
+                    } else {
+                        document.body.style.setProperty('background-color', '#ffffff', 'important');
+                        networkDiv.style.setProperty('background-color', '#ffffff', 'important');
+                        networkDiv.style.setProperty('border-color', '#cbd5e1', 'important');
+                        
+                        themeBtn.innerHTML = '<span class="material-icons" style="font-size: 16px;">dark_mode</span> Dark Mode';
+                        themeBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+                        themeBtn.style.color = '#1e293b';
+                        themeBtn.style.borderColor = '#cbd5e1';
+                        
+                        fsBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+                        fsBtn.style.color = '#1e293b';
+                        fsBtn.style.borderColor = '#cbd5e1';
+                        
+                        updateNodeFonts('#1e293b');
+                    }
+                };
+
+                // Fullscreen logic
+                fsBtn.onclick = () => {
+                    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                        const root = document.documentElement;
+                        if (root.requestFullscreen) {
+                            root.requestFullscreen().catch(err => console.warn(err));
+                        } else if (root.webkitRequestFullscreen) {
+                            root.webkitRequestFullscreen();
+                        }
+                        fsBtn.innerHTML = '<span class="material-icons" style="font-size: 16px;">fullscreen_exit</span> Exit Fullscreen';
+                    } else {
+                        if (document.exitFullscreen) {
+                            document.exitFullscreen();
+                        } else if (document.webkitExitFullscreen) {
+                            document.webkitExitFullscreen();
+                        }
+                        fsBtn.innerHTML = '<span class="material-icons" style="font-size: 16px;">fullscreen</span> Fullscreen';
+                    }
+                };
+                
+                const handleFsChange = () => {
+                    if (document.fullscreenElement || document.webkitFullscreenElement) {
+                        networkDiv.style.setProperty('height', '100vh', 'important');
+                    } else {
+                        networkDiv.style.setProperty('height', '750px', 'important');
+                        fsBtn.innerHTML = '<span class="material-icons" style="font-size: 16px;">fullscreen</span> Fullscreen';
+                    }
+                };
+                document.addEventListener('fullscreenchange', handleFsChange);
+                document.addEventListener('webkitfullscreenchange', handleFsChange);
+            </script>
+            """
+            html = html.replace("</body>", ui_controls + "</body>")
+
+            components.html(html, height=HEIGHT_PX)
             
             st.markdown("---")
             st.markdown("### System Topology Intelligence")
@@ -498,7 +718,7 @@ def show_bounded_contexts():
                 domain_files = domain.get("files", [])
 
                 st.markdown("---")
-                st.markdown(f"### 📂 `{domain_name}` — File Inventory")
+                st.markdown(f"### `{domain_name}` — File Inventory")
 
                 col_meta1, col_meta2, col_meta3 = st.columns(3)
                 col_meta1.metric("Files in Domain",   domain.get("file_count", 0))
