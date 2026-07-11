@@ -121,8 +121,12 @@ def show_database_intelligence():
         raw_pct = f"{(total_raw / (total_raw + total_orm) * 100):.1f}%" if (total_raw + total_orm) > 0 else "N/A"
         top_files = [r["File"] for r in rows[:3]] if rows else []
 
-        st.markdown("#### Query Abstraction Level")
-        st.info("Raw SQL vs. ORM usage ratio across the persistence layer.", icon=":material/info:")
+        st.markdown("""
+        <div style="background-color: rgba(28,131,225,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Query Abstraction Intelligence</h4>
+            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Raw SQL vs. ORM usage ratio across the persistence layer.</span></div>
+        </div>
+        """, unsafe_allow_html=True)
         st.markdown("**METRIC**: Raw SQL vs. ORM Usage ratio across the persistence layer")
         st.markdown(
             "**INTERPRETATION**: This metric assesses how the system interacts with its database. "
@@ -194,7 +198,12 @@ def show_database_intelligence():
 
         # ── Tab-specific Insight ─────────────────────────────────────────
         st.markdown("---")
-        st.markdown("#### Persistence Risk Posture")
+        st.markdown("""
+        <div style="background-color: rgba(33,195,84,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Persistence Risk Intelligence</h4>
+            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Composite persistence vulnerability count and unhandled transactions.</span></div>
+        </div>
+        """, unsafe_allow_html=True)
         if total_risk_items > 0:
             st.warning(f"{total_risk_items} persistence risk item(s) detected — credential, duplicate query, or transaction issues present.", icon=":material/warning:")
         else:
@@ -255,7 +264,12 @@ def show_database_intelligence():
 
         # ── Tab-specific Insight ─────────────────────────────────────────
         st.markdown("---")
-        st.markdown("#### Data Entanglement & Ownership")
+        st.markdown("""
+        <div style="background-color: rgba(255,193,7,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Data Entanglement Intelligence</h4>
+            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Cross-module write conflicts and shared table access analysis.</span></div>
+        </div>
+        """, unsafe_allow_html=True)
         if cross_module:
             st.warning(f"{len(cross_module)} table(s) written to by more than one module — cross-module write conflicts detected.", icon=":material/warning:")
         else:

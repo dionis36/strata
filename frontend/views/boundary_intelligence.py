@@ -103,8 +103,12 @@ def show_boundary_intelligence():
             st.dataframe(df, hide_index=True, use_container_width=True)
             
             st.markdown("---")
-            st.markdown("#### Presentation Layer Analysis")
-            st.info("UI Entanglement Ratio — proportion of HTML output nodes relative to logic nodes per file.", icon=":material/info:")
+            st.markdown("""
+            <div style="background-color: rgba(28,131,225,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Presentation Layer Intelligence</h4>
+                <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">UI Entanglement Ratio — proportion of HTML output nodes relative to logic nodes per file.</span></div>
+            </div>
+            """, unsafe_allow_html=True)
             st.markdown("**METRIC**: UI Entanglement Ratio - proportion of HTML/echo output nodes relative to logic nodes per file")
             fat_views = kpis.get("Fat Views (DB-Coupled UI)", 0)
             mvc_files = len(mvc)
@@ -141,8 +145,12 @@ def show_boundary_intelligence():
             st.dataframe(df, hide_index=True, use_container_width=True)
             
             st.markdown("---")
-            st.markdown("#### Application Entry Point Analysis")
-            st.info("Entry Point Classification — how external requests reach and enter the application.", icon=":material/info:")
+            st.markdown("""
+            <div style="background-color: rgba(33,195,84,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Application Entry Point Intelligence</h4>
+                <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Entry Point Classification — how external requests reach and enter the application.</span></div>
+            </div>
+            """, unsafe_allow_html=True)
             st.markdown("**METRIC**: Entry Point Classification - how external requests reach the application")
             pure_scripts = sum(1 for a in api if a.get("Pure Script") == "Yes")
             api_endpoints = sum(1 for a in api if a.get("Type") == "API Endpoint")
@@ -202,8 +210,12 @@ def show_boundary_intelligence():
             st.dataframe(df, hide_index=True, use_container_width=True)
             
             st.markdown("---")
-            st.markdown("#### Vendor Dependency Analysis")
-            st.info("Vendor Classification — Composer-managed vs. manually embedded third-party libraries.", icon=":material/info:")
+            st.markdown("""
+            <div style="background-color: rgba(255,193,7,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Vendor Dependency Intelligence</h4>
+                <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Vendor Classification — Composer-managed vs. manually embedded third-party libraries.</span></div>
+            </div>
+            """, unsafe_allow_html=True)
             st.markdown("**METRIC**: Vendor Classification - Composer-managed vs. manually embedded third-party libraries")
             orphans = sum(1 for v in vendor if "ORPHANED RISK" in v.get("Status", ""))
             total_vendor = len(vendor)

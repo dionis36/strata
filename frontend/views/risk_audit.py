@@ -148,8 +148,12 @@ def show_risk_audit():
         avg_mi = kpis.get("Average Maintainability", 0)
         critical_pct = f"{(critical_count / total_files * 100):.1f}" if total_files > 0 else "0"
         st.markdown("---")
-        st.markdown("#### File Risk Assessment")
-        st.info("Maintainability Index (MI) & Cyclomatic Complexity (CC) — per-file composite structural scoring.", icon=":material/info:")
+        st.markdown("""
+        <div style="background-color: rgba(28,131,225,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">File Risk Intelligence</h4>
+            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Maintainability Index (MI) & Cyclomatic Complexity (CC) — per-file composite structural scoring.</span></div>
+        </div>
+        """, unsafe_allow_html=True)
         st.markdown("**METRIC**: Maintainability Index (MI) & Cyclomatic Complexity (CC) - per-file composite scoring")
         st.markdown(
             f"**INTERPRETATION**: This codebase has an average Maintainability Index of **{avg_mi}/100**. "
@@ -196,7 +200,12 @@ def show_risk_audit():
         rce_count = sum(1 for v in vulns if v.get("Vulnerability Type") == "DANGER")
         sqli_count = sum(1 for v in vulns if v.get("Vulnerability Type") == "MYSQL_LEGACY")
         lfi_count = sum(1 for v in vulns if v.get("Vulnerability Type") == "INCLUDE_ROUTING")
-        st.markdown("#### Security Assessment")
+        st.markdown("""
+        <div style="background-color: rgba(33,195,84,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Security Intelligence</h4>
+            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">AST-detected Security Sinks — functions or patterns that directly enable a known attack class (XSS, SQLi, CSRF, RCE, IDOR, Auth bypass).</span></div>
+        </div>
+        """, unsafe_allow_html=True)
         if total_vulns > 0:
             st.warning(f"{total_vulns} confirmed security sink(s) detected — RCE, SQLi, or LFI vectors present.", icon=":material/warning:")
         else:
@@ -268,8 +277,12 @@ def show_risk_audit():
         multi_class = sum(1 for r in rot if r.get("Defect Type") == "Multiple Classes per File")
         dead_code = sum(1 for r in rot if r.get("Defect Type") == "Potential Dead Code")
         blocker_count = sum(1 for r in rot if r.get("Defect Type") in ["High Refactor Risk", "Microservice Extraction Blocker"])
-        st.markdown("#### Extensibility Assessment")
-        st.info("Composite structural anti-patterns — Global State coupling, Dead Code, and PSR violations.", icon=":material/info:")
+        st.markdown("""
+        <div style="background-color: rgba(255,193,7,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Extensibility Intelligence</h4>
+            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Composite structural anti-patterns — Global State coupling, Dead Code, and PSR violations.</span></div>
+        </div>
+        """, unsafe_allow_html=True)
         st.markdown("**METRIC**: Composite Structural Anti-Patterns - Global State, Dead Code, and PSR violations")
         st.markdown(
             f"**INTERPRETATION**: This codebase carries **{total_rot} architectural debt instances**. "

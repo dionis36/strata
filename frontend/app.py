@@ -21,6 +21,44 @@ st.markdown("""
     .stButton>button { border-radius: 6px !important; font-weight: 500 !important; transition: all 0.2s ease; }
     
     /* Streamlit Top Bar and Menu are enabled for Theme Switching */
+    
+    /* Global Tooltip Styles */
+    .strata-tooltip-container {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: default;
+        opacity: 0.6;
+    }
+    .strata-tooltip-container:hover {
+        opacity: 1;
+    }
+    .strata-tooltip-text {
+        visibility: hidden;
+        background-color: var(--background-color, #ffffff) !important;
+        color: var(--text-color, #31333F) !important;
+        text-align: left;
+        border-radius: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        position: absolute;
+        z-index: 999999;
+        bottom: 140%;
+        right: -10px;
+        width: 320px;
+        font-size: 14px;
+        line-height: 1.4;
+        opacity: 0;
+        transition: opacity 0.2s ease-in-out;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+        font-weight: 400 !important;
+        pointer-events: none;
+        border: 1px solid rgba(128,128,128,0.2);
+    }
+    .strata-tooltip-container:hover .strata-tooltip-text {
+        visibility: visible;
+        opacity: 1;
+    }
     </style>
 """, unsafe_allow_html=True)
 

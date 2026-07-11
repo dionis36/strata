@@ -115,8 +115,12 @@ def show_global_state_intelligence():
         total_sg = sum(sg_totals.values())
         top_sg   = max(sg_totals, key=sg_totals.get) if sg_totals else None
 
-        st.markdown("#### Superglobal Coupling")
-        st.info("Total superglobal accesses (`$_POST`, `$_GET`, `$_SESSION`, etc.) across all modules.", icon=":material/info:")
+        st.markdown("""
+        <div style="background-color: rgba(28,131,225,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Superglobal Access Intelligence</h4>
+            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Total superglobal accesses (`$_POST`, `$_GET`, `$_SESSION`, etc.) across all modules.</span></div>
+        </div>
+        """, unsafe_allow_html=True)
         st.markdown("**METRIC**: Total superglobal accesses across all modules")
         st.markdown(
             "**INTERPRETATION**: Every access to `$_POST`, `$_GET`, `$_SESSION`, or similar variables "
@@ -197,8 +201,12 @@ def show_global_state_intelligence():
 
         # ── Insight ──────────────────────────────────────────────────────
         st.markdown("---")
-        st.markdown("#### Session Flow Analysis")
-        st.info("Session Writer/Reader distribution — how session state is produced and consumed across files.", icon=":material/info:")
+        st.markdown("""
+        <div style="background-color: rgba(33,195,84,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Session State Intelligence</h4>
+            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Session Writer/Reader distribution — how session state is produced and consumed across files.</span></div>
+        </div>
+        """, unsafe_allow_html=True)
         st.markdown("**METRIC**: Session Writer/Reader Distribution")
         st.markdown(
             "**INTERPRETATION**: Session state in PHP flows **one-directionally but invisibly** - "
@@ -264,8 +272,12 @@ def show_global_state_intelligence():
         dominant_effect = max(se_totals, key=se_totals.get) if se_totals else None
         dominant_count  = se_totals.get(dominant_effect, 0) if dominant_effect else 0
 
-        st.markdown("#### Behavioural Complexity Profile")
-        st.info("Side-effect classification distribution — IO, NET, DB, TEMPLATE, and HOSTING operations across modules.", icon=":material/info:")
+        st.markdown("""
+        <div style="background-color: rgba(255,193,7,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Side-Effect Intelligence</h4>
+            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Side-effect classification distribution — IO, NET, DB, TEMPLATE, and HOSTING operations across modules.</span></div>
+        </div>
+        """, unsafe_allow_html=True)
         st.markdown("**METRIC**: Side-Effect Classification Distribution")
         st.markdown(
             "**INTERPRETATION**: Side effects classify what the system *does beyond returning values* - "

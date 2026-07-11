@@ -143,8 +143,12 @@ def show_legacy_intelligence():
         critical = sum(1 for s in era_signals if str(s.get("severity", "")).upper() == SEVERITY_CRITICAL)
         high     = sum(1 for s in era_signals if str(s.get("severity", "")).upper() == SEVERITY_HIGH)
 
-        st.markdown("#### Era Classification Assessment")
-        st.info("PHP Era Classification based on AST pattern density — not the declared php version.", icon=":material/info:")
+        st.markdown("""
+        <div style="background-color: rgba(28,131,225,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Era Classification Intelligence</h4>
+            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">PHP Era Classification based on AST pattern density — not the declared php version.</span></div>
+        </div>
+        """, unsafe_allow_html=True)
         st.markdown("**METRIC**: PHP Era Classification based on AST pattern density")
         st.markdown(
             "**INTERPRETATION**: PHP era classification is not based on the `php_version` file - "
@@ -202,7 +206,12 @@ def show_legacy_intelligence():
         inline_count   = pattern_totals.get("INLINE_HTML", 0)
         routing_count  = pattern_totals.get("INCLUDE_ROUTING", 0)
 
-        st.markdown("#### Anti-Pattern Density")
+        st.markdown("""
+        <div style="background-color: rgba(33,195,84,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Anti-Pattern Intelligence</h4>
+            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Density and concentration of specific legacy anti-patterns across the codebase.</span></div>
+        </div>
+        """, unsafe_allow_html=True)
         if total_patterns > 0:
             st.warning(f"{total_patterns} legacy anti-pattern instance(s) detected across {len(pattern_totals)} distinct categories.", icon=":material/warning:")
         else:
@@ -337,8 +346,12 @@ def show_legacy_intelligence():
         oop_count = data.get("files_with_classes", 0)
         proc_only = data.get("files_procedural_only", 0)
 
-        st.markdown("#### Structural Composition Profile")
-        st.info("OOP vs Procedural file distribution — classes, namespaces, and procedural-only files across the codebase.", icon=":material/info:")
+        st.markdown("""
+        <div style="background-color: rgba(255,193,7,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Structural Composition Intelligence</h4>
+            <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">OOP vs Procedural file distribution — classes, namespaces, and procedural-only files across the codebase.</span></div>
+        </div>
+        """, unsafe_allow_html=True)
         st.markdown("**METRIC**: OOP vs Procedural Distribution")
         st.markdown(
             "**INTERPRETATION**: This table shows the raw structural split of the codebase. "

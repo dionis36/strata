@@ -403,7 +403,7 @@ def show_system_topology():
             components.html(html, height=HEIGHT_PX)
             
             st.markdown("---")
-            st.markdown("### System Topology Intelligence")
+            st.markdown("### System Topology Assessment")
             
             # Find the most connected node
             max_degree_node = None
@@ -435,10 +435,12 @@ def show_system_topology():
             
             col1, col2, col3 = st.columns(3)
             with col1:
-                _h1, _p1 = st.columns([5, 1])
-                _h1.info("#### Network Density & Coupling")
-                with _p1.popover("?"):
-                    st.markdown("**Graph Edge Density** measures how interconnected the components are. A density near 0 = modular clusters. A density near 1 = 'Spaghetti Code' — every file talks to every other file, making safe extraction mathematically improbable.")
+                st.markdown("""
+                <div style="background-color: rgba(28,131,225,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                    <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Network Density & Coupling</h4>
+                    <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Graph Edge Density measures how interconnected the components are. A density near 0 = modular clusters. A density near 1 = 'Spaghetti Code' — every file talks to every other file, making safe extraction mathematically improbable.</span></div>
+                </div>
+                """, unsafe_allow_html=True)
                 st.markdown("**METRIC**: Graph Edge Density")
                 st.markdown("**INTERPRETATION**: Density indicates how intertwined the components are. A 'Spaghetti Code' monolith will have an extremely dense, highly connected graph, whereas a modular system will appear as distinct, lightly-connected clusters.")
                 
@@ -448,10 +450,12 @@ def show_system_topology():
                 st.markdown("**RECOMMENDATION**: If the graph is a dense web, do not attempt to split it immediately. Look for natural fault lines between the colored clusters to identify potential service boundaries.")
 
             with col2:
-                _h2, _p2 = st.columns([5, 1])
-                _h2.success("#### Structural Bottlenecks")
-                with _p2.popover("?"):
-                    st.markdown("**Component Centrality & Degree** — the node with the highest connection count is the structural center of gravity. In legacy systems this is usually a shared utility, base controller, or God Class that every other file depends on. It cannot be safely moved until its dependents are decoupled.")
+                st.markdown("""
+                <div style="background-color: rgba(33,195,84,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                    <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Structural Bottlenecks</h4>
+                    <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Component Centrality & Degree — the node with the highest connection count is the structural center of gravity. In legacy systems this is usually a shared utility, base controller, or God Class that every other file depends on. It cannot be safely moved until its dependents are decoupled.</span></div>
+                </div>
+                """, unsafe_allow_html=True)
                 st.markdown("**METRIC**: Component Centrality & Degree")
                 st.markdown("**INTERPRETATION**: The node with the highest number of connections acts as a primary structural bottleneck. These are often core utilities, base controllers, or global configuration files that every other file depends on.")
                 
@@ -470,10 +474,12 @@ def show_system_topology():
                 )
 
             with col3:
-                _h3, _p3 = st.columns([5, 1])
-                _h3.warning("#### Circular Dependencies")
-                with _p3.popover("?"):
-                    st.markdown("**Mutual Back-Edges** — A depends on B, and B depends on A. These loops are the most severe extraction blockers: neither component can be independently deployed without the other. Breaking them requires introducing an interface, a shared library, or merging both modules into one bounded context.")
+                st.markdown("""
+                <div style="background-color: rgba(255,193,7,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                    <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Circular Dependencies</h4>
+                    <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Mutual Back-Edges — A depends on B, and B depends on A. These loops are the most severe extraction blockers: neither component can be independently deployed without the other. Breaking them requires introducing an interface, a shared library, or merging both modules into one bounded context.</span></div>
+                </div>
+                """, unsafe_allow_html=True)
                 st.markdown("**METRIC**: Mutual Back-Edges")
                 st.markdown("**INTERPRETATION**: Circular dependencies (A calls B, and B calls A) create tightly coupled loops that are impossible to extract independently. They are the most severe blockers for microservice modernization.")
                 
@@ -585,7 +591,7 @@ def show_bounded_contexts():
                     st.info("No file paths recorded for this domain in the current scan.", icon=":material/info:")
             
             st.markdown("---")
-            st.markdown("### Domain Extractability Intelligence")
+            st.markdown("### Domain Extractability Assessment")
             
             # Find insights
             high_coupling = sorted(contexts, key=lambda x: x["coupling_ratio"], reverse=True)
@@ -596,10 +602,12 @@ def show_bounded_contexts():
 
             col1, col2 = st.columns(2)
             with col1:
-                _h4, _p4 = st.columns([5, 1])
-                _h4.info("#### Domain Cohesion Insight")
-                with _p4.popover("?"):
-                    st.markdown("**Coupling Ratio** = External Calls ÷ Internal Calls. A ratio > 1.0 means a domain makes more calls outside itself than within — it is not a true bounded context and cannot be extracted as-is without breaking cross-domain dependencies.")
+                st.markdown("""
+                <div style="background-color: rgba(28,131,225,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                    <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Domain Cohesion Insight</h4>
+                    <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Coupling Ratio = External Calls ÷ Internal Calls. A ratio > 1.0 means a domain makes more calls outside itself than within — it is not a true bounded context and cannot be extracted as-is without breaking cross-domain dependencies.</span></div>
+                </div>
+                """, unsafe_allow_html=True)
                 st.markdown("**METRIC**: Global Coupling Ratios & Outliers")
                 st.markdown("**INTERPRETATION**: This metric provides an understanding of how well the legacy system's logic is encapsulated. A system with predominantly high-coupling domains typically represents a 'Big Ball of Mud' architecture, whereas lower coupling ratios suggest that the original developers successfully implemented separation of concerns.")
                 
@@ -610,10 +618,12 @@ def show_bounded_contexts():
                 st.markdown("**RECOMMENDATION**: Use these cohesion insights to map out which areas of the codebase share state. High-coupling areas indicate cross-cutting concerns that should be mapped carefully during the architectural discovery phase.")
 
             with col2:
-                _h5, _p5 = st.columns([5, 1])
-                _h5.success("#### State & Boundary Distribution")
-                with _p5.popover("?"):
-                    st.markdown("**Transactional (DB) and Authentication (Auth) Sinks** — domains with direct DB access or auth/session management cannot easily operate as independent microservices without owning their own data tier. These domains require a Database-per-Service migration pattern before extraction.")
+                st.markdown("""
+                <div style="background-color: rgba(33,195,84,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                    <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">State & Boundary Distribution</h4>
+                    <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Transactional (DB) and Authentication (Auth) Sinks — domains with direct DB access or auth/session management cannot easily operate as independent microservices without owning their own data tier. These domains require a Database-per-Service migration pattern before extraction.</span></div>
+                </div>
+                """, unsafe_allow_html=True)
                 st.markdown("**METRIC**: Transactional (DB) and Authentication (Auth) Sinks")
                 st.markdown("**INTERPRETATION**: Identifying which domains independently touch database layers or session management reveals the functional layout of the system. Domains that manage their own state are naturally closer to operating as independent bounded contexts, whereas centralized state points to a highly monolithic data tier.")
                 

@@ -145,7 +145,7 @@ def show_monolith_navigator():
 
     # --- OOP Manifest (Symbols) ---
     st.markdown("---")
-    st.subheader("Extracted Intelligence Manifest")
+    st.subheader("Extracted Assessment Manifest")
     st.info("This manifest lists the physical entities extracted from your code. It identifies potential 'God Objects' and behavioral risks.")
     
     l2 = data.get("layer_2", {})
@@ -166,7 +166,7 @@ def show_monolith_navigator():
         st.dataframe(display_df, use_container_width=True, hide_index=True)
         
         st.markdown("---")
-        st.markdown("### Component Density Intelligence")
+        st.markdown("### Component Density Assessment")
         
         total_entities = len(df_oop)
         high_complexity = len(df_oop[df_oop["Complexity"] == "High"])
@@ -174,20 +174,24 @@ def show_monolith_navigator():
         
         col1, col2 = st.columns(2)
         with col1:
-            _h1, _p1 = st.columns([5, 1])
-            _h1.info("#### Object Encapsulation Insight")
-            with _p1.popover("?"):
-                st.markdown("**High-Complexity Object Concentration** — measures whether logic is evenly distributed across many single-responsibility classes or concentrated in a few bloated objects. A high number of complex classes (> 20 methods) indicates a heavy, tightly-coupled OOP architecture that resists extraction.")
+            st.markdown("""
+            <div style="background-color: rgba(28,131,225,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Object Encapsulation Insight</h4>
+                <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">High-Complexity Object Concentration — measures whether logic is evenly distributed across many single-responsibility classes or concentrated in a few bloated objects. A high number of complex classes (> 20 methods) indicates a heavy, tightly-coupled OOP architecture that resists extraction.</span></div>
+            </div>
+            """, unsafe_allow_html=True)
             st.markdown("**METRIC**: High-Complexity Object Concentration")
             st.markdown("**INTERPRETATION**: This metric assesses whether logic is evenly distributed across many single-responsibility classes or concentrated in a few bloated objects. A high number of complex classes indicates a heavy, tightly-coupled OOP architecture.")
             st.markdown(f"**EVIDENCE**: \n1. Total recognized entities: {total_entities}.\n2. Entities flagged with 'High' complexity (> 20 methods): {high_complexity}.")
             st.markdown("**RECOMMENDATION**: Focus refactoring efforts on the 'High' complexity entities. If the system is mostly procedural (few entities), proceed to look at standalone scripts instead of classes.")
 
         with col2:
-            _h2, _p2 = st.columns([5, 1])
-            _h2.success("#### Gravity Wells (God Objects)")
-            with _p2.popover("?"):
-                st.markdown("**Method Weight & Interaction Gravity** — 'Gravity Wells' are massive God Objects containing so much logic they attract dependencies from across the entire system. They are the primary anti-corruption targets: breaking them apart is mandatory before attempting to split the system into microservices.")
+            st.markdown("""
+            <div style="background-color: rgba(33,195,84,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Gravity Wells (God Objects)</h4>
+                <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Method Weight & Interaction Gravity — 'Gravity Wells' are massive God Objects containing so much logic they attract dependencies from across the entire system. They are the primary anti-corruption targets: breaking them apart is mandatory before attempting to split the system into microservices.</span></div>
+            </div>
+            """, unsafe_allow_html=True)
             st.markdown("**METRIC**: Method Weight & Interaction Gravity")
             st.markdown("**INTERPRETATION**: 'Gravity Wells' are massive God Objects that contain so much logic they attract dependencies from across the entire system. Breaking these apart is mandatory before attempting to split the system into microservices.")
             
