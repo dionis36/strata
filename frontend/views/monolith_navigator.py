@@ -87,7 +87,10 @@ def show_monolith_navigator():
         for name, data in sorted(node.items(), key=lambda x: x[0]):
             info = data["_info"]
             children_html = generate_html_tree(data["_children"], depth + 1)
-            open_attr = "open" if depth < 1 else ""
+            
+            # Auto-expand up to the system root, or if a folder only contains one sub-directory (passthrough)
+            is_passthrough = len(node) == 1 and not (info and info.get("files", []))
+            open_attr = "open" if (depth < 2 or is_passthrough) else ""
             
             if info:
                 summary = f"<b>{name}/</b>"
