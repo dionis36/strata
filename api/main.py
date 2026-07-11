@@ -996,45 +996,6 @@ def get_roadmap(run_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/report/summary-network/{run_id}", tags=["Reporting & Visuals"], summary="Get high-level interactive network")
-def get_summary_network(run_id: int, db: Session = Depends(get_db)):
-    """Returns a simplified JSON network representing directory-level coupling."""
-    try:
-        service = ReportService(db)
-        return service.generate_summary_network(run_id)
-    except Exception as e:
-        logger.error(f"Failed to generate summary network: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/report/graphviz/{run_id}", response_model=GraphvizResponse, tags=["Reporting & Visuals"], summary="Get full DOT graph")
-def get_graphviz(run_id: int, db: Session = Depends(get_db)):
-    """Returns the complete component-level DOT string for visualization tools."""
-    try:
-        service = ReportService(db)
-        return {"dot": service.generate_graphviz(run_id)}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/report/neo4j/{run_id}", tags=["Reporting & Visuals"], summary="Get Neo4j Cypher script")
-def get_neo4j(run_id: int, db: Session = Depends(get_db)):
-    """Returns a list of Cypher commands to import the graph into Neo4j."""
-    try:
-        service = ReportService(db)
-        return {"cypher": service.generate_neo4j_cypher(run_id)}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/report/ai-chunks/{run_id}", tags=["Reporting & Visuals"], summary="Get AI-ready knowledge chunks")
-def get_ai_chunks(run_id: int, db: Session = Depends(get_db)):
-    """Splits the analysis into optimal chunks for LLM context windows."""
-    try:
-        service = ReportService(db)
-        return {"chunks": service.generate_ai_chunks(run_id)}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/dashboard/{project_id}", response_model=DashboardResponse, tags=["Reporting & Visuals"], summary="Executive Dashboard data")
