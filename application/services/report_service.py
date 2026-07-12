@@ -16,46 +16,83 @@ class ReportService:
 
     def generate_roadmap(self, run_id: int) -> dict:
         """
-        Requirement 19: Generate Executive Migration Roadmap and System Context.
+        Dynamically constructs a deterministic extraction roadmap based on AST metrics.
         """
         legacy = self.db.query(LegacyMetrics).filter(LegacyMetrics.run_id == run_id).first()
-        run = self.db.query(AnalysisRun).filter(AnalysisRun.id == run_id).first()
-        risks = self.db.query(ComponentRisk).filter(ComponentRisk.run_id == run_id).order_by(ComponentRisk.final_risk.desc()).limit(10).all()
+        risks = self.db.query(ComponentRisk).filter(ComponentRisk.run_id == run_id).all()
+        
+        roadmap = {
+            "phase_0": None,
+            "phase_1": None,
+            "phase_2": None
+        }
         
         if not legacy:
-            return {"error": "Legacy metrics not found for this run."}
-            
-        rec = RecommendationEngine.recommend(legacy.total_modernization_score, {
-            "db_layer": legacy.db_layer,
-            "auth_layer": legacy.auth_layer
-        })
-        
-        top_risks = [f"- **{r.component_name}** (Risk Level: {r.risk_level}, Score: {round(r.risk_score, 2)})" for r in risks]
-        
-        md_roadmap = f"""# Executive Modernization Roadmap
-## System Context
-- **Era Classification:** {legacy.php_era}
-- **Architecture Type:** {legacy.detected_framework}
-- **Scale:** {run.total_files} Files | {run.total_classes} Classes
-- **Database Access:** {legacy.db_layer}
-- **Auth Pattern:** {legacy.auth_layer}
-- **Overall Modernization Readiness:** {round(legacy.total_modernization_score, 2)} / 100
+            return roadmap
 
-## Recommended Strategy: {rec['strategy']}
-{rec['description']}
-
-### Tactical Advice
-"""
-        for advice in rec["tactical_advice"]:
-            md_roadmap += f"- {advice}\n"
-            
-        md_roadmap += f"""
-## Phase 1: High-Risk Extraction Targets
-The following components exhibit the highest coupling pressure and criticality. They should be prioritized for isolation:
-"""
-        md_roadmap += "\n".join(top_risks)
+        # Phase 0: Base Abstraction (Global State & Direct DB Calls)
+        stateful_files = [
+            {"name": r.component_name, "type": "Global State", "pressure": round(r.coupling_pressure, 2)} 
+            for r in risks if r.is_stateful
+        ]
+        db_layer_direct = legacy.db_layer in ["Direct SQL", "Legacy Pattern", "None Detected"]
         
-        return {
-            "markdown": md_roadmap,
-            "recommendation": rec
-        }
+        has_phase_0 = len(stateful_files) > 0 or db_layer_direct
+        if has_phase_0:
+            roadmap["phase_0"] = {
+                "has_global_state": len(stateful_files) > 0,
+                "has_direct_sql": db_layer_direct,
+                "stateful_files": sorted(stateful_files, key=lambda x: x["pressure"], reverse=True)
+            }
+            
+        # Phase 1: Structural Decomposition
+        god_classes = [
+            {
+                "name": r.component_name, 
+                "risk_level": r.risk_level,
+                "complexity": r.wmc,
+                "lcom": round(r.lcom, 2),
+                "coupling": round(r.coupling_pressure, 2)
+            } 
+            for r in risks if r.domain_archetype == "GOD_CLASS" or r.risk_level == "CRITICAL"
+        ]
+        if god_classes:
+            roadmap["phase_1"] = {
+                "god_classes": sorted(god_classes, key=lambda x: x["coupling"], reverse=True)
+            }
+            
+        # Phase 2: Extraction Sequence
+        from application.services.layer_service import LayerService
+        layer_service = LayerService(self.db)
+        layers = layer_service.get_layered_analysis(run_id)
+        bounded_contexts = layers.get("layer_3", {}).get("bounded_contexts", [])
+        
+        domains = []
+        for ctx in bounded_contexts:
+            name = ctx.get("name")
+            if name in ["Global", "Vendor", "Unknown"]:
+                continue
+            
+            num_files = ctx.get("file_count", 0)
+            if num_files == 0:
+                continue
+                
+            external = ctx.get("external_edges", 0)
+            internal = ctx.get("internal_edges", 0)
+            # Isolation Score: fewer external edges relative to internal edges = better isolation
+            isolation_score = external / max(1, internal)
+            
+            domains.append({
+                "name": name,
+                "files": num_files,
+                "internal_coupling": internal,
+                "external_coupling": external,
+                "isolation_score": round(isolation_score, 2)
+            })
+            
+        if domains:
+            roadmap["phase_2"] = {
+                "domains": sorted(domains, key=lambda x: x["isolation_score"])
+            }
+            
+        return roadmap

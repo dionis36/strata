@@ -73,8 +73,6 @@ from views.legacy_intelligence import show_legacy_intelligence
 from views.risk_audit import show_risk_audit
 from views.extraction_simulator import show_extraction_simulator
 from views.decision_engine import show_modernization_decision_engine
-from views.legacy_bootstrapper import show_legacy_bootstrapper
-
 from views.boundary_intelligence import show_boundary_intelligence
 from views.report_viewer import show_report_viewer
 from views import page_registry
@@ -96,7 +94,6 @@ _page_boundary_intelligence = st.Page(show_boundary_intelligence, title="Boundar
 _page_decision_engine = st.Page(show_modernization_decision_engine, title="Modernization Decision Engine", icon=":material/psychology:")
 _page_extraction_simulator = st.Page(show_extraction_simulator, title="Extraction Simulator", icon=":material/biotech:")
 _page_executive_roadmap = st.Page(show_executive_roadmap, title="Strategic Roadmap", icon=":material/insights:")
-_page_legacy_bootstrapper = st.Page(show_legacy_bootstrapper, title="Legacy Bootstrapper", icon=":material/build:")
 _page_report_viewer = st.Page(show_report_viewer, title="Report Viewer", icon=":material/description:")
 
 page_registry.PAGE_DASHBOARD = _page_dashboard
@@ -125,7 +122,6 @@ pages = {
         _page_decision_engine,
         _page_extraction_simulator,
         _page_executive_roadmap,
-        _page_legacy_bootstrapper,
     ]
 }
 

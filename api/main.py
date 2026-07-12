@@ -12,7 +12,6 @@ from application.services.extraction_service import ExtractionService
 
 from infrastructure.persistence.models import ComponentMetric, ComponentRisk
 from application.services.analysis_service import AnalysisService
-from application.services.tree_service import TreeService
 from application.services.layer_service import LayerService
 from application.services.database_intelligence_service import DatabaseIntelligenceService
 from application.services.global_state_service import GlobalStateService
@@ -797,16 +796,6 @@ def list_runs(db: Session = Depends(get_db)):
         logger.error(f"Failed to list runs: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
-@app.get("/graph/{run_id}/includes", tags=["Intelligence Modules"], summary="Bootstrap include tree")
-def get_includes(run_id: int, db: Session = Depends(get_db)):
-    """Analyzes the PHP `include/require` structure to find entrypoint bottlenecks."""
-    try:
-        service = TreeService(db)
-        return service.get_bootstrap_analysis(run_id)
-    except Exception as e:
-        logger.error(f"Failed to generate include tree: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/layer-analysis/{run_id}", tags=["Intelligence Modules"], summary="Layered architectural analysis")
