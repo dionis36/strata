@@ -539,52 +539,53 @@ def show_bounded_contexts():
                 })
             df_ctx = pd.DataFrame(display_rows)
 
-            st.dataframe(
+            st.caption("**Check the box on the far left** of any row to drill into its file inventory.")
+            selection = st.dataframe(
                 df_ctx,
                 use_container_width=True,
                 hide_index=True,
+                on_select="rerun",
+                selection_mode="single-row",
                 column_config={
                     "Coupling Ratio": st.column_config.NumberColumn(format="%.2f"),
                 }
             )
 
             # ── File Drill-Down Panel ─────────────────────────────────────────
-            st.markdown("---")
-            
-            domain_names = [c.get("name", "") for c in contexts]
-            selected_domain_name = st.selectbox("👉 Select a Domain to drill into its file inventory", options=domain_names)
-            
-            if selected_domain_name:
-                domain = next((c for c in contexts if c.get("name") == selected_domain_name), None)
-                if domain:
-                    domain_files = domain.get("files", [])
+            selected_rows = selection.selection.get("rows", [])
+            if selected_rows:
+                idx = selected_rows[0]
+                domain = contexts[idx]
+                domain_name  = domain.get("name", "")
+                domain_files = domain.get("files", [])
 
-                    st.markdown(f"### `{selected_domain_name}` File Inventory")
+                st.markdown("---")
+                st.markdown(f"### `{domain_name}` File Inventory")
 
-                    col_meta1, col_meta2 = st.columns(2)
-                    col_meta1.metric("Files in Domain",   domain.get("file_count", 0))
-                    col_meta2.metric("Coupling Ratio",    domain.get("coupling_ratio", 0.0))
+                col_meta1, col_meta2 = st.columns(2)
+                col_meta1.metric("Files in Domain",   domain.get("file_count", 0))
+                col_meta2.metric("Coupling Ratio",    domain.get("coupling_ratio", 0.0))
 
-                    if domain_files:
-                        # Search filter
-                        search = st.text_input(
-                            "Filter files",
-                            placeholder="Type to search by filename or path...",
-                            key=f"file_search_{selected_domain_name}",
-                            label_visibility="collapsed"
-                        )
-                        filtered = [f for f in domain_files if search.lower() in f.lower()] if search else domain_files
+                if domain_files:
+                    # Search filter
+                    search = st.text_input(
+                        "Filter files",
+                        placeholder="Type to search by filename or path...",
+                        key=f"file_search_{domain_name}",
+                        label_visibility="collapsed"
+                    )
+                    filtered = [f for f in domain_files if search.lower() in f.lower()] if search else domain_files
 
-                        st.markdown(
-                            f"**{len(filtered)}** file(s) shown"
-                            + (f" · *filtered from {len(domain_files)}*" if search and len(filtered) != len(domain_files) else "")
-                        )
+                    st.markdown(
+                        f"**{len(filtered)}** file(s) shown"
+                        + (f" · *filtered from {len(domain_files)}*" if search and len(filtered) != len(domain_files) else "")
+                    )
 
-                        # Render as scrollable code block for easy copy
-                        file_list_text = "\n".join(filtered)
-                        st.code(file_list_text, language=None)
-                    else:
-                        st.info("No file paths recorded for this domain in the current scan.", icon=":material/info:")
+                    # Render as scrollable code block for easy copy
+                    file_list_text = "\n".join(filtered)
+                    st.code(file_list_text, language=None)
+                else:
+                    st.info("No file paths recorded for this domain in the current scan.", icon=":material/info:")
             
             st.markdown("---")
             st.markdown("### Domain Extractability Assessment")
