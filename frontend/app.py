@@ -244,24 +244,40 @@ with st.sidebar:
             if run_options:
                 current_run_id = st.session_state.get("active_run_id")
                 run_keys = list(run_options.keys())
-                try:
-                    current_idx = next(i for i, k in enumerate(run_keys) if run_options[k] == current_run_id)
-                except StopIteration:
-                    current_idx = 0
                 
-                selected_run_label = st.selectbox("Select Workspace / Run", run_keys, index=current_idx)
-                selected_run_id = run_options[selected_run_label]
+                current_idx = None
+                if current_run_id is not None:
+                    try:
+                        current_idx = next(i for i, k in enumerate(run_keys) if run_options[k] == current_run_id)
+                    except StopIteration:
+                        current_idx = None
                 
-                # Always ensure project_id stays in sync with run_id
-                current_r = next((r for r in available_runs if r['id'] == selected_run_id), None)
-                if current_r and 'project_id' in current_r:
-                    st.session_state["active_project_id"] = current_r['project_id']
-                else:
-                    st.session_state["active_project_id"] = None
+                selected_run_label = st.selectbox(
+                    "Select Workspace / Run", 
+                    run_keys, 
+                    index=current_idx,
+                    placeholder="Select Workspace..."
+                )
+                
+                if selected_run_label:
+                    selected_run_id = run_options[selected_run_label]
+                    
+                    # Always ensure project_id stays in sync with run_id
+                    current_r = next((r for r in available_runs if r['id'] == selected_run_id), None)
+                    if current_r and 'project_id' in current_r:
+                        st.session_state["active_project_id"] = current_r['project_id']
+                    else:
+                        st.session_state["active_project_id"] = None
 
-                if st.session_state.get("active_run_id") != selected_run_id:
-                    st.session_state["active_run_id"] = selected_run_id
-                    st.rerun()
+                    if st.session_state.get("active_run_id") != selected_run_id:
+                        st.session_state["active_run_id"] = selected_run_id
+                        st.rerun()
+                else:
+                    # Clear session state if selection is empty
+                    if st.session_state.get("active_run_id") is not None:
+                        st.session_state["active_run_id"] = None
+                        st.session_state["active_project_id"] = None
+                        st.rerun()
             else:
                 st.selectbox("Select Workspace / Run", ["No active runs"], disabled=True)
     except requests.exceptions.RequestException:

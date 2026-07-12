@@ -43,7 +43,7 @@ def show_modernization_decision_engine():
 
     run_id = st.session_state.get("active_run_id")
     if not run_id:
-        st.warning("No active analysis run detected. Please start a scan from the Executive Dashboard.")
+        st.warning("No active analysis selected. Select a run from the **side panel** or start a new scan from the **Executive Dashboard**.")
         st.page_link(page_registry.PAGE_DASHBOARD, label="← Go to Executive Dashboard", icon=":material/dashboard:")
         return
 
