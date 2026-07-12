@@ -536,61 +536,55 @@ def show_bounded_contexts():
                     "Internal Calls": c.get("internal_edges", 0),
                     "External Calls": c.get("external_edges", 0),
                     "Coupling Ratio": c.get("coupling_ratio", 0.0),
-                    "DB?":           c.get("is_transactional", False),
-                    "Auth?":         c.get("handles_auth", False),
                 })
             df_ctx = pd.DataFrame(display_rows)
 
-            st.caption("Click any row to drill into its file inventory.")
-            selection = st.dataframe(
+            st.dataframe(
                 df_ctx,
                 use_container_width=True,
                 hide_index=True,
-                on_select="rerun",
-                selection_mode="single-row",
                 column_config={
                     "Coupling Ratio": st.column_config.NumberColumn(format="%.2f"),
-                    "DB?":   st.column_config.CheckboxColumn("DB?"),
-                    "Auth?": st.column_config.CheckboxColumn("Auth?"),
                 }
             )
 
             # ── File Drill-Down Panel ─────────────────────────────────────────
-            selected_rows = selection.selection.get("rows", [])
-            if selected_rows:
-                idx = selected_rows[0]
-                domain = contexts[idx]
-                domain_name  = domain.get("name", "")
-                domain_files = domain.get("files", [])
+            st.markdown("---")
+            
+            domain_names = [c.get("name", "") for c in contexts]
+            selected_domain_name = st.selectbox("👉 Select a Domain to drill into its file inventory", options=domain_names)
+            
+            if selected_domain_name:
+                domain = next((c for c in contexts if c.get("name") == selected_domain_name), None)
+                if domain:
+                    domain_files = domain.get("files", [])
 
-                st.markdown("---")
-                st.markdown(f"### `{domain_name}` File Inventory")
+                    st.markdown(f"### `{selected_domain_name}` File Inventory")
 
-                col_meta1, col_meta2, col_meta3 = st.columns(3)
-                col_meta1.metric("Files in Domain",   domain.get("file_count", 0))
-                col_meta2.metric("Coupling Ratio",    domain.get("coupling_ratio", 0.0))
-                col_meta3.metric("DB Sink",           "Yes" if domain.get("is_transactional") else "No")
+                    col_meta1, col_meta2 = st.columns(2)
+                    col_meta1.metric("Files in Domain",   domain.get("file_count", 0))
+                    col_meta2.metric("Coupling Ratio",    domain.get("coupling_ratio", 0.0))
 
-                if domain_files:
-                    # Search filter
-                    search = st.text_input(
-                        "Filter files",
-                        placeholder="Type to search by filename or path...",
-                        key=f"file_search_{domain_name}",
-                        label_visibility="collapsed"
-                    )
-                    filtered = [f for f in domain_files if search.lower() in f.lower()] if search else domain_files
+                    if domain_files:
+                        # Search filter
+                        search = st.text_input(
+                            "Filter files",
+                            placeholder="Type to search by filename or path...",
+                            key=f"file_search_{selected_domain_name}",
+                            label_visibility="collapsed"
+                        )
+                        filtered = [f for f in domain_files if search.lower() in f.lower()] if search else domain_files
 
-                    st.markdown(
-                        f"**{len(filtered)}** file(s) shown"
-                        + (f" · *filtered from {len(domain_files)}*" if search and len(filtered) != len(domain_files) else "")
-                    )
+                        st.markdown(
+                            f"**{len(filtered)}** file(s) shown"
+                            + (f" · *filtered from {len(domain_files)}*" if search and len(filtered) != len(domain_files) else "")
+                        )
 
-                    # Render as scrollable code block for easy copy
-                    file_list_text = "\n".join(filtered)
-                    st.code(file_list_text, language=None)
-                else:
-                    st.info("No file paths recorded for this domain in the current scan.", icon=":material/info:")
+                        # Render as scrollable code block for easy copy
+                        file_list_text = "\n".join(filtered)
+                        st.code(file_list_text, language=None)
+                    else:
+                        st.info("No file paths recorded for this domain in the current scan.", icon=":material/info:")
             
             st.markdown("---")
             st.markdown("### Domain Extractability Assessment")
@@ -599,43 +593,20 @@ def show_bounded_contexts():
             high_coupling = sorted(contexts, key=lambda x: x["coupling_ratio"], reverse=True)
             most_coupled = high_coupling[0] if high_coupling else None
             
-            isolated_domains = [c for c in contexts if c["coupling_ratio"] <= 0.3 and c["file_count"] > 1]
-            best_candidate = sorted(isolated_domains, key=lambda x: x["file_count"], reverse=True)[0] if isolated_domains else None
-
-            col1, col2 = st.columns(2)
-            with col1:
-                st.markdown("""
-                <div style="background-color: rgba(28,131,225,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
-                    <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Domain Cohesion Insight</h4>
-                    <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Coupling Ratio = External Calls ÷ Internal Calls. A ratio > 1.0 means a domain makes more calls outside itself than within it is not a true bounded context and cannot be extracted as-is without breaking cross-domain dependencies.</span></div>
-                </div>
-                """, unsafe_allow_html=True)
-                st.markdown("**METRIC**: Global Coupling Ratios & Outliers")
-                st.markdown("**INTERPRETATION**: This metric provides an understanding of how well the legacy system's logic is encapsulated. A system with predominantly high-coupling domains typically represents a 'Big Ball of Mud' architecture, whereas lower coupling ratios suggest that the original developers successfully implemented separation of concerns.")
-                
-                highly_coupled = [f"`{c['name']}` ({c['coupling_ratio']})" for c in high_coupling[:3] if c["coupling_ratio"] >= 1.0]
-                ev1 = f"Domains with high inter-dependencies: {', '.join(highly_coupled)}." if highly_coupled else "No domains exceed a 1.0 coupling ratio."
-                ev2 = f"There are {len([c for c in contexts if c['coupling_ratio'] < 0.5])} domains with strong internal cohesion (< 0.5 ratio)."
-                st.markdown(f"**EVIDENCE**: \n1. {ev1}\n2. {ev2}")
-                st.markdown("**RECOMMENDATION**: Use these cohesion insights to map out which areas of the codebase share state. High-coupling areas indicate cross-cutting concerns that should be mapped carefully during the architectural discovery phase.")
-
-            with col2:
-                st.markdown("""
-                <div style="background-color: rgba(33,195,84,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
-                    <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">State & Boundary Distribution</h4>
-                    <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Transactional (DB) and Authentication (Auth) Sinks domains with direct DB access or auth/session management cannot easily operate as independent microservices without owning their own data tier. These domains require a Database-per-Service migration pattern before extraction.</span></div>
-                </div>
-                """, unsafe_allow_html=True)
-                st.markdown("**METRIC**: Transactional (DB) and Authentication (Auth) Sinks")
-                st.markdown("**INTERPRETATION**: Identifying which domains independently touch database layers or session management reveals the functional layout of the system. Domains that manage their own state are naturally closer to operating as independent bounded contexts, whereas centralized state points to a highly monolithic data tier.")
-                
-                db_domains = [f"`{c['name']}`" for c in contexts if c.get("db_access")]
-                auth_domains = [f"`{c['name']}`" for c in contexts if c.get("auth_access")]
-                ev1_db = ", ".join(db_domains[:4]) + ("..." if len(db_domains) > 4 else "") if db_domains else "No direct DB access sinks detected."
-                ev2_auth = ", ".join(auth_domains[:4]) + ("..." if len(auth_domains) > 4 else "") if auth_domains else "No isolated Auth sinks detected."
-                
-                st.markdown(f"**EVIDENCE**: \n1. Domains bypassing abstractions to hit DB sinks: {ev1_db}\n2. Domains interacting directly with auth/session state: {ev2_auth}")
-                st.markdown("**RECOMMENDATION**: Observe whether data persistence is heavily centralized in a single 'Core' domain or distributed across multiple feature domains. This insight will guide your future data-tier modernization strategies.")
+            st.markdown("""
+            <div style="background-color: rgba(28,131,225,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <h4 style="margin: 0; font-size: 1.1rem; color: inherit;">Domain Cohesion Insight</h4>
+                <div class="strata-tooltip-container"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span class="strata-tooltip-text">Coupling Ratio = External Calls ÷ Internal Calls. A ratio > 1.0 means a domain makes more calls outside itself than within it is not a true bounded context and cannot be extracted as-is without breaking cross-domain dependencies.</span></div>
+            </div>
+            """, unsafe_allow_html=True)
+            st.markdown("**METRIC**: Global Coupling Ratios & Outliers")
+            st.markdown("**INTERPRETATION**: This metric provides an understanding of how well the legacy system's logic is encapsulated. A system with predominantly high-coupling domains typically represents a 'Big Ball of Mud' architecture, whereas lower coupling ratios suggest that the original developers successfully implemented separation of concerns.")
+            
+            highly_coupled = [f"`{c['name']}` ({c['coupling_ratio']})" for c in high_coupling[:3] if c["coupling_ratio"] >= 1.0]
+            ev1 = f"Domains with high inter-dependencies: {', '.join(highly_coupled)}." if highly_coupled else "No domains exceed a 1.0 coupling ratio."
+            ev2 = f"There are {len([c for c in contexts if c['coupling_ratio'] < 0.5])} domains with strong internal cohesion (< 0.5 ratio)."
+            st.markdown(f"**EVIDENCE**: \n1. {ev1}\n2. {ev2}")
+            st.markdown("**RECOMMENDATION**: Use these cohesion insights to map out which areas of the codebase share state. High-coupling areas indicate cross-cutting concerns that should be mapped carefully during the architectural discovery phase.")
                     
         else:
             st.info("Insufficient signals to infer contexts.")
