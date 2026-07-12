@@ -59,6 +59,26 @@ st.markdown("""
         visibility: visible;
         opacity: 1;
     }
+    
+    /* --- Sidebar UX Refinements --- */
+    /* 1. Fix gaps around dividers */
+    [data-testid="stSidebar"] hr {
+        margin-top: 1.5rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    /* 2. Borderless accordions */
+    [data-testid="stSidebar"] details {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+    
+    /* 3. Bold, slightly larger group titles */
+    [data-testid="stSidebar"] summary p {
+        font-size: 1.05rem !important;
+        font-weight: 700 !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
