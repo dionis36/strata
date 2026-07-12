@@ -218,6 +218,7 @@ class AnalysisRunSchema(BaseModel):
     total_classes: int
     total_edges: int
     error_message: Optional[str] = None
+    risk_score: Optional[float] = 0.0
 
 class GraphvizResponse(BaseModel):
     dot: str
@@ -772,9 +773,14 @@ def get_extraction(run_id: int, db: Session = Depends(get_db)):
          summary="List all analysis runs")
 def list_runs(db: Session = Depends(get_db)):
     """Returns a history of all analysis attempts with high-level file and class counts."""
-    from infrastructure.persistence.models import AnalysisRun
+    from infrastructure.persistence.models import AnalysisRun, LegacyMetrics
     try:
         runs = db.query(AnalysisRun).order_by(AnalysisRun.id.desc()).all()
+        
+        # Fetch legacy metrics for risk score
+        legacies = db.query(LegacyMetrics).all()
+        risk_map = {l.run_id: (l.total_modernization_score if l.total_modernization_score else 0.0) for l in legacies}
+        
         return [
             {
                 "id": r.id,
@@ -788,7 +794,8 @@ def list_runs(db: Session = Depends(get_db)):
                 "avg_maintainability": r.avg_maintainability or 0.0,
                 "total_classes": r.total_classes or 0,
                 "total_edges": r.total_edges or 0,
-                "error_message": r.error_message
+                "error_message": r.error_message,
+                "risk_score": risk_map.get(r.id, 0.0)
             }
             for r in runs
         ]

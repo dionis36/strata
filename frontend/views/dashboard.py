@@ -32,10 +32,10 @@ def show_dashboard():
             score = run.get("risk_score", 0)
             st.markdown(f"""
                 <div style="text-align: center; background: var(--secondary-background-color); padding: 20px; border-radius: 12px; border: 1px solid rgba(128, 128, 128, 0.2);">
-                    <h2 style="margin:0; color: var(--primary-color);">{round(score, 1)}%</h2>
+                    <h2 style="margin:0; color: #1c83e1;">{round(score, 1)}%</h2>
                     <p style="color: var(--text-color); opacity: 0.8; font-size: 0.9rem;">Modernization Readiness</p>
                     <div style="background: rgba(128, 128, 128, 0.2); height: 8px; border-radius: 4px; margin-top: 10px;">
-                        <div style="background: var(--primary-color); width: {score}%; height: 100%; border-radius: 4px;"></div>
+                        <div style="background: #1c83e1; width: {score}%; height: 100%; border-radius: 4px;"></div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)

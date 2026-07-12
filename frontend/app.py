@@ -75,12 +75,14 @@ from views.extraction_simulator import show_extraction_simulator
 from views.decision_engine import show_modernization_decision_engine
 from views.boundary_intelligence import show_boundary_intelligence
 from views.report_viewer import show_report_viewer
+from views.run_comparison import show_run_comparison
 from views import page_registry
 
 # Named Page objects for pages that are cross-referenced by in-page navigation
 # buttons. Populated into page_registry so view files can import the exact same
 # registered object - avoids the st.switch_page(st.Page(...)) anti-pattern.
 _page_dashboard = st.Page(show_dashboard, title="Executive Dashboard", icon=":material/dashboard:")
+_page_run_comparison = st.Page(show_run_comparison, title="Run Comparison", icon=":material/compare_arrows:")
 _page_monolith_navigator = st.Page(show_monolith_navigator, title="System Structure", icon=":material/hub:")
 _page_system_topology = st.Page(show_system_topology, title="System Topology", icon=":material/account_tree:")
 _page_bounded_contexts = st.Page(show_bounded_contexts, title="Bounded Contexts", icon=":material/group_work:")
@@ -100,11 +102,13 @@ page_registry.PAGE_DASHBOARD = _page_dashboard
 page_registry.PAGE_RISK_AUDIT = _page_risk_audit
 page_registry.PAGE_BOUNDARY_INTELLIGENCE = _page_boundary_intelligence
 page_registry.PAGE_REPORT_VIEWER = _page_report_viewer
+page_registry.PAGE_RUN_COMPARISON = _page_run_comparison
 
 # Modern Streamlit Navigation (v1.31+)
 pages = {
     "Command Center": [
         _page_dashboard,
+        _page_run_comparison,
     ],
     "Architectural Discovery": [
         _page_monolith_navigator,
