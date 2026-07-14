@@ -178,9 +178,12 @@ class SecurityRiskService:
                     "Cyclomatic Complexity": cc,
                     "Max Nesting Depth": nesting,
                     "Max Method LOC": max_method_loc,
-                    "Fan-Out": fan_out,
+                    "Runtime Blast Radius (Out-Degree)": fan_out,
                     "Security Sinks": file_sinks,
                     "Global Accesses": global_usage,
+                    "Halstead Effort": round(n.get("halstead_effort", 0.0) or 0.0, 1),
+                    "PageRank": round(n.get("pagerank", 0.0) or 0.0, 4),
+                    "LLOC": n.get("lloc", 0),
                     # Phase 9: Semantic Data
                     "Domain Archetype": n.get("domain_archetype", "UNKNOWN"),
                     "Semantic Multiplier": n.get("semantic_multiplier", 1.0),

@@ -121,7 +121,13 @@ class AnalysisService:
                 
             total_files = len(files)
             total_classes = graph.get_class_count()
-            total_methods = graph.get_method_count()
+            
+            total_methods = 0
+            for node in nodes:
+                if getattr(node, "node_type", None) == NodeType.CLASS:
+                    methods = getattr(node, "metadata", {}).get("methods", [])
+                    total_methods += len(methods)
+                    
             total_functions = graph.get_function_count()
             total_namespaces = graph.get_namespace_count()
             total_edges = graph.get_edge_count()
@@ -131,17 +137,6 @@ class AnalysisService:
             total_complexity = sum(m["complexity"] for m in file_metrics.values())
             avg_complexity = total_complexity / total_files if total_files > 0 else 0
             
-            # Heuristic Maintainability Index (MI)
-            # Higher is better. Based on LOC and Complexity density.
-            import math
-            def calc_mi(loc, comp):
-                if loc <= 0: return 100
-                # Basic logarithmic penalty for scale and linear penalty for complexity
-                score = 171 - (0.23 * comp) - (16.2 * math.log(loc))
-                return max(0, min(100, (score * 100 / 171)))
-            
-            avg_mi = sum(calc_mi(m["loc"], m["complexity"]) for m in file_metrics.values()) / total_files if total_files > 0 else 100
-
             # Phase 8: Extract Test Coverage
             from domain.extraction.coverage_parser import CoverageParser
             coverage_map = CoverageParser.parse(project_path)
@@ -154,6 +149,10 @@ class AnalysisService:
             projected = MetricCalculator.project(graph.graph, edge_types=STRUCTURAL_EDGES)
             calculator = MetricCalculator(projected)
             metrics_matrix = calculator.calculate_all_metrics(coverage_map=coverage_map)
+            
+            # Accurate Maintainability Index (MI)
+            mi_values = [m.get("maintainability_index", 100.0) for m in metrics_matrix.values() if "maintainability_index" in m]
+            avg_mi = sum(mi_values) / len(mi_values) if mi_values else 100.0
 
             # 5. Persist
             node_types = {n: data.get('type', 'class') for n, data in graph.graph.nodes(data=True)}

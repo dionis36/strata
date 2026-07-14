@@ -21,7 +21,10 @@ def show_risk_audit():
         * **Cyclomatic Complexity (CC)**: The count of distinct logical branches (if, else, loops). A CC over 15 indicates a module that is extremely difficult to test and risky to modify.
         * **Max Nesting Depth**: How deeply logic is indented. Deep nesting (e.g., > 4) exponentially increases developer cognitive load.
         * **Max Method LOC**: The Lines of Code in the single largest function. Massive functions hide business logic and block independent extraction.
-        * **Fan-Out**: The number of external modules this file depends on. High fan-out equals high coupling-you cannot easily extract this file without breaking things.
+        * **Runtime Blast Radius (Out-Degree)**: The number of external modules this file directly depends on. High out-degree means high coupling.
+        * **Halstead Effort**: Bug prediction calculation measuring mental effort required to maintain code.
+        * **PageRank**: Network centrality. Highlights 'God Classes' that serve as the architectural backbone.
+        * **LLOC**: Logical Lines of Code, strictly ignoring whitespace and comments.
         * **Security Sinks**: Dangerous execution vectors (e.g., `eval`, raw SQL, dynamic includes) found in the AST. 
         * **Global Accesses**: Reliance on global runtime state. This explicitly prevents safe containerization and makes unit testing impossible without heavy mocking.
         """)
@@ -124,7 +127,7 @@ def show_risk_audit():
             
             st.markdown("##### Detailed Complexity Metrics")
             st.dataframe(
-                df_matrix[["File Name", "Cyclomatic Complexity", "Max Nesting Depth", "Max Method LOC", "Fan-Out", "Global Accesses"]],
+                df_matrix[["File Name", "Cyclomatic Complexity", "Max Nesting Depth", "Max Method LOC", "Runtime Blast Radius (Out-Degree)", "Global Accesses", "Halstead Effort", "PageRank", "LLOC"]],
                 hide_index=True,
                 use_container_width=True,
                 column_config={
@@ -132,8 +135,11 @@ def show_risk_audit():
                     "Cyclomatic Complexity": st.column_config.NumberColumn("Cyclomatic Complexity", help="Count of distinct logical branches (if, else, loops, catches). CC > 15 means the file is extremely difficult to test and risky to modify safely."),
                     "Max Nesting Depth": st.column_config.NumberColumn("Nesting Depth", help="Max depth of nested loops and conditionals. Depth > 4 exponentially increases cognitive load and makes logic nearly impossible to trace without a debugger."),
                     "Max Method LOC": st.column_config.NumberColumn("Method LOC", help="Lines of Code in the single largest method or function. Massive methods hide multiple responsibilities each is a refactoring and testing blocker."),
-                    "Fan-Out": st.column_config.NumberColumn("Fan-Out", help="The number of external files or modules this file directly depends on. High fan-out means this file cannot be moved or extracted without also moving everything it depends on."),
-                    "Global Accesses": st.column_config.NumberColumn("Global Accesses", help="How many times this file reads from PHP superglobals or global scope. A direct measure of hidden runtime coupling prevents safe unit testing or containerization.")
+                    "Runtime Blast Radius (Out-Degree)": st.column_config.NumberColumn("Runtime Blast Radius (Out-Degree)", help="The number of external files or modules this file directly depends on. High blast radius means this file cannot be moved or extracted without also moving everything it depends on."),
+                    "Global Accesses": st.column_config.NumberColumn("Global Accesses", help="How many times this file reads from PHP superglobals or global scope. A direct measure of hidden runtime coupling prevents safe unit testing or containerization."),
+                    "Halstead Effort": st.column_config.NumberColumn("Halstead Effort", help="Bug prediction metric."),
+                    "PageRank": st.column_config.NumberColumn("PageRank", format="%.4f", help="Network centrality score identifying structural 'God Classes'."),
+                    "LLOC": st.column_config.NumberColumn("LLOC", help="Logical Lines of Code")
                 }
             )
         else:

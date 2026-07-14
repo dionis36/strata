@@ -55,7 +55,7 @@ class AIAdvisoryService:
         hotspots_str = ""
         if hotspots:
             hotspots_str = "\n".join([
-                f"- File '{h['file_path']}': Risk Score: {h['risk_score']:.1f}/100, WMC (Complexity): {h['wmc']}, LCOM (Lack of Cohesion): {h['lcom']:.2f}, Instability: {h['instability']:.2f}, Test Coverage: {h['coverage']*100:.1f}%, DB Write Intensity: {h['write_intensity']:.2f}."
+                f"- File '{h.get('file_path', h.get('component_name', 'Unknown'))}': Risk Score: {h.get('risk_score', 0):.1f}/100, WMC (Complexity): {h.get('wmc', 0)}, LCOM (Lack of Cohesion): {h.get('lcom', 0):.2f}, Instability: {h.get('instability', 0):.2f}, Halstead Effort: {h.get('halstead_effort', 0):.1f}, PageRank: {h.get('pagerank', 0):.4f}, DB Write Intensity: {h.get('write_intensity', 0):.2f}."
                 for hr, h in zip(range(len(hotspots)), hotspots)
             ])
         else:

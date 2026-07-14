@@ -74,6 +74,9 @@ class RiskService:
                 "lcom":            row.lcom,
                 "wmc":             row.wmc,
                 "test_coverage":   row.test_coverage,
+                "halstead_effort": row.halstead_effort,
+                "pagerank":        row.pagerank,
+                "lloc":            row.lloc,
             })
 
 
@@ -153,6 +156,9 @@ class RiskService:
                 "wmc":               metric.get("wmc", 0),
                 "test_coverage":     test_coverage,
                 "semantic_multiplier": semantic_multiplier,
+                "halstead_effort":   metric.get("halstead_effort"),
+                "pagerank":          metric.get("pagerank"),
+                "lloc":              metric.get("lloc"),
                 # Risk output
                 "risk_score":        risk_score,
                 "risk_level":        risk_level,
