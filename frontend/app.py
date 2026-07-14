@@ -79,6 +79,11 @@ st.markdown("""
         font-size: 1.05rem !important;
         font-weight: 700 !important;
     }
+    
+    /* 4. Hide native expander toggle arrows in the sidebar */
+    [data-testid="stSidebar"] div[data-testid="stExpander"] summary svg {
+        display: none !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 

@@ -14,7 +14,11 @@ def render_markdown_with_mermaid(content: str):
     for i, part in enumerate(parts):
         if i % 2 == 0:
             if part.strip():
-                st.markdown(part, unsafe_allow_html=True)
+                # CHUNKING THE RENDER: Split massive markdown blocks by headers to prevent UI freezing
+                chunks = re.split(r'(?m)^(?=## )', part)
+                for chunk in chunks:
+                    if chunk.strip():
+                        st.markdown(chunk.strip(), unsafe_allow_html=True)
         else:
             code = part.strip()
             # Escape code for JS injection
