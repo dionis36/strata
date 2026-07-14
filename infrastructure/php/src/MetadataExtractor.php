@@ -87,31 +87,77 @@ class MetadataExtractor extends NodeVisitorAbstract
 
     public function enterNode(Node $node)
     {
-        // --- Cyclomatic Complexity Heuristic ---
+        // --- Halstead Bug Prediction Metrics ---
+        $nodeType = $node->getType();
+        
+        // Halstead Operators
+        if (strpos($nodeType, 'Expr_BinaryOp_') === 0 || 
+            strpos($nodeType, 'Expr_Assign') === 0 || 
+            strpos($nodeType, 'Expr_Cast_') === 0 ||
+            strpos($nodeType, 'Stmt_') === 0) {
+            if ($this->currentClass) {
+                if (!isset($this->metadata['classes'][$this->currentClass]['halstead'])) {
+                    $this->metadata['classes'][$this->currentClass]['halstead'] = ['operators' => [], 'operands' => []];
+                }
+                $this->metadata['classes'][$this->currentClass]['halstead']['operators'][] = $nodeType;
+            }
+        }
+        
+        // Halstead Operands
+        if ($node instanceof Node\Expr\Variable && is_string($node->name)) {
+            if ($this->currentClass) {
+                if (!isset($this->metadata['classes'][$this->currentClass]['halstead'])) {
+                    $this->metadata['classes'][$this->currentClass]['halstead'] = ['operators' => [], 'operands' => []];
+                }
+                $this->metadata['classes'][$this->currentClass]['halstead']['operands'][] = '$' . $node->name;
+            }
+        } elseif ($node instanceof Node\Scalar\String_) {
+            if ($this->currentClass) {
+                if (!isset($this->metadata['classes'][$this->currentClass]['halstead'])) {
+                    $this->metadata['classes'][$this->currentClass]['halstead'] = ['operators' => [], 'operands' => []];
+                }
+                $this->metadata['classes'][$this->currentClass]['halstead']['operands'][] = '"' . $node->value . '"';
+            }
+        } elseif ($node instanceof Node\Scalar\LNumber || $node instanceof Node\Scalar\DNumber) {
+            if ($this->currentClass) {
+                if (!isset($this->metadata['classes'][$this->currentClass]['halstead'])) {
+                    $this->metadata['classes'][$this->currentClass]['halstead'] = ['operators' => [], 'operands' => []];
+                }
+                $this->metadata['classes'][$this->currentClass]['halstead']['operands'][] = (string)$node->value;
+            }
+        } elseif ($node instanceof Node\Expr\ConstFetch || $node instanceof Node\Expr\ClassConstFetch) {
+            if ($this->currentClass) {
+                if (!isset($this->metadata['classes'][$this->currentClass]['halstead'])) {
+                    $this->metadata['classes'][$this->currentClass]['halstead'] = ['operators' => [], 'operands' => []];
+                }
+                $name = $node instanceof Node\Expr\ConstFetch ? (string)$node->name : (string)$node->name;
+                $this->metadata['classes'][$this->currentClass]['halstead']['operands'][] = $name;
+            }
+        }
+
+        // --- Strict McCabe Cyclomatic Complexity ---
         if ($node instanceof Node\Stmt\If_ || 
+            $node instanceof Node\Stmt\ElseIf_ || 
             $node instanceof Node\Stmt\For_ || 
             $node instanceof Node\Stmt\Foreach_ || 
             $node instanceof Node\Stmt\While_ || 
             $node instanceof Node\Stmt\Do_ || 
             $node instanceof Node\Stmt\Catch_ || 
+            $node instanceof Node\Stmt\Case_ ||
             $node instanceof Node\Expr\BinaryOp\BooleanAnd || 
             $node instanceof Node\Expr\BinaryOp\BooleanOr || 
-            $node instanceof Node\Expr\Ternary ||
-            $node instanceof Node\Stmt\Case_) {
+            $node instanceof Node\Expr\BinaryOp\LogicalAnd ||
+            $node instanceof Node\Expr\BinaryOp\LogicalOr ||
+            $node instanceof Node\Expr\BinaryOp\Coalesce ||
+            $node instanceof Node\Expr\Ternary) {
             $this->metadata['complexity']++;
             
             if ($this->currentClass) {
-                if (!isset($this->metadata['classes'][$this->currentClass]['wmc'])) {
-                    $this->metadata['classes'][$this->currentClass]['wmc'] = 0;
-                }
                 $this->metadata['classes'][$this->currentClass]['wmc']++;
                 
                 if ($this->currentMethod) {
                     $methodIndex = count($this->metadata['classes'][$this->currentClass]['methods']) - 1;
                     if ($methodIndex >= 0) {
-                        if (!isset($this->metadata['classes'][$this->currentClass]['methods'][$methodIndex]['complexity'])) {
-                            $this->metadata['classes'][$this->currentClass]['methods'][$methodIndex]['complexity'] = 1;
-                        }
                         $this->metadata['classes'][$this->currentClass]['methods'][$methodIndex]['complexity']++;
                     }
                 }
@@ -238,6 +284,8 @@ class MetadataExtractor extends NodeVisitorAbstract
                 'accessed_properties' => [],
                 'globals' => []
             ];
+
+            $this->metadata['classes'][$this->currentClass]['wmc']++;
 
             if ($methodName === '__construct') {
                 foreach ($node->params as $param) {
@@ -776,6 +824,28 @@ class MetadataExtractor extends NodeVisitorAbstract
             $this->currentNamespace = null;
         }
         if ($node instanceof Class_) {
+            $operators = $this->metadata['classes'][$this->currentClass]['halstead']['operators'] ?? [];
+            $operands = $this->metadata['classes'][$this->currentClass]['halstead']['operands'] ?? [];
+            
+            $N1 = count($operators);
+            $N2 = count($operands);
+            $n1 = count(array_unique($operators));
+            $n2 = count(array_unique($operands));
+            
+            $V = 0; $E = 0;
+            if ($n1 + $n2 > 0) {
+                $V = ($N1 + $N2) * log($n1 + $n2, 2);
+            }
+            if ($n2 > 0) {
+                $D = ($n1 / 2) * ($N2 / $n2);
+                $E = $D * $V;
+            }
+            
+            $this->metadata['classes'][$this->currentClass]['halstead_volume'] = $V;
+            $this->metadata['classes'][$this->currentClass]['halstead_effort'] = $E;
+            
+            unset($this->metadata['classes'][$this->currentClass]['halstead']);
+
             $this->currentClass = null;
         }
         if ($node instanceof ClassMethod) {

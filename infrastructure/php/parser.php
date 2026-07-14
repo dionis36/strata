@@ -42,6 +42,26 @@ while ($path = fgets(STDIN)) {
         $code = preg_replace('/(\$[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*)\{(\d+)\}/', '$1[$2]', $code);
 
         $loc = substr_count($code, "\n") + 1;
+        
+        // ── Calculate Logical Lines of Code (LLOC) ─────────────────────────────
+        $lloc = 0;
+        $tokens = token_get_all($code);
+        $logicalLines = [];
+        $currentLine = 1;
+        foreach ($tokens as $token) {
+            if (is_array($token)) {
+                $id = $token[0];
+                $text = $token[1];
+                if ($id !== T_COMMENT && $id !== T_DOC_COMMENT && $id !== T_WHITESPACE) {
+                    $logicalLines[$currentLine] = true;
+                }
+                $currentLine += substr_count($text, "\n");
+            } else {
+                $logicalLines[$currentLine] = true;
+                $currentLine += substr_count($token, "\n");
+            }
+        }
+        $lloc = count($logicalLines);
         $stmts = $parser->parse($code);
 
         if ($stmts === null) {
@@ -63,6 +83,7 @@ while ($path = fgets(STDIN)) {
 
         $metadata = $extractor->metadata;
         $metadata['loc'] = $loc;
+        $metadata['lloc'] = $lloc;
 
         echo json_encode([
             'status'   => 'success',
