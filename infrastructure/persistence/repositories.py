@@ -77,6 +77,7 @@ class AnalysisRunRepository:
             run.avg_complexity = metrics.get('avg_complexity')
             run.avg_maintainability = metrics.get('avg_maintainability')
             run.total_classes = metrics.get('total_classes')
+            run.total_methods = metrics.get('total_methods')
             run.total_edges = metrics.get('total_edges')
             self.db.commit()
             self.db.refresh(run)

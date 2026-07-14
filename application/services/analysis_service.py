@@ -122,11 +122,7 @@ class AnalysisService:
             total_files = len(files)
             total_classes = graph.get_class_count()
             
-            total_methods = 0
-            for node in nodes:
-                if getattr(node, "node_type", None) == NodeType.CLASS:
-                    methods = getattr(node, "metadata", {}).get("methods", [])
-                    total_methods += len(methods)
+            total_methods = sum(1 for node in nodes if getattr(node, "node_type", None) == NodeType.METHOD)
                     
             total_functions = graph.get_function_count()
             total_namespaces = graph.get_namespace_count()

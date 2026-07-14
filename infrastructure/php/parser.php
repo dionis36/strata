@@ -8,14 +8,14 @@ use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use Strata\Parser\MetadataExtractor;
 
+use PhpParser\ErrorHandler\Collecting;
+
 // ── Parser Initialisation ────────────────────────────────────────────────────
-// We target PHP 7.4 via the Emulative lexer.  This gives us:
-//   • Full PHP 7.x syntax support
-//   • Emulation of deprecated PHP 5/7 constructs (e.g. short-open-tags after
-//     our pre-processor normalises them, curly-brace string indices, etc.)
-//   • Widest compatibility with legacy PHP 5-era monolith code without
-//     needing a second PHP 5 parser binary.
-$parser = (new ParserFactory())->createForVersion(PhpVersion::fromString('7.4'));
+// MULTI-PASS ARCHITECTURE: We instantiate two parsers. 
+// 1. Modern (PHP 8.2): For strict validation of modern syntax.
+// 2. Legacy (PHP 5.6): For fallback parsing of procedural PHP 4/5 files (e.g. 'var $x').
+$modernParser = (new ParserFactory())->createForVersion(PhpVersion::fromString('8.2'));
+$legacyParser = (new ParserFactory())->createForVersion(PhpVersion::fromString('5.6'));
 
 while ($path = fgets(STDIN)) {
     $path = trim($path);
@@ -62,13 +62,29 @@ while ($path = fgets(STDIN)) {
             }
         }
         $lloc = count($logicalLines);
-        $stmts = $parser->parse($code);
+        // ── AST Extraction (Multi-Pass & Error Recovery) ──────────────────────
+        $errorHandler = new Collecting();
+        
+        try {
+            $stmts = $modernParser->parse($code, $errorHandler);
+            if ($stmts === null) {
+                throw new PhpParser\Error("Modern parser returned null");
+            }
+        } catch (PhpParser\Error $e) {
+            // PASS 2: Legacy Fallback
+            $errorHandler = new Collecting();
+            try {
+                $stmts = $legacyParser->parse($code, $errorHandler);
+            } catch (PhpParser\Error $e2) {
+                $stmts = null;
+            }
+        }
 
         if ($stmts === null) {
             echo json_encode([
                 'status'  => 'error',
                 'path'    => $path,
-                'message' => 'Parser returned null (empty file or unrecoverable error)',
+                'message' => 'Parser returned null after multi-pass fallback (unrecoverable error)',
             ]) . "\n";
             continue;
         }
