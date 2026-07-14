@@ -85,6 +85,11 @@ class ComponentMetric(Base):
     lcom = Column(Float, default=0.0)
     wmc = Column(Integer, default=0)
     
+    # Phase 6: Deep Intelligence
+    halstead_effort = Column(Float, nullable=True)
+    pagerank = Column(Float, nullable=True)
+    lloc = Column(Integer, nullable=True)
+    
     # Phase 8: Test Coverage Awareness
     test_coverage = Column(Float, nullable=True)
     
@@ -136,6 +141,11 @@ class ComponentRisk(Base):
     lcom = Column(Float, default=0.0)
     wmc = Column(Integer, default=0)
     semantic_multiplier = Column(Float, default=1.0)
+    
+    # Deep Intelligence (Phase 6)
+    halstead_effort = Column(Float, nullable=True)
+    pagerank = Column(Float, nullable=True)
+    lloc = Column(Integer, nullable=True)
     
     # Phase 8: Test Coverage Awareness
     test_coverage = Column(Float, nullable=True)

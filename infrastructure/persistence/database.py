@@ -68,9 +68,21 @@ def init_db() -> None:
                         for col in ("ai_executive_summary_json", "ai_findings_json", "ai_rector_config_json"):
                             if col not in existing_cols:
                                 cur.execute(f"ALTER TABLE analysis_run ADD COLUMN {col} TEXT")
+                                
+                        # New Deep Intelligence Metrics (Phase 6)
+                        for table_name in ("component_metrics", "component_risk"):
+                            cur.execute(f"PRAGMA table_info('{table_name}')")
+                            existing_tbl_cols = [row[1] for row in cur.fetchall()]
+                            if "halstead_effort" not in existing_tbl_cols:
+                                cur.execute(f"ALTER TABLE {table_name} ADD COLUMN halstead_effort REAL")
+                            if "pagerank" not in existing_tbl_cols:
+                                cur.execute(f"ALTER TABLE {table_name} ADD COLUMN pagerank REAL")
+                            if "lloc" not in existing_tbl_cols:
+                                cur.execute(f"ALTER TABLE {table_name} ADD COLUMN lloc INTEGER")
+                                
                         conn_sql.commit()
                         conn_sql.close()
-                        logger.info("Ensured AI columns present in analysis_run table")
+                        logger.info("Ensured AI and Deep Intelligence columns are present in DB")
                     except Exception as e:
                         logger.error(f"Failed to ensure AI columns in sqlite DB: {e}")
         except Exception:
