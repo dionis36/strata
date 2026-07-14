@@ -1,3 +1,4 @@
+import math
 import networkx as nx
 from typing import Dict, Any, List, Optional
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
@@ -105,6 +106,9 @@ class MetricCalculator:
         else:
             betweenness = {n: -1.0 for n in nodes}  # Signal: skipped
             closeness = {n: -1.0 for n in nodes}    # Signal: skipped
+            
+        # PageRank handles larger graphs efficiently
+        pagerank = nx.pagerank(self.graph, alpha=0.85, max_iter=100)
 
         # 3. SCC Clusters
         sccs = list(nx.strongly_connected_components(self.graph))
@@ -131,6 +135,7 @@ class MetricCalculator:
             metrics_store[node]['weighted_out'] = weighted_out.get(node, 0)
             metrics_store[node]['betweenness'] = betweenness.get(node, 0.0)
             metrics_store[node]['closeness'] = closeness.get(node, 0.0)
+            metrics_store[node]['pagerank'] = pagerank.get(node, 0.0)
             metrics_store[node]['scc_id'] = scc_map[node]['id']
             metrics_store[node]['scc_size'] = scc_map[node]['size']
             metrics_store[node]['fan_in_ratio'] = in_degrees.get(node, 0) / self.total_nodes
@@ -145,6 +150,15 @@ class MetricCalculator:
             properties = metadata.get('properties', [])
             methods = metadata.get('methods', [])
             doc_comment = metadata.get('doc_comment', '')
+            halstead_effort = metadata.get('halstead_effort', 0.0)
+            halstead_volume = metadata.get('halstead_volume', 0.0)
+            lloc = metadata.get('lloc', node_data.get('loc', 1))
+            
+            # Microsoft MI Formula (Normalized 0-100)
+            ln_v = math.log(halstead_volume) if halstead_volume > 0 else 0
+            ln_l = math.log(lloc) if lloc > 0 else 0
+            raw_mi = 171 - 5.2 * ln_v - 0.23 * wmc - 16.2 * ln_l
+            normalized_mi = max(0.0, (raw_mi * 100) / 171.0)
             
             is_stateful = False
             for prop in properties:
@@ -199,5 +213,8 @@ class MetricCalculator:
             metrics_store[node]['wmc'] = int(wmc)
             metrics_store[node]['domain_archetype'] = domain_archetype
             metrics_store[node]['test_coverage'] = test_coverage
+            metrics_store[node]['halstead_effort'] = halstead_effort
+            metrics_store[node]['maintainability_index'] = normalized_mi
+            metrics_store[node]['lloc'] = lloc
 
         return metrics_store
