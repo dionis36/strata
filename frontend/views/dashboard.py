@@ -11,11 +11,11 @@ def show_dashboard():
     st.markdown("---")
 
     # ── Context is managed globally in app.py ──
-    project_id = st.session_state.get("active_project_id")
+    run_id = st.session_state.get("active_run_id")
     dashboard_data = None
-    if project_id:
+    if run_id:
         try:
-            dash_res = requests.get(f"{FASTAPI_URL}/dashboard/{project_id}", timeout=5)
+            dash_res = requests.get(f"{FASTAPI_URL}/dashboard/run/{run_id}", timeout=5)
             if dash_res.status_code == 200:
                 dashboard_data = dash_res.json()
         except Exception:

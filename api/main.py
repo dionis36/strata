@@ -1001,43 +1001,25 @@ def get_roadmap(run_id: int, db: Session = Depends(get_db)):
 
 
 
-@app.get("/dashboard/{project_id}", response_model=DashboardResponse, tags=["Reporting & Visuals"], summary="Executive Dashboard data")
-def get_dashboard(project_id: int, db: Session = Depends(get_db)):
-    """Requirement 4.A: Returns consolidated metrics and risk scores for the Project Dashboard."""
+@app.get("/dashboard/run/{run_id}", response_model=DashboardResponse, tags=["Reporting & Visuals"], summary="Executive Dashboard data")
+def get_dashboard(run_id: int, db: Session = Depends(get_db)):
+    """Requirement 4.A: Returns consolidated metrics and risk scores for the Project Dashboard based on the selected run."""
     from infrastructure.persistence.models import Project, AnalysisRun, LegacyMetrics
     try:
-        project = db.query(Project).filter(Project.id == project_id).first()
+        run = db.query(AnalysisRun).filter(AnalysisRun.id == run_id).first()
+        if not run:
+            raise HTTPException(status_code=404, detail="Run not found")
+            
+        project = db.query(Project).filter(Project.id == run.project_id).first()
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
-        
-        latest_run = (
-            db.query(AnalysisRun)
-            .filter(AnalysisRun.project_id == project_id, AnalysisRun.status.in_([
-                "completed", "analysis_complete", "intelligence_ready", "intelligence_failed", 
-                "synthesizing_findings", "synthesizing_summary", "synthesizing_rector"
-            ]))
-            .order_by(AnalysisRun.id.desc())
-            .first()
-        )
-        
-        if not latest_run:
-            return {
-                "project": {
-                    "name": project.name,
-                    "root_path": project.root_path,
-                    "ingest_type": getattr(project, "ingest_type", "local"),
-                    "repo_url": getattr(project, "repo_url", None),
-                    "created_at": project.created_at.isoformat()
-                },
-                "latest_run": None
-            }
             
-        legacy = db.query(LegacyMetrics).filter(LegacyMetrics.run_id == latest_run.id).first()
+        legacy = db.query(LegacyMetrics).filter(LegacyMetrics.run_id == run.id).first()
         
         from infrastructure.persistence.models import ComponentMetric
         from sqlalchemy.sql import func
         avg_coverage_result = db.query(func.avg(ComponentMetric.test_coverage)).filter(
-            ComponentMetric.run_id == latest_run.id,
+            ComponentMetric.run_id == run.id,
             ComponentMetric.test_coverage.isnot(None)
         ).scalar()
         global_coverage = float(avg_coverage_result) if avg_coverage_result is not None else None
@@ -1051,19 +1033,19 @@ def get_dashboard(project_id: int, db: Session = Depends(get_db)):
                 "created_at": project.created_at.isoformat()
             },
             "latest_run": {
-                "id": latest_run.id,
-                "completed_at": latest_run.completed_at.isoformat(),
-                "total_files": latest_run.total_files,
-                "total_loc": latest_run.total_loc,
-                "avg_complexity": latest_run.avg_complexity,
-                "avg_maintainability": latest_run.avg_maintainability,
-                "total_classes": latest_run.total_classes,
-                "total_edges": latest_run.total_edges,
+                "id": run.id,
+                "completed_at": run.completed_at.isoformat() if run.completed_at else None,
+                "total_files": run.total_files,
+                "total_loc": run.total_loc,
+                "avg_complexity": run.avg_complexity,
+                "avg_maintainability": run.avg_maintainability,
+                "total_classes": run.total_classes,
+                "total_edges": run.total_edges,
                 "risk_score": legacy.total_modernization_score if legacy else 0.0,
                 "php_era": legacy.php_era if legacy else "Unknown",
                 "framework": legacy.detected_framework if legacy else "Unknown",
                 "test_coverage": global_coverage,
-                "status": latest_run.status
+                "status": run.status
             }
         }
     except Exception as e:
