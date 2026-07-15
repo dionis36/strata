@@ -414,20 +414,131 @@ def show_extraction_simulator():
                         
                     custom_css = """
                     <style>
-                        body { margin: 0 !important; padding: 0 !important; background-color: #0e1117 !important; }
-                        #mynetwork { 
-                            border: 1px solid #1e2430 !important; 
-                            border-radius: 12px !important; 
-                            box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
+                        html, body {
+                            margin: 0 !important;
+                            padding: 0 !important;
                             background-color: #0e1117 !important;
+                            overflow: hidden !important;
+                        }
+                        center, h1 {
+                            display: none !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                        }
+                        .card {
+                            border: none !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            background-color: transparent !important;
+                        }
+                        .card-body {
+                            padding: 0 !important;
+                        }
+                        #mynetwork {
+                            background-color: #0e1117 !important;
+                            border: 1px solid #2d3748 !important;
+                            border-radius: 8px !important;
+                            box-sizing: border-box !important;
                         }
                         #loadingBar { display: none !important; }
                     </style>
                     """
-                    html_g = html_g.replace("</head>", custom_css + "</head>")
+                    
+                    icon_css = '<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">'
+                    html_g = html_g.replace("</head>", icon_css + custom_css + "</head>")
                     html_g = html_g.replace('border: 1px solid lightgray;', 'border: none;')
+
+                    ui_controls = """
+                    <div style="position: absolute; top: 15px; right: 15px; z-index: 9999; display: flex; gap: 8px;">
+                        <button id="theme-btn" style="background: rgba(30, 36, 48, 0.8); border: 1px solid #4a5568; color: #e2e8f0; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-family: sans-serif; font-size: 13px; font-weight: 500; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
+                            <span class="material-icons" style="font-size: 16px;">light_mode</span> Light Mode
+                        </button>
+                        <button id="fs-btn" style="background: rgba(30, 36, 48, 0.8); border: 1px solid #4a5568; color: #e2e8f0; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-family: sans-serif; font-size: 13px; font-weight: 500; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
+                            <span class="material-icons" style="font-size: 16px;">fullscreen</span> Fullscreen
+                        </button>
+                    </div>
+                    <script>
+                        let isDark = true;
+                        const themeBtn = document.getElementById('theme-btn');
+                        const fsBtn = document.getElementById('fs-btn');
+                        const networkDiv = document.getElementById('mynetwork');
+                        
+                        const updateNodeFonts = (colorHex) => {
+                            if (typeof nodes !== 'undefined') {
+                                const updates = nodes.get().map(n => ({id: n.id, font: {color: colorHex}}));
+                                nodes.update(updates);
+                            } else if (typeof network !== 'undefined') {
+                                network.setOptions({ nodes: { font: { color: colorHex } } });
+                            }
+                        };
+                        
+                        themeBtn.onclick = () => {
+                            isDark = !isDark;
+                            if (isDark) {
+                                document.documentElement.style.setProperty('background-color', '#0e1117', 'important');
+                                document.body.style.setProperty('background-color', '#0e1117', 'important');
+                                networkDiv.style.setProperty('background-color', '#0e1117', 'important');
+                                networkDiv.style.setProperty('border-color', '#2d3748', 'important');
+                                themeBtn.innerHTML = '<span class="material-icons" style="font-size: 16px;">light_mode</span> Light Mode';
+                                themeBtn.style.background = 'rgba(30, 36, 48, 0.8)';
+                                themeBtn.style.color = '#e2e8f0';
+                                themeBtn.style.borderColor = '#4a5568';
+                                fsBtn.style.background = 'rgba(30, 36, 48, 0.8)';
+                                fsBtn.style.color = '#e2e8f0';
+                                fsBtn.style.borderColor = '#4a5568';
+                                updateNodeFonts('#e0e0e0');
+                            } else {
+                                document.documentElement.style.setProperty('background-color', '#ffffff', 'important');
+                                document.body.style.setProperty('background-color', '#ffffff', 'important');
+                                networkDiv.style.setProperty('background-color', '#ffffff', 'important');
+                                networkDiv.style.setProperty('border-color', '#cbd5e1', 'important');
+                                themeBtn.innerHTML = '<span class="material-icons" style="font-size: 16px;">dark_mode</span> Dark Mode';
+                                themeBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+                                themeBtn.style.color = '#1e293b';
+                                themeBtn.style.borderColor = '#cbd5e1';
+                                fsBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+                                fsBtn.style.color = '#1e293b';
+                                fsBtn.style.borderColor = '#cbd5e1';
+                                updateNodeFonts('#1e293b');
+                            }
+                        };
+
+                        fsBtn.onclick = () => {
+                            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                                const root = document.documentElement;
+                                if (root.requestFullscreen) {
+                                    root.requestFullscreen().catch(err => console.warn(err));
+                                } else if (root.webkitRequestFullscreen) {
+                                    root.webkitRequestFullscreen();
+                                }
+                                fsBtn.innerHTML = '<span class="material-icons" style="font-size: 16px;">fullscreen_exit</span> Exit Fullscreen';
+                            } else {
+                                if (document.exitFullscreen) {
+                                    document.exitFullscreen();
+                                } else if (document.webkitExitFullscreen) {
+                                    document.webkitExitFullscreen();
+                                }
+                                fsBtn.innerHTML = '<span class="material-icons" style="font-size: 16px;">fullscreen</span> Fullscreen';
+                            }
+                        };
+                        
+                        const handleFsChange = () => {
+                            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                                networkDiv.style.setProperty('height', '100vh', 'important');
+                            } else {
+                                networkDiv.style.setProperty('height', '500px', 'important');
+                                fsBtn.innerHTML = '<span class="material-icons" style="font-size: 16px;">fullscreen</span> Fullscreen';
+                            }
+                        };
+                        document.addEventListener('fullscreenchange', handleFsChange);
+                        document.addEventListener('webkitfullscreenchange', handleFsChange);
+                    </script>
+                    """
+                    html_g = html_g.replace("</body>", ui_controls + "</body>")
+
                     components.html(html_g, height=520)
                     
+                '''
                 st.markdown("---")
                 st.markdown("#### Extraction Details & Data Contracts")
                 
@@ -495,6 +606,7 @@ def show_extraction_simulator():
                             
                         mermaid_code = "\n".join(mermaid_lines)
                         st.markdown(f"```mermaid\n{mermaid_code}\n```")
+                '''
             else:
                 st.info("Simulating target decoupled architecture... Please run simulation above.")
     else:

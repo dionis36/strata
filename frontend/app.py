@@ -264,10 +264,20 @@ with st.sidebar:
     st.divider()
     FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")
     import requests
+
+    @st.cache_data(ttl=60, show_spinner=False)
+    def fetch_sidebar_runs():
+        try:
+            res = requests.get(f"{FASTAPI_URL}/runs", timeout=10)
+            if res.status_code == 200:
+                return res.json()
+        except Exception:
+            return []
+        return []
+
     try:
-        runs_res = requests.get(f"{FASTAPI_URL}/runs", timeout=2)
-        if runs_res.status_code == 200:
-            available_runs = runs_res.json()
+        available_runs = fetch_sidebar_runs()
+        if available_runs:
             valid_statuses = ['COMPLETED', 'ANALYSIS_COMPLETE', 'INTELLIGENCE_READY', 'INTELLIGENCE_FAILED', 'SYNTHESIZING_FINDINGS', 'SYNTHESIZING_SUMMARY', 'SYNTHESIZING_RECTOR']
             run_options = {f"Run {r['id']} ({r['started_at'][:10]})": r['id'] for r in available_runs if r.get('status', '').upper() in valid_statuses}
             if run_options:

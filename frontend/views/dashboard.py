@@ -186,8 +186,8 @@ def show_dashboard():
                 
         ingest_method = st.radio(
             "Ingestion Method", 
-            ["Local Directory", "Zip Upload", "Git Repository"], 
-            index=default_idx, 
+            ["Local Directory", "Zip Upload"], 
+            index=default_idx if default_idx < 2 else 0, 
             horizontal=True,
             label_visibility="collapsed"
         )
@@ -281,7 +281,8 @@ def show_dashboard():
                         if type(e).__name__ == 'RerunException':
                             raise
                         status_placeholder.error(f"Upload error: {e}")
-
+        
+        '''
         elif ingest_method == "Git Repository":
             st.markdown("Clone a Git repository directly into the analysis engine.")
             repo_url = st.text_input("Repository URL", placeholder="https://github.com/dionis36/strata.git", key="git_url")
@@ -344,6 +345,7 @@ def show_dashboard():
                         if type(e).__name__ == 'RerunException':
                             raise
                         status_placeholder.error(f"Git Ingestion error: {e}")
+        '''
 
     with c2:
         if dashboard_data and dashboard_data.get("project"):
@@ -376,6 +378,8 @@ def show_dashboard():
                 st.markdown(f"**Method:** Zip Upload  \n**Snapshot Path:** `{proj['root_path']}`")
                 st.markdown("---")
                 st.info("Uploaded snapshots cannot be re-scanned. Upload a new zip to analyze changes.")
+            
+            '''
             elif i_type == "git":
                 repo = proj.get("repo_url", "Unknown repo")
                 active_branch = proj.get("branch", "main")
@@ -415,6 +419,7 @@ def show_dashboard():
                             else:
                                 break
                             time.sleep(2)
+            '''
 
 if __name__ == "__main__":
     show_dashboard()

@@ -103,5 +103,11 @@ def show_executive_roadmap():
         
         st.markdown("<hr style='margin: 40px 0;'>", unsafe_allow_html=True)
 
+    st.markdown("---")
+    st.subheader("Next Steps: Export Documentation")
+    st.info("The modernization roadmap review is complete. Return to the Executive Dashboard to export these insights as a Markdown report.")
+    from views import page_registry
+    st.page_link(page_registry.PAGE_DASHBOARD, label="Generate & Download Report (Dashboard)", icon=":material/arrow_forward:")
+
 if __name__ == "__main__":
     show_executive_roadmap()
