@@ -305,7 +305,7 @@ def show_risk_audit():
             "Before any further analysis, ask: do the modules listed as 'High Refactor Risk' correspond to features you intend to extract early? "
             "If so, those files reveal the minimum set of dependencies you must untangle *first* - understanding their structure is the prerequisite for planning extraction in the Strategic Advisory module."
         )
-        if st.button("Map External Boundaries"):
+        if st.button("Map External Boundaries", type="primary", use_container_width=True):
             st.switch_page(page_registry.PAGE_BOUNDARY_INTELLIGENCE)
 
 if __name__ == "__main__":

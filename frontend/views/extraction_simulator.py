@@ -76,7 +76,7 @@ def show_extraction_simulator():
     sim_key = f"last_sim_{run_id}"
     ghost_key = f"last_ghost_{run_id}"
 
-    if st.button("Run Impact Simulation"):
+    if st.button("Run Impact Simulation", type="primary"):
         with st.spinner(f"Simulating extraction of {os.path.basename(target_fqn)}..."):
             data = fetch_simulation(run_id, target_fqn)
             ghost_data = fetch_ghost_graph(run_id, target_fqn)

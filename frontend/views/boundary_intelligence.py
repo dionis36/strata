@@ -128,7 +128,7 @@ def show_boundary_intelligence():
                 "Study the distribution - are the fat views concentrated in one directory (suggesting a feature module), or scattered across the codebase? "
                 "That pattern is the difference between a targeted refactor and a wholesale rewrite of the presentation tier."
             )
-            if st.button("Analyze Structural Risk of these Views"):
+            if st.button("Analyze Structural Risk of these Views", type="primary", use_container_width=True):
                 st.switch_page(page_registry.PAGE_RISK_AUDIT)
         else:
             st.success("No presentation coupling detected. HTML output is not mixed with backend logic in this scan.")
@@ -173,7 +173,7 @@ def show_boundary_intelligence():
                 "Before forming any migration strategy, consider: which of these entry points are actively used by real users or clients, and which are dead code? "
                 "That distinction changes the scope of work significantly - a system with 50 entry points but 10 active ones has a much smaller viable extraction surface than the raw count suggests."
             )
-            if st.button("Audit Architectural Rot"):
+            if st.button("Audit Architectural Rot", type="primary", use_container_width=True):
                 st.switch_page(page_registry.PAGE_RISK_AUDIT)
         else:
             st.warning("No entry points detected. This may indicate the scan covered only a library or internal module, rather than a web-facing application.")

@@ -210,7 +210,7 @@ def show_dashboard():
                 p_path = os.path.join(data_dir, selected_dir)
                 p_name = st.text_input("Project Name", value=selected_dir.replace("-", "_").replace(".", "_"), key="local_p_name")
             
-            if st.button("Initialize Deep Scan", use_container_width=True, key="btn_local_scan"):
+            if st.button("Initialize Deep Scan", type="primary", use_container_width=True, key="btn_local_scan"):
                 with st.spinner("Processing AST..."):
                     res = requests.post(f"{FASTAPI_URL}/analyze", json={"project_name": p_name, "project_path": p_path})
                     if res.status_code == 200:
@@ -235,7 +235,7 @@ def show_dashboard():
             persist_zip = st.checkbox("Save extracted codebase to persistent /data folder", value=False, key="persist_zip")
             
             if uploaded_file is not None:
-                if st.button("Upload & Analyze", use_container_width=True, key="btn_zip_analyze"):
+                if st.button("Upload & Analyze", type="primary", use_container_width=True, key="btn_zip_analyze"):
                     import time
                     status_placeholder = st.empty()
                     status_placeholder.info("Uploading file to engine...")
@@ -293,7 +293,7 @@ def show_dashboard():
                 
             persist_git = st.checkbox("Save cloned codebase to persistent /data folder", value=False, key="persist_git")
                 
-            if st.button("Clone & Analyze", use_container_width=True, key="btn_git_analyze"):
+            if st.button("Clone & Analyze", type="primary", use_container_width=True, key="btn_git_analyze"):
                 if not repo_url:
                     st.error("Please provide a Repository URL.")
                 else:
