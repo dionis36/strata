@@ -1,0 +1,724 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Strata Modernization Intelligence",
+          "rules": [
+            {
+              "id": "STRATA-HIGH-COUPLING",
+              "name": "HighCoupling",
+              "shortDescription": {
+                "text": "Component exhibits dangerous coupling pressure."
+              },
+              "fullDescription": {
+                "text": "This component is tightly coupled to many other parts of the system, making changes highly risky and prone to cascading failures. Decouple by extracting responsibilities or introducing interfaces."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "STRATA-STATEFUL-BOTTLENECK",
+              "name": "StatefulBottleneck",
+              "shortDescription": {
+                "text": "Component maintains excessive state and acts as a bottleneck."
+              },
+              "fullDescription": {
+                "text": "This component manages global or shared state, causing tight contention and making it difficult to scale or test in isolation. Consider stateless architectural patterns or dependency injection."
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              }
+            },
+            {
+              "id": "STRATA-STRUCTURAL-RISK",
+              "name": "StructuralRisk",
+              "shortDescription": {
+                "text": "Component exhibits high structural risk."
+              },
+              "fullDescription": {
+                "text": "This component has significant architectural issues such as high complexity or blast radius, requiring immediate remediation. Consider breaking it down into smaller, more focused modules."
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "STRATA-STRUCTURAL-RISK",
+          "level": "warning",
+          "message": {
+            "text": "Component 'gitrepo::create_new' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "gitrepo/create_new.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.53,
+            "coupling_pressure": 0.05,
+            "criticality_index": 0.382,
+            "instability": 0.727
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "44649c07c5d43c4c5851260a5835fb4e"
+          }
+        },
+        {
+          "ruleId": "STRATA-STATEFUL-BOTTLENECK",
+          "level": "error",
+          "message": {
+            "text": "Component 'gitrepo' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "marcel-master/class/git.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.63,
+            "coupling_pressure": 0.31,
+            "criticality_index": 0.379,
+            "instability": 0.932
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "7f014a24c6e074ce1fb71c1fc1955b6a"
+          }
+        },
+        {
+          "ruleId": "STRATA-STRUCTURAL-RISK",
+          "level": "warning",
+          "message": {
+            "text": "Component 'linode' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "marcel-master/site/marcel/controller/linode.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.32,
+            "coupling_pressure": 0.36,
+            "criticality_index": 0.001,
+            "instability": 0.985
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "844e0ed581b2d63f04883227348d4158"
+          }
+        },
+        {
+          "ruleId": "STRATA-STATEFUL-BOTTLENECK",
+          "level": "warning",
+          "message": {
+            "text": "Component 'socket_server' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "marcel-master/class/socket_server.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.28,
+            "coupling_pressure": 0.2,
+            "criticality_index": 0.017,
+            "instability": 0.947
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "d605fc777f771cb17abfeb0b27888c31"
+          }
+        },
+        {
+          "ruleId": "STRATA-HIGH-COUPLING",
+          "level": "warning",
+          "message": {
+            "text": "Component 'controller_git' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "marcel-master/site/marcel/controller/git.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.35,
+            "coupling_pressure": 0.5,
+            "criticality_index": 0.018,
+            "instability": 0.989
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "d9e25e2dcf11b00c9e7ebbd3d96afc06"
+          }
+        },
+        {
+          "ruleId": "STRATA-STATEFUL-BOTTLENECK",
+          "level": "error",
+          "message": {
+            "text": "Component 'image_manip' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "marcel-master/vendor/image_manip.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.49,
+            "coupling_pressure": 0.21,
+            "criticality_index": 0.018,
+            "instability": 0.949
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "fe8e9d0a4acf5f2af6b47c0c9f71e697"
+          }
+        },
+        {
+          "ruleId": "STRATA-STATEFUL-BOTTLENECK",
+          "level": "error",
+          "message": {
+            "text": "Component 'simple_html_dom_node' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "marcel-master/vendor/dom/dom.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.39,
+            "coupling_pressure": 0.37,
+            "criticality_index": 0.256,
+            "instability": 0.915
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "c8c258b9161a661611c76c3aff0d8ad0"
+          }
+        },
+        {
+          "ruleId": "STRATA-STATEFUL-BOTTLENECK",
+          "level": "warning",
+          "message": {
+            "text": "Component 'simple_html_dom' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "marcel-master/vendor/dom/dom.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.31,
+            "coupling_pressure": 0.3,
+            "criticality_index": 0.006,
+            "instability": 0.982
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "84c1250e7173e477f8b00e6a7ee17e1a"
+          }
+        },
+        {
+          "ruleId": "STRATA-STRUCTURAL-RISK",
+          "level": "note",
+          "message": {
+            "text": "Component 'User' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "marcel-master/model/User.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.49,
+            "coupling_pressure": 0.28,
+            "criticality_index": 0.225,
+            "instability": 0.641
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "926ad4bd3a1a4582bf859f6d9637b8c4"
+          }
+        },
+        {
+          "ruleId": "STRATA-STATEFUL-BOTTLENECK",
+          "level": "note",
+          "message": {
+            "text": "Component 'upload' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "marcel-master/site/marcel/controller/file_manager.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.48,
+            "coupling_pressure": 0.2,
+            "criticality_index": 0.018,
+            "instability": 0.946
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "e00da8c39dd94c02fbbfc39363db1b70"
+          }
+        },
+        {
+          "ruleId": "STRATA-STATEFUL-BOTTLENECK",
+          "level": "note",
+          "message": {
+            "text": "Component 'remote' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "marcel-master/class/remote.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.45,
+            "coupling_pressure": 0.11,
+            "criticality_index": 0.008,
+            "instability": 0.909
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "cb6c61700d0d40a2a420eef45a98e153"
+          }
+        },
+        {
+          "ruleId": "STRATA-STRUCTURAL-RISK",
+          "level": "note",
+          "message": {
+            "text": "Component 'Stock' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "marcel-master/model/Stock.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.44,
+            "coupling_pressure": 0.12,
+            "criticality_index": 0.005,
+            "instability": 0.87
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "0696ad96985a88037dae2aa8a2d04efb"
+          }
+        },
+        {
+          "ruleId": "STRATA-STRUCTURAL-RISK",
+          "level": "note",
+          "message": {
+            "text": "Component 'Session::gc' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Session/gc.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.43,
+            "coupling_pressure": 0.04,
+            "criticality_index": 0.0,
+            "instability": 0.875
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "e3bfefd258b28c69b4202d5313c87364"
+          }
+        },
+        {
+          "ruleId": "STRATA-STRUCTURAL-RISK",
+          "level": "note",
+          "message": {
+            "text": "Component 'User::init' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "User/init.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.43,
+            "coupling_pressure": 0.03,
+            "criticality_index": 0.181,
+            "instability": 0.625
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "8ce60e0f139a78a0c1eca4d27ee1ddcb"
+          }
+        },
+        {
+          "ruleId": "STRATA-STRUCTURAL-RISK",
+          "level": "note",
+          "message": {
+            "text": "Component 'Session' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "marcel-master/model/Session.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.42,
+            "coupling_pressure": 0.15,
+            "criticality_index": 0.031,
+            "instability": 0.706
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "c7b12ec19bf8062dbce0de6c9182a042"
+          }
+        },
+        {
+          "ruleId": "STRATA-STRUCTURAL-RISK",
+          "level": "note",
+          "message": {
+            "text": "Component 'Stock::symbol' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Stock/symbol.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.41,
+            "coupling_pressure": 0.05,
+            "criticality_index": 0.005,
+            "instability": 0.8
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "8ea6cf8af8f3b6c67d6d8279245210d2"
+          }
+        },
+        {
+          "ruleId": "STRATA-STRUCTURAL-RISK",
+          "level": "note",
+          "message": {
+            "text": "Component 'User_Permission' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "marcel-master/model/User_Permission.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.41,
+            "coupling_pressure": 0.09,
+            "criticality_index": 0.039,
+            "instability": 0.7
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "f545d8633cc1e621ffb8854e87d8715d"
+          }
+        },
+        {
+          "ruleId": "STRATA-STRUCTURAL-RISK",
+          "level": "note",
+          "message": {
+            "text": "Component 'Worker' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "marcel-master/model/Worker.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.41,
+            "coupling_pressure": 0.11,
+            "criticality_index": 0.019,
+            "instability": 0.708
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "33daa415badecca1e7d380c2349cfd6b"
+          }
+        },
+        {
+          "ruleId": "STRATA-STRUCTURAL-RISK",
+          "level": "note",
+          "message": {
+            "text": "Component 'Session::write' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Session/write.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.4,
+            "coupling_pressure": 0.02,
+            "criticality_index": 0.0,
+            "instability": 0.8
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "4bca7e3b8fb5a538a2a1b7ca71ab51d2"
+          }
+        },
+        {
+          "ruleId": "STRATA-STRUCTURAL-RISK",
+          "level": "note",
+          "message": {
+            "text": "Component 'User_Verification' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "marcel-master/model/User_Verification.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.4,
+            "coupling_pressure": 0.08,
+            "criticality_index": 0.021,
+            "instability": 0.722
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "3a6dc087274e834a736fda3c72ee773b"
+          }
+        },
+        {
+          "ruleId": "STRATA-STRUCTURAL-RISK",
+          "level": "note",
+          "message": {
+            "text": "Component 'Cron_Job::seed' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "Cron_Job/seed.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.39,
+            "coupling_pressure": 0.02,
+            "criticality_index": 0.0,
+            "instability": 0.75
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "cc9831659613624921db9387bdbbadb3"
+          }
+        },
+        {
+          "ruleId": "STRATA-STRUCTURAL-RISK",
+          "level": "note",
+          "message": {
+            "text": "Component 'User::update_cache' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "User/update_cache.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.39,
+            "coupling_pressure": 0.02,
+            "criticality_index": 0.0,
+            "instability": 0.75
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "4d0c52fb4e4059accee3014deb571a47"
+          }
+        },
+        {
+          "ruleId": "STRATA-STRUCTURAL-RISK",
+          "level": "note",
+          "message": {
+            "text": "Component 'User::join_process' exhibits structural risk. Review the attached properties and code flows for details."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "User/join_process.php",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "risk_score": 0.39,
+            "coupling_pressure": 0.02,
+            "criticality_index": 0.0,
+            "instability": 0.75
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "4ebf31770de4b5b2019180afcc98bb3c"
+          }
+        }
+      ]
+    }
+  ]
+}
+

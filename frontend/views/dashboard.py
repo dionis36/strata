@@ -155,7 +155,7 @@ def show_dashboard():
                 col_idx += 1
                 
             with cols[col_idx]:
-                if st.button("Re-Synthesize Artifacts", use_container_width=True):
+                if st.button("Regenerate Report", use_container_width=True):
                     with st.spinner("Re-initializing AI Synthesis..."):
                         fetch_human_cached.clear()
                         fetch_sarif_cached.clear()

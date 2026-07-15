@@ -21,33 +21,169 @@ class ArtifactService:
 
     def generate_sarif(self, run_id: int) -> Dict[str, Any]:
         """Generates a SARIF v2.1.0 compliant JSON output for GitHub Code Scanning."""
-        risks = self.db.query(ComponentRisk).filter(ComponentRisk.run_id == run_id).all()
+        import hashlib
         
+        # 1. Fetch CRITICAL and HIGH risks
+        critical_high_risks = self.db.query(ComponentRisk).filter(
+            ComponentRisk.run_id == run_id,
+            ComponentRisk.risk_level.in_(["CRITICAL", "HIGH"])
+        ).all()
+        
+        # 2. Fetch Top 15 MEDIUM risks (Strategic Blast Radius inclusion)
+        medium_risks = self.db.query(ComponentRisk).filter(
+            ComponentRisk.run_id == run_id,
+            ComponentRisk.risk_level == "MEDIUM"
+        ).order_by(ComponentRisk.risk_score.desc()).limit(15).all()
+        
+        risks = critical_high_risks + medium_risks
+        
+        # 3. Define Rules (Sanitized of personal URLs, richer descriptions)
+        rules = [
+            {
+                "id": "STRATA-HIGH-COUPLING",
+                "name": "HighCoupling",
+                "shortDescription": {"text": "Component exhibits dangerous coupling pressure."},
+                "fullDescription": {"text": "This component is tightly coupled to many other parts of the system, making changes highly risky and prone to cascading failures. Decouple by extracting responsibilities or introducing interfaces."},
+                "defaultConfiguration": {"level": "error"}
+            },
+            {
+                "id": "STRATA-STATEFUL-BOTTLENECK",
+                "name": "StatefulBottleneck",
+                "shortDescription": {"text": "Component maintains excessive state and acts as a bottleneck."},
+                "fullDescription": {"text": "This component manages global or shared state, causing tight contention and making it difficult to scale or test in isolation. Consider stateless architectural patterns or dependency injection."},
+                "defaultConfiguration": {"level": "error"}
+            },
+            {
+                "id": "STRATA-STRUCTURAL-RISK",
+                "name": "StructuralRisk",
+                "shortDescription": {"text": "Component exhibits high structural risk."},
+                "fullDescription": {"text": "This component has significant architectural issues such as high complexity or blast radius, requiring immediate remediation. Consider breaking it down into smaller, more focused modules."},
+                "defaultConfiguration": {"level": "warning"}
+            }
+        ]
+
         results = []
         for r in risks:
-            if r.risk_level in ["CRITICAL", "HIGH"]:
-                level = "error" if r.risk_level == "CRITICAL" else "warning"
+            # Map risk level to SARIF severity level
+            if r.risk_level == "CRITICAL":
+                level = "error"
+            elif r.risk_level == "HIGH":
+                level = "warning"
+            else:
+                level = "note"
                 
-                # Try to resolve a file path from GraphNode
-                node = self.db.query(GraphNode).filter(GraphNode.run_id == run_id, GraphNode.name == r.component_name).first()
-                uri = node.file_path if node and node.file_path else f"{r.component_name}.php"
+            if r.coupling_pressure and r.coupling_pressure > 0.4:
+                rule_id = "STRATA-HIGH-COUPLING"
+            elif r.is_stateful:
+                rule_id = "STRATA-STATEFUL-BOTTLENECK"
+            else:
+                rule_id = "STRATA-STRUCTURAL-RISK"
                 
-                results.append({
-                    "ruleId": f"STRATA-RISK-{r.risk_level}",
-                    "level": level,
-                    "message": {
-                        "text": f"Component '{r.component_name}' exhibits {r.risk_level} structural risk (Score: {round(r.risk_score, 2)}). Coupling Pressure: {round(r.coupling_pressure, 2)}."
-                    },
-                    "locations": [
-                        {
-                            "physicalLocation": {
-                                "artifactLocation": {
-                                    "uri": uri.lstrip('/')
+            # Try to resolve a file path from GraphNode
+            node = self.db.query(GraphNode).filter(GraphNode.run_id == run_id, GraphNode.name == r.component_name).first()
+            uri = node.file_path if node and node.file_path else f"{r.component_name}.php"
+            uri = uri.lstrip('/')
+            
+            # Ensure no phantom classes in file path
+            if '::' in uri:
+                uri = uri.replace('::', '/')
+                
+            # Extract line numbers from AST metadata if available
+            start_line = 1
+            end_line = None
+            if node and node.metadata_json:
+                try:
+                    meta = json.loads(node.metadata_json)
+                    start_line = int(meta.get("start_line", meta.get("startLine", 1)))
+                    if "end_line" in meta or "endLine" in meta:
+                        end_line = int(meta.get("end_line", meta.get("endLine")))
+                except Exception:
+                    pass
+                    
+            region = {"startLine": start_line}
+            if end_line:
+                region["endLine"] = end_line
+                
+            # Generate deterministic fingerprint for deduplication across commits
+            fingerprint_hash = hashlib.md5(f"{r.component_name}_{rule_id}".encode('utf-8')).hexdigest()
+            
+            result = {
+                "ruleId": rule_id,
+                "level": level,
+                "message": {
+                    "text": f"Component '{r.component_name}' exhibits structural risk. Review the attached properties and code flows for details."
+                },
+                "locations": [
+                    {
+                        "physicalLocation": {
+                            "artifactLocation": {
+                                "uri": uri,
+                                "uriBaseId": "%SRCROOT%"
+                            },
+                            "region": region
+                        }
+                    }
+                ],
+                "properties": {
+                    "risk_score": round(r.risk_score, 2) if r.risk_score else 0.0,
+                    "coupling_pressure": round(r.coupling_pressure, 2) if r.coupling_pressure else 0.0,
+                    "criticality_index": round(r.criticality_index, 3) if r.criticality_index else 0.0,
+                    "instability": round(r.instability, 3) if r.instability else 0.0
+                },
+                "partialFingerprints": {
+                    "primaryLocationLineHash": fingerprint_hash
+                }
+            }
+            
+            # Build CodeFlows for Highly Coupled components to visually map dependencies
+            if rule_id == "STRATA-HIGH-COUPLING":
+                deps = self.db.query(ComponentDependency).filter(
+                    ComponentDependency.run_id == run_id,
+                    (ComponentDependency.source_id == r.component_name) | (ComponentDependency.target_id == r.component_name)
+                ).limit(3).all()
+                
+                if deps:
+                    locations = []
+                    step_num = 1
+                    for dep in deps:
+                        dep_target = dep.target_id if dep.source_id == r.component_name else dep.source_id
+                        dep_node = self.db.query(GraphNode).filter(GraphNode.run_id == run_id, GraphNode.name == dep_target).first()
+                        dep_uri = dep_node.file_path.lstrip('/') if dep_node and dep_node.file_path else f"{dep_target}.php".replace('::', '/')
+                        
+                        dep_start = 1
+                        if dep_node and dep_node.metadata_json:
+                            try:
+                                dmeta = json.loads(dep_node.metadata_json)
+                                dep_start = int(dmeta.get("start_line", dmeta.get("startLine", 1)))
+                            except Exception:
+                                pass
+                                
+                        edge_action = "invokes" if dep.source_id == r.component_name else "is invoked by"
+                        comp_type = node.node_type if node else "component"
+                        dep_type = dep_node.node_type if dep_node else "component"
+                        
+                        locations.append({
+                            "location": {
+                                "physicalLocation": {
+                                    "artifactLocation": {
+                                        "uri": dep_uri,
+                                        "uriBaseId": "%SRCROOT%"
+                                    },
+                                    "region": {
+                                        "startLine": dep_start
+                                    }
+                                },
+                                "message": {
+                                    "text": f"Step {step_num}: The '{r.component_name}' {comp_type} {edge_action} the '{dep_target}' {dep_type} ({dep.edge_type}), creating a tight dependency chain."
                                 }
                             }
-                        }
-                    ]
-                })
+                        })
+                        step_num += 1
+                        
+                    if locations:
+                        result["codeFlows"] = [{"threadFlows": [{"locations": locations}]}]
+
+            results.append(result)
 
         sarif = {
             "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
@@ -57,19 +193,7 @@ class ArtifactService:
                     "tool": {
                         "driver": {
                             "name": "Strata Modernization Intelligence",
-                            "informationUri": "https://github.com/dionis36/strata",
-                            "rules": [
-                                {
-                                    "id": "STRATA-RISK-CRITICAL",
-                                    "name": "CriticalStructuralRisk",
-                                    "shortDescription": {"text": "Critical architectural or security risk."}
-                                },
-                                {
-                                    "id": "STRATA-RISK-HIGH",
-                                    "name": "HighStructuralRisk",
-                                    "shortDescription": {"text": "High architectural or security risk."}
-                                }
-                            ]
+                            "rules": rules
                         }
                     },
                     "results": results
