@@ -12,27 +12,20 @@ PHASE_CONTEXTS = {
 }
 
 def style_dataframe(df: pd.DataFrame, phase_id: int):
-    """Applies custom color coding and formatting to dataframes based on phase."""
+    """Applies custom formatting to dataframes based on phase."""
     if df.empty:
          return df
          
     styled = df.style
     
-    if phase_id == 0 and "wmc" in df.columns:
-         styled = styled.background_gradient(subset=["wmc"], cmap="Reds", vmin=0, vmax=100)
-    elif phase_id == 1 and "entanglement" in df.columns:
+    if phase_id == 1 and "entanglement" in df.columns:
          try:
-             # Convert the string percentage (e.g. '15.5%') into a float directly in the column so the Styler can use it
+             # Convert the string percentage (e.g. '15.5%') into a float directly in the column
              df["entanglement"] = df["entanglement"].astype(str).str.rstrip('%').astype(float)
-             styled = df.style.background_gradient(subset=["entanglement"], cmap="Oranges")
              # Format it back to look like a percentage
              styled = styled.format({"entanglement": "{:.1f}%"})
          except:
              pass
-    elif phase_id == 3 and "coupling" in df.columns:
-         styled = styled.background_gradient(subset=["coupling"], cmap="Purples")
-    elif phase_id == 4 and "isolation_score" in df.columns:
-         styled = styled.background_gradient(subset=["isolation_score"], cmap="Greens_r")
          
     return styled
 
