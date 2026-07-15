@@ -77,16 +77,16 @@ def show_dashboard():
         
         if run_status in synthesis_statuses:
             import time
-            with st.status("Querying LLM & Synthesizing Artifacts...", expanded=True):
+            with st.status("Generating Report...", expanded=True):
                 st.write("Please wait...")
                 time.sleep(3)
             st.rerun()
             
         elif run_status in ["analysis_complete", "completed"]:
             col_msg, col_btn = st.columns([3, 1])
-            col_msg.info("Analysis complete. Query LLM to generate modernization artifacts.")
-            if col_btn.button("Query LLM for Artifacts", type="primary", use_container_width=True):
-                with st.spinner("Initializing AI Synthesis..."):
+            col_msg.info("Analysis complete. Generate report to view modernization artifacts.")
+            if col_btn.button("Generate Report", type="primary", use_container_width=True):
+                with st.spinner("Initializing Report Generation..."):
                     requests.post(f"{FASTAPI_URL}/runs/{run['id']}/retry_intelligence")
                     st.rerun()
                     
@@ -98,8 +98,8 @@ def show_dashboard():
             
         elif run_status == "intelligence_failed":
             col_msg, col_btn = st.columns([3, 1])
-            col_msg.error("LLM Artifact Synthesis Failed.")
-            if col_btn.button("Retry LLM Query", type="primary", use_container_width=True):
+            col_msg.error("Report Generation Failed.")
+            if col_btn.button("Retry Report Generation", type="primary", use_container_width=True):
                 requests.post(f"{FASTAPI_URL}/runs/{run['id']}/retry_intelligence")
                 st.rerun()
                 
@@ -156,7 +156,7 @@ def show_dashboard():
                 
             with cols[col_idx]:
                 if st.button("Regenerate Report", use_container_width=True):
-                    with st.spinner("Re-initializing AI Synthesis..."):
+                    with st.spinner("Re-initializing Report Generation..."):
                         fetch_human_cached.clear()
                         fetch_sarif_cached.clear()
                         requests.post(f"{FASTAPI_URL}/runs/{run['id']}/retry_intelligence")

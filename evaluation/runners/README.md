@@ -71,5 +71,5 @@ Strata uses the **Henderson-Sellers LCOM4 formula**, which bounds the cohesion s
 ### ❌ WMC & LOC (Complexity) -> PHPMETRICS IS MORE ACCURATE
 Strata approximates complexity by counting logical AST nodes (`If`, `For`, `While`) and calculates LOC by counting raw lines (`\n`). PhpMetrics strictly adheres to McCabe's Cyclomatic Complexity and Logical LOC (LLOC). If you see a major divergence here, trust the PhpMetrics number. (This is a known improvement target for Strata).
 
-### 🔍 Unparsed Classes
+###  Unparsed Classes
 If the report shows that Strata missed classes that PhpMetrics found, it is likely due to the legacy file containing PHP 5.x short-open-tags (`<?`) or raw syntax errors that caused Strata's `parser.php` sidecar to fail silently. 

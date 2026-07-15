@@ -80,7 +80,7 @@ def show_monolith_navigator():
         
     col1, col2 = st.columns([1, 2])
     with col1:
-        search_term = st.text_input("Search", placeholder="🔍 Filter codebase...", label_visibility="collapsed").lower()
+        search_term = st.text_input("Search", placeholder="Filter codebase...", label_visibility="collapsed").lower()
     
     def generate_html_tree(node, depth=0):
         html = ""

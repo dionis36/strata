@@ -192,7 +192,7 @@ def show_user_guide():
             st.markdown("**Phase 3: Simulate & Export**")
             st.markdown(
                 "5. **Simulate Extraction**: Use the **Extraction Simulator** to model changes in Blast Radius and dependency flow.\n\n"
-                "6. **Export Roadmaps**: Generate step-by-step modernization guides and Neo4j Cypher/AI JSON metadata."
+                "6. **Export Roadmaps**: Generate step-by-step modernization guides and Neo4j Cypher/JSON metadata."
             )
         st.info("Tip: You can switch between active workspace runs anytime using the drop-down menu in the sidebar.")
 
