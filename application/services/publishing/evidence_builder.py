@@ -125,6 +125,14 @@ class EvidenceBuilder:
             except Exception:
                 pass
                 
+        from application.services.report_service import ReportService
+        roadmap = {}
+        try:
+            report_service = ReportService(self.db)
+            roadmap = report_service.generate_roadmap(run_id)
+        except Exception:
+            pass
+                
         # 9. Extract File Matrix (Risk Matrix)
         from application.services.security_risk_service import SecurityRiskService
         file_matrix = []
@@ -150,7 +158,8 @@ class EvidenceBuilder:
             findings=findings,
             full_risk_register=full_risk_register,
             file_matrix=file_matrix,
-            ai_executive_summary=ai_exec_summary
+            ai_executive_summary=ai_exec_summary,
+            roadmap=roadmap
         )
 
     def _extract_database_intelligence(self, run_id: int):

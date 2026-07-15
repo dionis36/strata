@@ -272,6 +272,42 @@ with st.sidebar:
             run_options = {f"Run {r['id']} ({r['started_at'][:10]})": r['id'] for r in available_runs if r.get('status', '').upper() in valid_statuses}
             if run_options:
                 current_run_id = st.session_state.get("active_run_id")
+                
+                # --- Persistent State Sync ---
+                import json
+                state_file = ".strata_state.json"
+                
+                # 1. Restore from file if session is empty
+                if current_run_id is None:
+                    try:
+                        if os.path.exists(state_file):
+                            with open(state_file, "r") as f:
+                                saved = json.load(f)
+                                saved_run_id = saved.get("active_run_id")
+                                if saved_run_id in run_options.values():
+                                    current_run_id = saved_run_id
+                                    st.session_state["active_run_id"] = saved_run_id
+                                    st.session_state["active_project_id"] = saved.get("active_project_id")
+                    except Exception:
+                        pass
+                
+                # 2. Always ensure file reflects the active session (handles updates from anywhere)
+                try:
+                    current_saved = {}
+                    if os.path.exists(state_file):
+                        with open(state_file, "r") as f:
+                            current_saved = json.load(f)
+                            
+                    if current_saved.get("active_run_id") != current_run_id:
+                        with open(state_file, "w") as f:
+                            json.dump({
+                                "active_run_id": current_run_id, 
+                                "active_project_id": st.session_state.get("active_project_id")
+                            }, f)
+                except Exception:
+                    pass
+                # ------------------------
+
                 run_keys = list(run_options.keys())
                 
                 current_idx = None

@@ -405,13 +405,20 @@ def background_synthesize_intelligence(run_id: int):
         except Exception:
             global_state_data = None
 
+        from application.services.report_service import ReportService
+        try:
+            roadmap_data = ReportService(db).generate_roadmap(run_id)
+        except Exception:
+            roadmap_data = None
+
         ai_service = AIAdvisoryService()
         summary = ai_service.synthesize_executive_summary(
             ctx, legacy, recs, hotspots_data,
             boundary_data=boundary_data,
             database_data=database_data,
             architecture_data=architecture_data,
-            global_state_data=global_state_data
+            global_state_data=global_state_data,
+            roadmap_data=roadmap_data
         )
         
         run.ai_executive_summary_json = json.dumps(summary)

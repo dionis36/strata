@@ -38,7 +38,7 @@ class AIAdvisoryService:
                 else:
                     raise
 
-    def synthesize_executive_summary(self, system_context: Any, legacy_posture: Any, recs: List[Dict[str, Any]] = None, hotspots: List[Dict[str, Any]] = None, boundary_data: Any = None, database_data: Any = None, architecture_data: Any = None, global_state_data: Any = None) -> Dict[str, Any]:
+    def synthesize_executive_summary(self, system_context: Any, legacy_posture: Any, recs: List[Dict[str, Any]] = None, hotspots: List[Dict[str, Any]] = None, boundary_data: Any = None, database_data: Any = None, architecture_data: Any = None, global_state_data: Any = None, roadmap_data: Any = None) -> Dict[str, Any]:
         """Calls an LLM to write a high-level strategic executive summary."""
         if not self.openrouter_key and not self.client:
             raise ValueError("No API keys found. AI Synthesis unavailable.")
@@ -65,6 +65,7 @@ class AIAdvisoryService:
         database_str = str(database_data) if database_data else "None"
         architecture_str = str(architecture_data) if architecture_data else "None"
         global_state_str = str(global_state_data) if global_state_data else "None"
+        roadmap_str = json.dumps(roadmap_data.get('phases', []), indent=2) if roadmap_data else "None"
 
         prompt = f"""
         You are a Principal PHP Modernization Architect consulting for a C-level executive.
@@ -105,6 +106,9 @@ class AIAdvisoryService:
         Global State Data:
         {global_state_str}
         
+        Strategic Roadmap Sequence (Deterministic):
+        {roadmap_str}
+        
         Provide a strategic evaluation in exact JSON format.
         You must return a raw JSON object with EXACTLY these keys.
         
@@ -112,7 +116,6 @@ class AIAdvisoryService:
         1. Do NOT use double quotes (") anywhere inside the text values. If you need to quote anything, use single quotes (') or backticks (`) instead.
         2. All double quotes (") must strictly be used ONLY for JSON keys and JSON value boundaries.
         3. Do not include markdown backticks around the JSON.
-        4. STRATEGIC ROADMAP ENFORCEMENT: You MUST generate between 5 and 8 detailed, highly specific phases. Do NOT output a generic 3-step list. You MUST directly mention specific file paths, dependencies, and architectural blockers from the Hotspots and Boundary Data in your step descriptions.
         
         {{
             "current_state": "A comprehensive, multi-paragraph (3 to 4 paragraphs) deep-dive assessment of the system's current architectural health. Paragraph 1: Introduce the system using its real project name and explicitly explain the system's overall purpose, domain, or use cases (based on the Project Description/documentation context). Connect this purpose to the physical codebase footprint (total files, lines of code, and specific layers) to paint the bigger picture. Paragraph 2: Analyze the structural topology and metrics. Detail the footprint numbers (Models, Controllers, Views, CLI Scripts, Schemas, Libraries) and explain the namespace adoption score (why it is 0.0, why classes live in the global scope, and the implications for modern autoloading). Paragraph 3: Detail the coupling, complexity, and hotspot findings. Explicitly reference the top class hotspots from the provided hotspot list, specifying their WMC (complexity), LCOM (lack of cohesion), instability, and lack of test coverage. Explain the implications of these hotspots on architectural risk. Paragraph 4: Synthesize the bigger picture and modernization impedance. Explain how these factors combine to create high regression risks and why refactoring or upgrading is critical to secure and professionalize the application. Ensure paragraphs are separated by a double newline (\\n\\n) so they render correctly in the HTML view.",
@@ -126,18 +129,26 @@ class AIAdvisoryService:
             ],
             "security_posture": "Narrative evaluating the overall security risks (e.g. SQL injection, unprotected endpoints).",
             "testing_strategy": "A recommendation for writing the first tests for the system.",
-            "strategic_roadmap": [
+            "strategic_roadmap_prose": [
                 {{
-                    "step_number": 1,
-                    "title": "Phase 1: Immediate Critical Remediation",
-                    "description": "Provide a highly detailed description of what needs to be done. YOU MUST explicitly reference specific files, vulnerabilities, or hotspots from the data provided.",
-                    "rationale": "The technical rationale explaining 'why' this phase mitigates the highest immediate risks."
+                    "phase_id": 0,
+                    "executive_summary": "Provide a 2-3 sentence executive rationale for Phase 0 based strictly on the provided roadmap data."
                 }},
                 {{
-                    "step_number": 2,
-                    "title": "Phase 2: ...",
-                    "description": "Provide a highly detailed description of what needs to be done. YOU MUST explicitly reference specific files, vulnerabilities, or hotspots from the data provided.",
-                    "rationale": "The technical rationale explaining 'why'."
+                    "phase_id": 1,
+                    "executive_summary": "Provide a 2-3 sentence executive rationale for Phase 1 based strictly on the provided roadmap data."
+                }},
+                {{
+                    "phase_id": 2,
+                    "executive_summary": "Provide a 2-3 sentence executive rationale for Phase 2 based strictly on the provided roadmap data."
+                }},
+                {{
+                    "phase_id": 3,
+                    "executive_summary": "Provide a 2-3 sentence executive rationale for Phase 3 based strictly on the provided roadmap data."
+                }},
+                {{
+                    "phase_id": 4,
+                    "executive_summary": "Provide a 2-3 sentence executive rationale for Phase 4 based strictly on the provided roadmap data."
                 }}
             ]
         }}

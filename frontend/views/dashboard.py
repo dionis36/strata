@@ -105,12 +105,12 @@ def show_dashboard():
                 
         elif run_status == "intelligence_ready":
             st.markdown("#### Artifact Exports")
-            @st.cache_data(show_spinner=False)
+            @st.cache_data(show_spinner=False, ttl=60)
             def fetch_human_cached(run_id_val):
                 res = requests.get(f"{FASTAPI_URL}/artifacts/human/{run_id_val}?format=md")
                 return res.content if res.status_code == 200 else None
 
-            @st.cache_data(show_spinner=False)
+            @st.cache_data(show_spinner=False, ttl=60)
             def fetch_sarif_cached(run_id_val):
                 res = requests.get(f"{FASTAPI_URL}/artifacts/sarif/{run_id_val}")
                 import json
@@ -119,41 +119,49 @@ def show_dashboard():
             md_content = fetch_human_cached(run['id'])
             sarif_content = fetch_sarif_cached(run['id'])
             
-            button_count = 0
+            button_count = 1 # Regenerate button is always present
             if md_content: button_count += 2
             if sarif_content: button_count += 1
             
-            if button_count > 0:
-                cols = st.columns(button_count)
-                col_idx = 0
+            cols = st.columns(button_count)
+            col_idx = 0
+            
+            if md_content:
+                with cols[col_idx]:
+                    if st.button("View Report", use_container_width=True):
+                        from views import page_registry
+                        st.switch_page(page_registry.PAGE_REPORT_VIEWER)
+                col_idx += 1
                 
-                if md_content:
-                    with cols[col_idx]:
-                        if st.button("View Report", use_container_width=True):
-                            from views import page_registry
-                            st.switch_page(page_registry.PAGE_REPORT_VIEWER)
-                    col_idx += 1
-                    
-                    with cols[col_idx]:
-                        st.download_button(
-                            label="Download Report",
-                            data=md_content,
-                            file_name="Strategic_Modernization_Blueprint.md",
-                            mime="text/markdown",
-                            use_container_width=True
-                        )
-                    col_idx += 1
-                    
-                if sarif_content:
-                    with cols[col_idx]:
-                        st.download_button(
-                            label="Download SARIF Report",
-                            data=sarif_content,
-                            file_name="results.sarif",
-                            mime="application/json",
-                            use_container_width=True
-                        )
-                    col_idx += 1
+                with cols[col_idx]:
+                    st.download_button(
+                        label="Download Report",
+                        data=md_content,
+                        file_name="Strategic_Modernization_Blueprint.md",
+                        mime="text/markdown",
+                        use_container_width=True
+                    )
+                col_idx += 1
+                
+            if sarif_content:
+                with cols[col_idx]:
+                    st.download_button(
+                        label="Download SARIF",
+                        data=sarif_content,
+                        file_name="results.sarif",
+                        mime="application/json",
+                        use_container_width=True
+                    )
+                col_idx += 1
+                
+            with cols[col_idx]:
+                if st.button("Re-Synthesize Artifacts", use_container_width=True):
+                    with st.spinner("Re-initializing AI Synthesis..."):
+                        fetch_human_cached.clear()
+                        fetch_sarif_cached.clear()
+                        requests.post(f"{FASTAPI_URL}/runs/{run['id']}/retry_intelligence")
+                        st.rerun()
+            col_idx += 1
         st.markdown("---")
 
     else:

@@ -42,3 +42,6 @@ infrastructure/php/composer.lock
 
 # Generated Reports
 AUDIT/
+
+# Local State
+.strata_state.json

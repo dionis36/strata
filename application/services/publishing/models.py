@@ -122,3 +122,4 @@ class CanonicalModel(BaseModel):
     full_risk_register: List[Finding] = Field(default_factory=list)
     file_matrix: List[Dict[str, Any]] = Field(default_factory=list)
     ai_executive_summary: Dict[str, Any] = Field(default_factory=dict)
+    roadmap: Dict[str, Any] = Field(default_factory=dict)

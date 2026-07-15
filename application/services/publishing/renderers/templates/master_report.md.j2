@@ -30,11 +30,31 @@
 
 **Critical Risks:** {{ model.ai_executive_summary.get('critical_risks', '[Not Available]') }}
 
-*Strategic Roadmap:*
-{% for step in model.ai_executive_summary.get('strategic_roadmap', []) %}
-**Step {{ step.step_number }}: {{ step.title }}**
-- *Description:* {{ step.description }}
-- *Rationale:* {{ step.rationale }}
+*Strategic Roadmap (Deterministic 5-Phase Sequence):*
+{% for phase in model.roadmap.get('phases', []) %}
+**{{ phase.title }}**
+{% if phase.status == 'PASSED' %}
+- **PASSED**: No modernization blockers detected for this phase.
+{% else %}
+- **ACTION REQUIRED**
+- *Executive Rationale:* {{ phase.executive_summary }}
+
+{% for table_name, table_data in phase.evidence_tables.items() %}
+{% if table_data is iterable and table_data is not string %}
+**{{ table_name | replace('_', ' ') | title }}**
+{% if table_data|length > 0 %}
+| {% for k in table_data[0].keys() %}{{ k | replace('_', ' ') | title }} | {% endfor %}
+| {% for k in table_data[0].keys() %}--- | {% endfor %}
+{% for row in table_data %}| {% for k, v in row.items() %}{{ v }} | {% endfor %}
+{% endfor %}
+{% else %}
+*No instances detected.*
+{% endif %}
+{% else %}
+- **{{ table_name | replace('_', ' ') | title }}**: {{ table_data }}
+{% endif %}
+{% endfor %}
+{% endif %}
 {% endfor %}
 
 ## 2. Boundary Intelligence & External Surface
